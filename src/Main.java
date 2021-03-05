@@ -14,7 +14,7 @@ public class Main implements JmmParser {
 		
 		try {
 		    JmmTree jmmTree = new JmmTree(new StringReader(jmmCode));
-    		SimpleNode root = jmmTree.Expression(); // returns reference to root node
+    		SimpleNode root = jmmTree.Program(); // returns reference to root node
             	
     		root.dump(""); // prints the tree on the screen
     	

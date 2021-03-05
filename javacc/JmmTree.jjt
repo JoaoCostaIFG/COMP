@@ -11,7 +11,7 @@ public class JmmTree
     public static void main(String args[]) throws ParseException {
       	System.out.println("Write an arithmetic expression:");
 		JmmTree jmmTree = new JmmTree(System.in);
-		SimpleNode root = jmmTree.Expression(); // returns reference to root node
+		SimpleNode root = jmmTree.Program(); // returns reference to root node
         	
 		root.dump(""); // prints the tree on the screen
 
@@ -44,44 +44,76 @@ TOKEN:
     |   <WHILE: "while">
     |   <BOOL: "boolean"> | <INT: "int">
     |   <VOID: "void">
-    |   <PUBLIC: "public"> | <PRIVATE: "private"> | <STATIC: "static">
+    |   <PUBLIC: "public"> | <STATIC: "static">
     |   <MAIN: "main"> | <STRING: "String">
     |   <CLASS: "class"> | <EXTENDS: "extends">
     |   <IMPORT: "import">
     |   <RET: "return">
     |   <LEN: "length">
+    |   <IDENTIFIER: ["A"-"Z", "a"-"z", "_", "$"](["0"-"9", "A"-"Z", "a"-"z", "_", "$"])*>
     |	<INTEGER: (["0"-"9"])+>
 	|   <LF: "\n">
 }
 
-SimpleNode Expression(): {}
+SimpleNode Program(): {}
 {
-   Expr1() <LF> <EOF>  {return jjtThis;} // Java code inside brackets
+  ImportDeclaration() ClassDeclaration() <EOF>  {return jjtThis;} // Java code inside brackets
 }
 
-void Expr1() #void: {}
+void ImportDeclaration(): {}
 {
-   Expr2(1) [
-   	("+" Expr2(1) #Add(2)
-   	| "-" Expr2(1) #Sub(2)
-   	)
-
-   ]
+    (<IMPORT> <IDENTIFIER> (<DOT> <IDENTIFIER>)* <SEMICOLON>)*
 }
 
-void Expr2(int sign) #void: {} // 1: positive; -1: negative, because of the ‘-‘ unitary operator
+void ClassDeclaration(): {}
 {
-   Expr3(sign)  [
-   ("*" Expr3(1) #Mul(2)
-   | "/" Expr3(1) #Div(2)
-   )
-
-   ]
+    <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] <SCURL>
+        (VarDeclaration())* (MethodDeclaration())* <ECURL>
 }
 
-void Expr3(int sign) #void: {Token t;}
+void VarDeclaration(): {}
 {
-    t=<INTEGER> {  jjtThis.val = sign *Integer.parseInt(t.image); } #Term
-    | "-" Expr3(-1)
-    | "(" Expr1() ")"
+    Type() <IDENTIFIER> <SEMICOLON>
+}
+
+void MethodDeclaration(): {}
+{
+    LOOKAHEAD(2)
+
+    <PUBLIC> Type() <IDENTIFIER>
+    <SPAR>
+        [Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*]
+    <EPAR>
+    <SCURL>
+        (VarDeclaration())* (Statement())*
+        <RET> Expression() <SEMICOLON>
+    <ECURL>
+    |   <PUBLIC> <STATIC> <VOID> <MAIN>
+        <SPAR>
+            <STRING> <SBRAK> <EBRAK> <IDENTIFIER>
+        <EPAR>
+        <SCURL>
+            (VarDeclaration())* (Statement())*
+        <ECURL>
+}
+
+void Type() : {}
+{
+    LOOKAHEAD(2)
+
+    <INT> <SBRAK> <EBRAK>
+    |   <BOOL>
+    |   <INT>
+    |   <IDENTIFIER>
+}
+
+void Statement() : {}
+{
+    <IDENTIFIER> <SEMICOLON>
+}
+
+void Expression() : {}
+{
+    //Expression() (<AND> | <LESSTHAN> | <ADD> | <SUB> | <MULT> | <DIV>) Expression()
+    <IDENTIFIER>
 }

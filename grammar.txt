@@ -2,8 +2,6 @@ Program -> ImportDeclaration, ClassDeclaration, EOF
 
 ImportDeclaration -> { "import" Identifier {"." Identifier} ";" }
 
-VarDeclaration -> Type Identifier ";"
-
 ClassDeclaration -> "class" Identifier ["extends" Identifier]
                     "{"
                         {VarDeclaration}
@@ -24,6 +22,8 @@ MethodDeclaration ->  "public"
 
 MethodBody ->   {VarDeclaration} {Statement}
 
+VarDeclaration -> Type Identifier ";"
+
 Type -> "int" ["[" "]"]
         |   "boolean"
         |   Identifier
@@ -40,8 +40,8 @@ Expression ->
         |   "true"
         |   "false"
         |   "this"
-        |   "new" "int" "[" Expression "]"
-        |   "new" Identifier "(" ")"
+        |   "new" ("int" "[" Expression "]"
+                    |   Identifier "(" ")")
         |   "!" Expression
         |   "(" Expression ")"
         |   Identifier>
@@ -50,8 +50,8 @@ Expression ->
 ExpressionTail ->
     [(Op Expression
     |   "[" Expression "]"
-    |   "." ("length"
-            |   Identifier "(" [Expression ("," Expression)*] ")")
+    |   ".length"
+    |   "." Identifier "(" [Expression ("," Expression)*] ")")
     ) ExpressionTail()]
 
 Op ->   && | < | + | - | * | /

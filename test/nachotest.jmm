@@ -2,7 +2,9 @@ import nacho.dumb;
 class Nachos {
 	public static void main(String[] args) {
         int[] boots;
-        boots[0] = 10;
+        int length;
+        //boots[0] = 10;
+        //boots[0];
 
 	    while (true) {
             if (boots < cats) {

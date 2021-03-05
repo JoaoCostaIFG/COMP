@@ -1,7 +1,7 @@
 options
 {
-    LOOKAHEAD=1;
-    //FORCE_LA_CHECK = true;
+    LOOKAHEAD=2;
+    FORCE_LA_CHECK = true;
 }
 
 PARSER_BEGIN(JmmTree)
@@ -26,28 +26,21 @@ SKIP :
 {
 	" " | "\r" | "\t" | "\n"
 	|   < "//" (~["\r", "\n"])* >
-	|   < "/*" > : ML_COMMENT_STATE
+	|   "/*" : ML_COMMENT_STATE
 }
 
 <ML_COMMENT_STATE> SKIP :
 {
-    < "*/" > : DEFAULT
+    "*/" : DEFAULT
     | < ~[] >
 }
 
+// reserved keywords
 TOKEN:
 {
-    <SPAR: "("> | <EPAR: ")">
-    |   <SBRAK: "["> | <EBRAK: "]" >
-    |   <SCURL: "{"> | <ECURL: "}">
-    |   <NEW: "new">
+    <NEW: "new">
     |   <THIS: "this">
     |   <TRUE: "true"> | <FALSE: "false">
-    |   <DOT: "."> | <COMMA: ",">
-    |   <NOT: "!"> | <AND: "&&"> | <LESSTHAN: "<">
-    |   <ADD: "+"> | <SUB: "-"> | <MULT: "*"> | <DIV: "/">
-    |   <ATTRIB: "=">
-    |   <SEMICOLON: ";">
     |   <IF: "if"> | <ELSE: "else">
     |   <WHILE: "while">
     |   <BOOL: "boolean"> | <INT: "int">
@@ -57,10 +50,26 @@ TOKEN:
     |   <CLASS: "class"> | <EXTENDS: "extends">
     |   <IMPORT: "import">
     |   <RET: "return">
-    |   <LEN: "length">
-    |   <IDENTIFIER: ["A"-"Z", "a"-"z", "_", "$"](["0"-"9", "A"-"Z", "a"-"z", "_", "$"])*>
-    |	<INTEGER: (["0"-"9"])+>
+    |   <LEN: ".length"> // storing as .length because length can be an identifier
     // |   <LF>: "\n"
+}
+
+// integer and identifiers
+TOKEN : {
+    <IDENTIFIER: ["A"-"Z", "a"-"z", "_", "$"](["0"-"9", "A"-"Z", "a"-"z", "_", "$"])*>
+    |	<INTEGER: (["0"-"9"])+>
+}
+
+// other
+TOKEN : {
+    <SPAR: "("> | <EPAR: ")">
+    |   <SBRAK: "["> | <EBRAK: "]" >
+    |   <SCURL: "{"> | <ECURL: "}">
+    |   <DOT: "."> | <COMMA: ",">
+    |   <NOT: "!"> | <AND: "&&"> | <LESSTHAN: "<">
+    |   <ADD: "+"> | <SUB: "-"> | <MULT: "*"> | <DIV: "/">
+    |   <ATTRIB: "=">
+    |   <SEMICOLON: ";">
 }
 
 SimpleNode Program() : {}
@@ -75,8 +84,11 @@ void ImportDeclaration() : {}
 
 void ClassDeclaration() : {}
 {
-    <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] <SCURL>
-        (VarDeclaration())* (MethodDeclaration())* <ECURL>
+    <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>]
+    <SCURL>
+        (VarDeclaration())*
+        (MethodDeclaration())*
+    <ECURL>
 }
 
 void VarDeclaration() : {}
@@ -107,8 +119,8 @@ void MethodDeclaration() : {}
 
 void MethodBody() : {}
 {
-    (VarDeclaration())*
-    (Statement())*
+    (LOOKAHEAD(2) VarDeclaration())*
+    (LOOKAHEAD(2) Statement())*
 }
 
 void Type() : {}
@@ -133,8 +145,8 @@ void Expression() : {}
     |   <TRUE>
     |   <FALSE>
     |   <THIS>
-    |   <NEW> <INT> <SBRAK> Expression() <EBRAK>
-    |   <NEW> <IDENTIFIER> <SPAR> <EPAR>
+    |   <NEW> (<INT> <SBRAK> Expression() <EBRAK>
+                |   <IDENTIFIER> <SPAR> <EPAR>)
     |   <NOT> Expression()
     |   <SPAR> Expression() <EPAR>
     |   <IDENTIFIER>) ExpressionTail()
@@ -144,8 +156,8 @@ void ExpressionTail() : {}
 {
     [(Op() Expression()
     |   <SBRAK> Expression() <EBRAK>
-    |   <DOT> (<LEN>
-                |   <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>)
+    |   <LEN>
+    |   <DOT> <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>
     ) ExpressionTail()]
 }
 

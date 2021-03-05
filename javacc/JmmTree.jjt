@@ -101,7 +101,7 @@ void MethodDeclaration() : {}
         <EPAR>
         <SCURL>
             (VarDeclaration())* (Statement())*
-        <ECURL>
+    <ECURL>
 }
 
 void Type() : {}

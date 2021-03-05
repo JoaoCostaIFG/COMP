@@ -48,3 +48,27 @@ Expression ->   Expression ( "&&" | "<" | "+" | "-" | "*" | "/") Expression
                     |    "new" Identifier "(" ")"
                     |    "!" Expression
                     |    "(" Expression ")"
+
+Expression ->
+    (
+        Integer
+        |   "true"
+        |   "false"
+        |   "this"
+        |   "new" "int" "[" Expression "]"
+        |   "new" Identifier "(" ")"
+        |   "!" Expression
+        |   "(" Expression ")"
+        |   Identifier>
+    ) ExpressionTail
+
+
+ExpressionTail ->
+    [
+        (Op Expression
+        |   "[" Expression "]"
+        |   "." "length"
+        |   "." Identifier "(" [Expression ("," Expression)*] ")"
+    ) ExpressionTail()]
+
+Op ->   && | < | + | - | * | /

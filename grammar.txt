@@ -32,8 +32,7 @@ Statement ->    "{" {Statement} "}"
                 |   "if" "(" Expression ")" Statement "else" Statement
                 |   "while" "(" Expression ")" Statement
                 |   Expression ";"
-                |   Identifier ("=" Expression ";"
-                                | "[" Expression "]" "=" Expression ";")
+                |   Identifier ["[" Expression "]"] "=" Expression ";"
 
 Expression ->
     (

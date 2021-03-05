@@ -1,7 +1,7 @@
 options
 {
-    LOOKAHEAD=2;
-    FORCE_LA_CHECK = true;
+    LOOKAHEAD=1;
+    //FORCE_LA_CHECK = true;
 }
 
 PARSER_BEGIN(JmmTree)
@@ -124,8 +124,7 @@ void Statement() : {}
     |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement()
     |   <WHILE> <SPAR> Expression() <EPAR> Statement()
     |   Expression() <SEMICOLON>
-    |   <IDENTIFIER> (<ATTRIB> Expression() <SEMICOLON>
-                        |   <SBRAK> Expression() <EBRAK> <ATTRIB> Expression() <SEMICOLON>)
+    |   <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ATTRIB> Expression() <SEMICOLON>
 }
 
 void Expression() : {}

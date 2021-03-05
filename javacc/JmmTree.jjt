@@ -1,6 +1,7 @@
 options
 {
     LOOKAHEAD=2;
+    FORCE_LA_CHECK = true;
 }
 
 PARSER_BEGIN(JmmTree)
@@ -85,14 +86,13 @@ void VarDeclaration() : {}
 
 void MethodDeclaration() : {}
 {
-    LOOKAHEAD(2)
-
     <PUBLIC> Type() <IDENTIFIER>
     <SPAR>
         [Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*]
     <EPAR>
     <SCURL>
-        (VarDeclaration())* (Statement())*
+        (VarDeclaration())*
+        (Statement())*
         <RET> Expression() <SEMICOLON>
     <ECURL>
     |   <PUBLIC> <STATIC> <VOID> <MAIN>
@@ -106,8 +106,6 @@ void MethodDeclaration() : {}
 
 void Type() : {}
 {
-    LOOKAHEAD(2)
-
     <INT> <SBRAK> <EBRAK>
     |   <BOOL>
     |   <INT>

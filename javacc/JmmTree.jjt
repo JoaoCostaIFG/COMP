@@ -1,6 +1,6 @@
 options
 {
-    LOOKAHEAD=1;
+    LOOKAHEAD=2;
 }
 
 PARSER_BEGIN(JmmTree)
@@ -8,23 +8,30 @@ PARSER_BEGIN(JmmTree)
 
 public class JmmTree
 {
-    public static void main(String args[]) throws ParseException {
+    public static void main(String[] args) throws ParseException {
       	System.out.println("Write an arithmetic expression:");
 		JmmTree jmmTree = new JmmTree(System.in);
 		SimpleNode root = jmmTree.Program(); // returns reference to root node
-        	
+
 		root.dump(""); // prints the tree on the screen
 
 		//System.out.println("Expression value: "+myCalc.eval(root));
     }
-	
 }
 
 PARSER_END(JmmTree)
 
 SKIP :
 {
-	" " | "\r" | "\t"
+	" " | "\r" | "\t" | "\n"
+	|   < "//" (~["\r", "\n"])* >
+	|   < "/*" > : ML_COMMENT_STATE
+}
+
+<ML_COMMENT_STATE> SKIP :
+{
+    < "*/" > : DEFAULT
+    | < ~[] >
 }
 
 TOKEN:
@@ -52,31 +59,31 @@ TOKEN:
     |   <LEN: "length">
     |   <IDENTIFIER: ["A"-"Z", "a"-"z", "_", "$"](["0"-"9", "A"-"Z", "a"-"z", "_", "$"])*>
     |	<INTEGER: (["0"-"9"])+>
-	|   <LF: "\n">
+    // |   <LF>: "\n"
 }
 
-SimpleNode Program(): {}
+SimpleNode Program() : {}
 {
   ImportDeclaration() ClassDeclaration() <EOF>  {return jjtThis;} // Java code inside brackets
 }
 
-void ImportDeclaration(): {}
+void ImportDeclaration() : {}
 {
     (<IMPORT> <IDENTIFIER> (<DOT> <IDENTIFIER>)* <SEMICOLON>)*
 }
 
-void ClassDeclaration(): {}
+void ClassDeclaration() : {}
 {
     <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] <SCURL>
         (VarDeclaration())* (MethodDeclaration())* <ECURL>
 }
 
-void VarDeclaration(): {}
+void VarDeclaration() : {}
 {
     Type() <IDENTIFIER> <SEMICOLON>
 }
 
-void MethodDeclaration(): {}
+void MethodDeclaration() : {}
 {
     LOOKAHEAD(2)
 
@@ -109,11 +116,37 @@ void Type() : {}
 
 void Statement() : {}
 {
-    <IDENTIFIER> <SEMICOLON>
+    <SCURL> (Statement())* <ECURL>
+    |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement()
+    |   <WHILE> <SPAR> Expression() <EPAR> Statement()
+    |   Expression() <SEMICOLON>
+    |   <IDENTIFIER> <ATTRIB> Expression() <SEMICOLON>
+    |   <IDENTIFIER> <SBRAK> Expression() <EBRAK> <ATTRIB> Expression() <SEMICOLON>
 }
 
 void Expression() : {}
 {
-    //Expression() (<AND> | <LESSTHAN> | <ADD> | <SUB> | <MULT> | <DIV>) Expression()
-    <IDENTIFIER>
+    (<INTEGER>
+    |   <TRUE>
+    |   <FALSE>
+    |   <THIS>
+    |   <NEW> <INT> <SBRAK> Expression() <EBRAK>
+    |   <NEW> <IDENTIFIER> <SPAR> <EPAR>
+    |   <NOT> Expression()
+    |   <SPAR> Expression() <EPAR>
+    |   <IDENTIFIER>) ExpressionTail()
+}
+
+void ExpressionTail() : {}
+{
+    [(Op() Expression()
+    |   <SBRAK> Expression() <EBRAK>
+    |   <DOT> <LEN>
+    |   <DOT> <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>
+    ) ExpressionTail()]
+}
+
+void Op() : {}
+{
+    <AND> | <LESSTHAN> | <ADD> | <SUB> | <MULT> | <DIV>
 }

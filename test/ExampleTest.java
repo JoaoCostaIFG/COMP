@@ -12,11 +12,9 @@ import pt.up.fe.specs.util.SpecsIo;
 public class ExampleTest {
 
     @Test
-    public void simplestJaiva() {
-        String jmmCode = "import nachos.Dumb;" +
-                "class ZINGA {int[] i;" +
-                "public int bazinga(int argc, string args) {return expr;}" +
-                "}";
+    public void helloworld() {
+        //var jmmCode = SpecsIo.getResource("fixtures/public/HelloWorld.jmm");
+        var jmmCode = SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm");
         System.out.println(TestUtils.parse(jmmCode).getRootNode());
         //var fileContents = SpecsIo.read("./test.txt");
     }

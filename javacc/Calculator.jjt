@@ -29,7 +29,28 @@ SKIP :
 
 TOKEN:
 {
-    	< INTEGER: (["0"-"9"])+ >
+    <SPAR: "("> | <EPAR: ")">
+    |   <SBRAK: "["> | <EBRAK: "]" >
+    |   <SCURL: "{"> | <ECURL: "}">
+    |   <NEW: "new">
+    |   <THIS: "this">
+    |   <TRUE: "true"> | <FALSE: "false">
+    |   <DOT: "."> | <COMMA: ",">
+    |   <NOT: "!"> | <AND: "&&"> | <LESSTHAN: "<">
+    |   <ADD: "+"> | <SUB: "-"> | <MULT: "*"> | <DIV: "/">
+    |   <ATTRIB: "=">
+    |   <SEMICOLON: ";">
+    |   <IF: "if"> | <ELSE: "else">
+    |   <WHILE: "while">
+    |   <BOOL: "boolean"> | <INT: "int">
+    |   <VOID: "void">
+    |   <PUBLIC: "public"> | <PRIVATE: "private"> | <STATIC: "static">
+    |   <MAIN: "main"> | <STRING: "String">
+    |   <CLASS: "class"> | <EXTENDS: "extends">
+    |   <IMPORT: "import">
+    |   <RET: "return">
+    |   <LEN: "length">
+    |	< INTEGERLITERAL: (["0"-"9"])+ >
 	|   < LF: "\n" >
 }
 

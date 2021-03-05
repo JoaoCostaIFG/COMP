@@ -86,22 +86,29 @@ void VarDeclaration() : {}
 
 void MethodDeclaration() : {}
 {
-    <PUBLIC> Type() <IDENTIFIER>
+    <PUBLIC>
+    (Type() <IDENTIFIER>
     <SPAR>
         [Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*]
     <EPAR>
     <SCURL>
-        (VarDeclaration())*
-        (Statement())*
+        MethodBody()
         <RET> Expression() <SEMICOLON>
     <ECURL>
-    |   <PUBLIC> <STATIC> <VOID> <MAIN>
-        <SPAR>
-            <STRING> <SBRAK> <EBRAK> <IDENTIFIER>
-        <EPAR>
-        <SCURL>
-            (VarDeclaration())* (Statement())*
-    <ECURL>
+    |
+    <STATIC> <VOID> <MAIN>
+    <SPAR>
+        <STRING> <SBRAK> <EBRAK> <IDENTIFIER>
+    <EPAR>
+    <SCURL>
+        MethodBody()
+    <ECURL>)
+}
+
+void MethodBody() : {}
+{
+    (VarDeclaration())*
+    (Statement())*
 }
 
 void Type() : {}

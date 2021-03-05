@@ -2,26 +2,27 @@ Program -> ImportDeclaration, ClassDeclaration, EOF
 
 ImportDeclaration -> { "import" Identifier {"." Identifier} ";" }
 
+VarDeclaration -> Type Identifier ";"
+
 ClassDeclaration -> "class" Identifier ["extends" Identifier]
                     "{"
                         {VarDeclaration}
                         {MethodDeclaration}
                     "}"
 
-VarDeclaration -> Type Identifier ";"
-
-MethodDeclaration -> "public" Type Identifier "(" [Type Identifier] {"," Type Identifier} ] ")"
+MethodDeclaration ->  "public"
+                      (Type Identifier "(" [Type Identifier] {"," Type Identifier} ] ")"
                       "{"
-                        {VarDeclaration}
-                        {Statement}
+                        MethodBody
                         "return" Expression ";"
                       "}"
                       |
-                      "public" "static" "void" "main" "(" "String" "[" "]" Identifier ")"
+                      "static" "void" "main" "(" "String" "[" "]" Identifier ")"
                       "{"
-                        {VarDeclaration}
-                        {Statement}
-                      "}"
+                        MethodBody
+                      "}")
+
+MethodBody ->   {VarDeclaration} {Statement}
 
 Type -> "int" "[" "]"
         |   "boolean"
@@ -34,20 +35,6 @@ Statement ->    "{" {Statement} "}"
                 |   Expression ";"
                 |   Identifier "=" Expression ";"
                 |   Identifier "[" Expression "]" "=" Expression ";"
-
-Expression ->   Expression ( "&&" | "<" | "+" | "-" | "*" | "/") Expression
-                    |    Expression "[" Expression "]"
-                    |    Expression "." "length"
-                    |    "." Identifier "(" [ Expression { "," Expression } ] ")"
-                    |    Integer
-                    |    "true"
-                    |    "false"
-                    |    Identifier
-                    |    "this"
-                    |    "new" "int" "[" Expression "]"
-                    |    "new" Identifier "(" ")"
-                    |    "!" Expression
-                    |    "(" Expression ")"
 
 Expression ->
     (
@@ -62,13 +49,11 @@ Expression ->
         |   Identifier>
     ) ExpressionTail
 
-
 ExpressionTail ->
-    [
-        (Op Expression
-        |   "[" Expression "]"
-        |   "." "length"
-        |   "." Identifier "(" [Expression ("," Expression)*] ")"
+    [(Op Expression
+    |   "[" Expression "]"
+    |   "." "length"
+    |   "." Identifier "(" [Expression ("," Expression)*] ")"
     ) ExpressionTail()]
 
 Op ->   && | < | + | - | * | /

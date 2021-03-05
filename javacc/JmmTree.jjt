@@ -3,15 +3,15 @@ options
     LOOKAHEAD=1;
 }
 
-PARSER_BEGIN(Calculator)
+PARSER_BEGIN(JmmTree)
 
 
-public class Calculator
+public class JmmTree
 {
     public static void main(String args[]) throws ParseException {
       	System.out.println("Write an arithmetic expression:");
-		Calculator myCalc = new Calculator(System.in);
-		SimpleNode root = myCalc.Expression(); // returns reference to root node
+		JmmTree jmmTree = new JmmTree(System.in);
+		SimpleNode root = jmmTree.Expression(); // returns reference to root node
         	
 		root.dump(""); // prints the tree on the screen
 
@@ -20,7 +20,7 @@ public class Calculator
 	
 }
 
-PARSER_END(Calculator)
+PARSER_END(JmmTree)
 
 SKIP :
 {
@@ -50,13 +50,13 @@ TOKEN:
     |   <IMPORT: "import">
     |   <RET: "return">
     |   <LEN: "length">
-    |	< INTEGERLITERAL: (["0"-"9"])+ >
-	|   < LF: "\n" >
+    |	<INTEGER: (["0"-"9"])+>
+	|   <LF: "\n">
 }
 
 SimpleNode Expression(): {}
 {
-   Expr1() <LF>  {return jjtThis;} // Java code inside brackets
+   Expr1() <LF> <EOF>  {return jjtThis;} // Java code inside brackets
 }
 
 void Expr1() #void: {}
@@ -65,27 +65,18 @@ void Expr1() #void: {}
    	("+" Expr2(1) #Add(2)
    	| "-" Expr2(1) #Sub(2)
    	)
-   	
+
    ]
 }
 
 void Expr2(int sign) #void: {} // 1: positive; -1: negative, because of the ‘-‘ unitary operator
 {
    Expr3(sign)  [
-   ("*" Expr3(1) #Mul(2) 
+   ("*" Expr3(1) #Mul(2)
    | "/" Expr3(1) #Div(2)
    )
-   
+
    ]
-/*
-   Expr3(sign) [
-   ("*" #Mul(2)
-   | "/" #Div(2)
-   )
-   Expr3(1)
-   ]
-   */
-   
 }
 
 void Expr3(int sign) #void: {Token t;}

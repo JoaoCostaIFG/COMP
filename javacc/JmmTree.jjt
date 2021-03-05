@@ -113,9 +113,8 @@ void MethodBody() : {}
 
 void Type() : {}
 {
-    <INT> <SBRAK> <EBRAK>
+    <INT> [<SBRAK> <EBRAK>]
     |   <BOOL>
-    |   <INT>
     |   <IDENTIFIER>
 }
 
@@ -125,8 +124,8 @@ void Statement() : {}
     |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement()
     |   <WHILE> <SPAR> Expression() <EPAR> Statement()
     |   Expression() <SEMICOLON>
-    |   <IDENTIFIER> <ATTRIB> Expression() <SEMICOLON>
-    |   <IDENTIFIER> <SBRAK> Expression() <EBRAK> <ATTRIB> Expression() <SEMICOLON>
+    |   <IDENTIFIER> (<ATTRIB> Expression() <SEMICOLON>
+                        |   <SBRAK> Expression() <EBRAK> <ATTRIB> Expression() <SEMICOLON>)
 }
 
 void Expression() : {}
@@ -146,8 +145,8 @@ void ExpressionTail() : {}
 {
     [(Op() Expression()
     |   <SBRAK> Expression() <EBRAK>
-    |   <DOT> <LEN>
-    |   <DOT> <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>
+    |   <DOT> (<LEN>
+                |   <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>)
     ) ExpressionTail()]
 }
 

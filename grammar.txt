@@ -24,17 +24,16 @@ MethodDeclaration ->  "public"
 
 MethodBody ->   {VarDeclaration} {Statement}
 
-Type -> "int" "[" "]"
+Type -> "int" ["[" "]"]
         |   "boolean"
-        |   "int"
         |   Identifier
 
 Statement ->    "{" {Statement} "}"
                 |   "if" "(" Expression ")" Statement "else" Statement
                 |   "while" "(" Expression ")" Statement
                 |   Expression ";"
-                |   Identifier "=" Expression ";"
-                |   Identifier "[" Expression "]" "=" Expression ";"
+                |   Identifier ("=" Expression ";"
+                                | "[" Expression "]" "=" Expression ";")
 
 Expression ->
     (
@@ -52,8 +51,8 @@ Expression ->
 ExpressionTail ->
     [(Op Expression
     |   "[" Expression "]"
-    |   "." "length"
-    |   "." Identifier "(" [Expression ("," Expression)*] ")"
+    |   "." ("length"
+            |   Identifier "(" [Expression ("," Expression)*] ")")
     ) ExpressionTail()]
 
 Op ->   && | < | + | - | * | /

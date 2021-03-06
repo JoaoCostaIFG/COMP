@@ -1,4 +1,3 @@
-import aasdas.asudasdh;
         /* asd adsd asp dkapsk d
         apdkaspokdopask
         asdioajdoiaj*/
@@ -6,8 +5,19 @@ import aasdas.asudasdh;
 class Nachos {
 	public static void main(String[] args) {
 	    int EOF;
-        boots[0] = 10l;
-        boots[0L];
+	    EOF = 0xa8192;
+        boots[0] = 10l + 9l * 8l;
+        boots[0L] = 7l * 6l + 5l;
+
+        numero = 129_2312_23_12;
+
+        !false.length; // TODO :)
+        !new int[nachos[2]].length < true;
+        true.break(1.length);
+        false.$(9999l - 10000L) < 1;
+        false[true] < $$$$$$$$$$$$$$$$$;
+
+        true && this && false;
 
 	    while (asj$d7as_211d$sa < sim) {
             if (boots < cats) {

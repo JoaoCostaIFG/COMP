@@ -49,7 +49,7 @@ Expression ->
     ) ExpressionTail
 
 ExpressionTail ->
-    [(Op Expression
+    [(ArithmeticExpression
     |   "[" Expression "]"
     |   ".length"
     |   "." Identifier "(" [Expression ("," Expression)*] ")")
@@ -57,26 +57,30 @@ ExpressionTail ->
 
 Op ->   && | < | + | - | * | /
 
+Expression ->   LogicalExpression ExpressionTail
 
-Warning: Choice conflict in (...)* construct at line 122, column 5.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: <IDENTIFIER>
-         Consider using a lookahead of 2 or more for nested expansion.
-Warning: Choice conflict involving two expansions at
-         line 138, column 9 and line 139, column 9 respectively.
-         A common prefix is: <IDENTIFIER> "["
-         Consider using a lookahead of 3 or more for earlier expansion.
-Warning: Choice conflict in [...] construct at line 157, column 5.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: "&&"
-         Consider using a lookahead of 2 or more for nested expansion.
+ArrayAccessExpression ->
 
-Warning: Choice conflict in [...] construct at line 138, column 9.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: <IDENTIFIER>
-         Consider using a lookahead of 2 or more for nested expansion.
+LogicalExpression ->    ArithmeticExpression
+                        ("&&" ArithmeticExpression #And(2)
+                        | "<" ArithmeticExpression #LessThan(2))*
 
-Warning: Choice conflict in [...] construct at line 182, column 5.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: "&&"
-         Consider using a lookahead of 2 or more for nested expansion.
+ArithmeticExpression ->     MultiplicativeExpression
+                            ("+" MultiplicativeExpression #Add(2)
+                            | "-" MultiplicativeExpression #Sub(2))*
+
+MultiplicativeExpression -> UnaryExpression
+                            ("*" UnaryExpression #Mul(2)
+                            | "/" UnaryExpression #Div(2))*
+
+UnaryExpression ->  "!" Expression
+                    |   "(" Expression ")"
+                    |   "new" ("int" "[" Expression "]"
+                                |   Identifier "(" ")")
+                    |   ExpressionTerminals
+
+ExpressionTerminals ->  "true"
+                        |   "false"
+                        |   "this"
+                        |   Integer
+                        |   Identifier

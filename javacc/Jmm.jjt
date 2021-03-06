@@ -180,15 +180,29 @@ void WhileLoop() : {}
 {
     <WHILE>
     try { <SPAR> } // report missing start parentheses "("
-    catch (ParseException e) { error_ignore(e); }
+    catch (ParseException e) {
+        error_ignore(e, "expected '(' at the start of the while loop expression");
+    }
 
     try { Expression()
         try { <EPAR> }
-        catch (ParseException e) { error_ignore(e); }
-    } catch (ParseException e) { error_skipto(e, new Integer[]{ EPAR, SCURL, SEMICOLON }, new Integer[]{ EPAR, SEMICOLON }); }
+        catch (ParseException e) {
+            error_ignore(e, "expected ')' at the end of the while loop expression");
+        }
+    } catch (ParseException e) {
+        error_skipto(e, "couldn't parse expression starting at '" +
+            getToken(1).image + "' inside while loop",
+            new Integer[]{ EPAR, SCURL, SEMICOLON },
+            new Integer[]{ EPAR, SEMICOLON });
+    }
 
-   try { Statement() }
-   catch (ParseException e) { error_skipto(e, new Integer[]{ ECURL, SEMICOLON }, new Integer[]{ ECURL, SEMICOLON }); }
+    try { Statement() }
+    catch (ParseException e) {
+        error_skipto(e, "couldn't parse statement starting at '" +
+        getToken(1).image + "' in while loop body",
+        new Integer[]{ ECURL, SEMICOLON },
+        new Integer[]{ ECURL, SEMICOLON });
+    }
 }
 
 void Expression() : {}
@@ -218,20 +232,24 @@ void Op() : {}
     <AND> | <LESSTHAN> | <ADD> | <SUB> | <MULT> | <DIV>
 }
 
-JAVACODE
-void error_skipto(ParseException e, Integer[] skipto, Integer[] toconsume) {
-  System.err.println(e.toString());  // print the error message
-  Token t = getToken(1);
-  // consume tokens until the next token is of "kind"
-  while (!Arrays.asList(skipto).contains(t.kind) && t.kind != 0) {
-    getNextToken();
-    t = getToken(1);
-  }
 
-  if (Arrays.asList(toconsume).contains(t.kind)) getNextToken();
+JAVACODE
+void error_skipto(ParseException e, String errMsg, Integer[] skipto, Integer[] toconsume) {
+    e.setErrMsg(errMsg);
+    System.err.println(e.getErrMsg());  // print the error message
+
+    Token t = getToken(1);
+    // consume tokens until the next token is of "kind"
+    while (!Arrays.asList(skipto).contains(t.kind) && t.kind != 0) {
+        getNextToken();
+        t = getToken(1);
+    }
+
+    if (Arrays.asList(toconsume).contains(t.kind)) getNextToken();
 }
 
 JAVACODE
-void error_ignore(ParseException e) {
-  System.err.println(e.toString());  // print the error message
+void error_ignore(ParseException e, String errMsg) {
+    e.setErrMsg(errMsg);
+    System.err.println(e.getErrMsg());  // print the error message
 }

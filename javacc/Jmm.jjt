@@ -7,15 +7,16 @@ options
     //FORCE_LA_CHECK=true;
 }
 
-PARSER_BEGIN(JmmTree)
+PARSER_BEGIN(Jmm)
 
 
-public class JmmTree
+import java.util.Arrays;
+public class Jmm
 {
     public static void main(String[] args) throws ParseException {
-      	System.out.println("Write an arithmetic expression:");
-		JmmTree jmmTree = new JmmTree(System.in);
-		SimpleNode root = jmmTree.Program(); // returns reference to root node
+      	System.out.println("Write a jmm arithmetic:");
+		Jmm jmm = new Jmm(System.in);
+		SimpleNode root = jmm.Program(); // returns reference to root node
 
 		root.dump(""); // prints the tree on the screen
 
@@ -23,7 +24,7 @@ public class JmmTree
     }
 }
 
-PARSER_END(JmmTree)
+PARSER_END(Jmm)
 
 SKIP :
 {
@@ -72,13 +73,19 @@ TOKEN:
 }
 
 // integer literals and identifiers
-// TODO: match octal, hex, and bin?
+// IMP: unicode literal matching is not ok
 TOKEN : {
     <IDENTIFIER: <LETTER> (<LETTERNUM>)*>
     |   <#LETTER: ["A"-"Z", "a"-"z", "_", "$"]>
     |   <#LETTERNUM: ["A"-"Z", "a"-"z", "0"-"9", "_", "$"]>
-    |   <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])?>
-    |   <#DECIMAL_LITERAL: ["0"-"9"] (("_")* ["0"-"9"])*>
+    |   <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])?
+        |   <HEX_LITERAL> (["l","L"])?
+        |   <OCTAL_LITERAL> (["l","L"])?
+        |   <BINARY_LITERAL> (["l","L"])?>
+    | <#DECIMAL_LITERAL: ["1"-"9"] (("_")* ["0"-"9"])*>
+    | <#HEX_LITERAL: "0" ["x","X"] ["0"-"9","a"-"f","A"-"F"] (("_")* ["0"-"9","a"-"f","A"-"F"])*>
+    | <#OCTAL_LITERAL: "0" (("_")* ["0"-"7"])*>
+    | <#BINARY_LITERAL: "0" ["b","B"] ["0","1"] (("_")* ["0","1"])*>
 }
 
 // separators
@@ -92,7 +99,7 @@ TOKEN : {
 
 // operators
 TOKEN : {
-    <ATTRIB: "=">
+    <ASSIGN: "=">
     |   <NOT: "!"> | <AND: "&&"> | <LESSTHAN: "<">
     |   <ADD: "+"> | <SUB: "-"> | <MULT: "*"> | <DIV: "/">
 }
@@ -164,9 +171,24 @@ void Statement() : {}
 {
     <SCURL> (Statement())* <ECURL>
     |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement()
-    |   <WHILE> <SPAR> Expression() <EPAR> Statement()
-    |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ATTRIB>] Expression() <SEMICOLON>
+    |   WhileLoop()
+    |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
     // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
+}
+
+void WhileLoop() : {}
+{
+    <WHILE>
+    try { <SPAR> } // report missing start parentheses "("
+    catch (ParseException e) { error_ignore(e); }
+
+    try { Expression()
+        try { <EPAR> }
+        catch (ParseException e) { error_ignore(e); }
+    } catch (ParseException e) { error_skipto(e, new Integer[]{ EPAR, SCURL, SEMICOLON }, new Integer[]{ EPAR, SEMICOLON }); }
+
+   try { Statement() }
+   catch (ParseException e) { error_skipto(e, new Integer[]{ ECURL, SEMICOLON }, new Integer[]{ ECURL, SEMICOLON }); }
 }
 
 void Expression() : {}
@@ -184,7 +206,7 @@ void Expression() : {}
 
 void ExpressionTail() : {}
 {
-    [(Op() Expression()
+    [LOOKAHEAD(2) (Op() Expression()
     |   <SBRAK> Expression() <EBRAK>
     |   <LEN>
     |   <DOT> <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>
@@ -194,4 +216,22 @@ void ExpressionTail() : {}
 void Op() : {}
 {
     <AND> | <LESSTHAN> | <ADD> | <SUB> | <MULT> | <DIV>
+}
+
+JAVACODE
+void error_skipto(ParseException e, Integer[] skipto, Integer[] toconsume) {
+  System.err.println(e.toString());  // print the error message
+  Token t = getToken(1);
+  // consume tokens until the next token is of "kind"
+  while (!Arrays.asList(skipto).contains(t.kind) && t.kind != 0) {
+    getNextToken();
+    t = getToken(1);
+  }
+
+  if (Arrays.asList(toconsume).contains(t.kind)) getNextToken();
+}
+
+JAVACODE
+void error_ignore(ParseException e) {
+  System.err.println(e.toString());  // print the error message
 }

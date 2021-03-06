@@ -24,16 +24,16 @@ public class ExampleTest {
         //System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
     }
 
-    @Test
-    public void montecarlopitest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
-        //System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
-    }
+    //@Test
+    //public void montecarlopitest() {
+    //    var jmmCode = SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm");
+    //    System.out.println(TestUtils.parse(jmmCode).getRootNode());
+    //    //System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
+    //}
 
-    @Test
-    public void life() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/Life.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
-    }
+    //@Test
+    //public void life() {
+    //    var jmmCode = SpecsIo.getResource("fixtures/public/Life.jmm");
+    //    System.out.println(TestUtils.parse(jmmCode).getRootNode());
+    //}
 }

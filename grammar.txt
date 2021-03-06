@@ -4,9 +4,11 @@ ImportDeclaration -> { "import" Identifier {"." Identifier} ";" }
 
 ClassDeclaration -> "class" Identifier ["extends" Identifier]
                     "{"
-                        {VarDeclaration}
-                        {MethodDeclaration}
+                        ClassBody
                     "}"
+
+ClassBody ->    {VarDeclaration}
+                {MethodDeclaration}
 
 MethodDeclaration ->  "public"
                       (Type Identifier "(" [Type Identifier] {"," Type Identifier} ] ")"
@@ -72,4 +74,9 @@ Warning: Choice conflict in [...] construct at line 157, column 5.
 Warning: Choice conflict in [...] construct at line 138, column 9.
          Expansion nested within construct and expansion following construct
          have common prefixes, one of which is: <IDENTIFIER>
+         Consider using a lookahead of 2 or more for nested expansion.
+
+Warning: Choice conflict in [...] construct at line 182, column 5.
+         Expansion nested within construct and expansion following construct
+         have common prefixes, one of which is: "&&"
          Consider using a lookahead of 2 or more for nested expansion.

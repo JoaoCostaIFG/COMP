@@ -1,7 +1,10 @@
 options
 {
     LOOKAHEAD=1;
-    //FORCE_LA_CHECK = true;
+    //CHOICE_AMBIGUITY_CHECK=6;
+    //DEBUG_LOOKAHEAD=true;
+    //DEBUG_PARSER=true;
+    //FORCE_LA_CHECK=true;
 }
 
 PARSER_BEGIN(JmmTree)
@@ -25,17 +28,31 @@ PARSER_END(JmmTree)
 SKIP :
 {
 	" " | "\r" | "\t" | "\n"
-	|   < "//" (~["\r", "\n"])* >
-	|   "/*" : ML_COMMENT_STATE
+}
+// comments (source: https://javacc.github.io/javacc/documentation/bnf.html)
+<DEFAULT> MORE : { "//" : IN_SINGLE_LINE_COMMENT
+                 | <"/**" ~["/"]> : IN_FORMAL_COMMENT
+                 | "/*" : IN_MULTI_LINE_COMMENT
+                 | "/*@bgen(jjtree" : IN_MULTI_LINE_COMMENT
 }
 
-<ML_COMMENT_STATE> SKIP :
-{
-    "*/" : DEFAULT
-    | < ~[] >
+<IN_SINGLE_LINE_COMMENT> SPECIAL_TOKEN : {
+  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n"> : DEFAULT
 }
 
-// reserved keywords
+<IN_FORMAL_COMMENT> SPECIAL_TOKEN : {
+  <FORMAL_COMMENT: "*/"> : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT> SPECIAL_TOKEN : {
+  <MULTI_LINE_COMMENT: "*/"> : DEFAULT
+}
+
+<IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT> MORE : {
+  <~[]>
+}
+
+// reserved words and literals
 TOKEN:
 {
     <NEW: "new">
@@ -54,27 +71,35 @@ TOKEN:
     // |   <LF>: "\n"
 }
 
-// integer and identifiers
+// integer literals and identifiers
+// TODO: match octal, hex, and bin?
 TOKEN : {
-    <IDENTIFIER: ["A"-"Z", "a"-"z", "_", "$"](["0"-"9", "A"-"Z", "a"-"z", "_", "$"])*>
-    |	<INTEGER: (["0"-"9"])+>
+    <IDENTIFIER: <LETTER> (<LETTERNUM>)*>
+    |   <#LETTER: ["A"-"Z", "a"-"z", "_", "$"]>
+    |   <#LETTERNUM: ["A"-"Z", "a"-"z", "0"-"9", "_", "$"]>
+    |   <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])?>
+    |   <#DECIMAL_LITERAL: ["0"-"9"] (("_")* ["0"-"9"])*>
 }
 
-// other
+// separators
 TOKEN : {
     <SPAR: "("> | <EPAR: ")">
     |   <SBRAK: "["> | <EBRAK: "]" >
     |   <SCURL: "{"> | <ECURL: "}">
     |   <DOT: "."> | <COMMA: ",">
+    |   <SEMICOLON: ";">
+}
+
+// operators
+TOKEN : {
+    <ATTRIB: "=">
     |   <NOT: "!"> | <AND: "&&"> | <LESSTHAN: "<">
     |   <ADD: "+"> | <SUB: "-"> | <MULT: "*"> | <DIV: "/">
-    |   <ATTRIB: "=">
-    |   <SEMICOLON: ";">
 }
 
 SimpleNode Program() : {}
 {
-  ImportDeclaration() ClassDeclaration() <EOF>  {return jjtThis;} // Java code inside brackets
+  ImportDeclaration() ClassDeclaration() <EOF>  {return jjtThis;}
 }
 
 void ImportDeclaration() : {}
@@ -84,11 +109,16 @@ void ImportDeclaration() : {}
 
 void ClassDeclaration() : {}
 {
-    <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>]
+    <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] // can only extend once
     <SCURL>
-        (VarDeclaration())*
-        (MethodDeclaration())*
+        ClassBody()
     <ECURL>
+}
+
+void ClassBody() : {}
+{
+    (VarDeclaration())*
+    (MethodDeclaration())*
 }
 
 void VarDeclaration() : {}
@@ -120,7 +150,7 @@ void MethodDeclaration() : {}
 void MethodBody() : {}
 {
     (LOOKAHEAD(2) VarDeclaration())*
-    (LOOKAHEAD(2) Statement())*
+    (Statement())* // TODO maybe LOOKAHEAD(2) ?
 }
 
 void Type() : {}
@@ -135,12 +165,13 @@ void Statement() : {}
     <SCURL> (Statement())* <ECURL>
     |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement()
     |   <WHILE> <SPAR> Expression() <EPAR> Statement()
-    |   [<IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ATTRIB>] Expression() <SEMICOLON>
+    |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ATTRIB>] Expression() <SEMICOLON>
+    // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
 }
 
 void Expression() : {}
 {
-    (<INTEGER>
+    (<INTEGER_LITERAL>
     |   <TRUE>
     |   <FALSE>
     |   <THIS>
@@ -153,7 +184,7 @@ void Expression() : {}
 
 void ExpressionTail() : {}
 {
-    [LOOKAHEAD(2) (Op() Expression()
+    [(Op() Expression()
     |   <SBRAK> Expression() <EBRAK>
     |   <LEN>
     |   <DOT> <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>

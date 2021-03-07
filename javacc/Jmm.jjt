@@ -70,8 +70,8 @@ TOKEN:
     |   <CLASS: "class"> | <EXTENDS: "extends">
     |   <IMPORT: "import">
     |   <RET: "return">
-    |   <LEN: "length"> // TODO store as .length because length can be an identifier? (is reserved)
-    // |   <LF>: "\n"
+    |   <LEN: "length"> // IMP storing as .length would enable variables to be called "length" (see DotTer())
+    // |   <LF>: "\n" // we skip "\n" instead of matching it
 }
 
 // integer literals and identifiers
@@ -242,6 +242,12 @@ void NotTerm() #void : {}
 
 void DotTerm() #void : {}
 {
+    // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
+    // and match like so:
+    // ArrayAccessTerm()
+    // (<LEN>
+    // |    <DOT> DotExpansion())*
+
     ArrayAccessTerm()
     (<DOT> (<LEN> | DotExpansion()))*
 }

@@ -8,10 +8,7 @@ import java.util.ArrayList;
 import java.io.StringReader;
 
 public class Main implements JmmParser {
-
-
 	public JmmParserResult parse(String jmmCode) {
-		
 		try {
 		    Jmm jmm = new Jmm(new StringReader(jmmCode));
     		SimpleNode root = jmm.Program(); // returns reference to root node
@@ -30,6 +27,4 @@ public class Main implements JmmParser {
             throw new RuntimeException("It's supposed to fail");
         }
     }
-
-
 }

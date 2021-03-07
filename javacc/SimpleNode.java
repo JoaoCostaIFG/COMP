@@ -30,31 +30,66 @@ class SimpleNode implements Node, JmmNode {
     parser = p;
   }
 
-
+  /**
+   * @return the kind of this node (e.g. MethodDeclaration, ClassDeclaration, etc.)
+   */
   public String getKind() {
-	  return toString();
+    return toString();
   }
-  
+
+  // TODO implement this
+  /**
+   * @return the names of the attributes supported by this Node kind
+   */
   public List<String> getAttributes() {
-	throw new RuntimeException("Not implemented yet");
+    throw new RuntimeException("Not implemented yet");
   }
 
+  // TODO implement this
+  /**
+   * Sets the value of an attribute.
+   *
+   * @param attribute
+   * @param value
+   */
   public void put(String attribute, String value) {
-	throw new RuntimeException("Not implemented yet");	  
+    throw new RuntimeException("Not implemented yet");
   }
 
+  // TODO implement this
+  /**
+   *
+   * @param attribute
+   * @returns the value of an attribute. To see all the attributes iterate the list provided by
+   *          {@link JmmNode#getAttributes()}
+   */
   public String get(String attribute) {
-	throw new RuntimeException("Not implemented yet");
+    throw new RuntimeException("Not implemented yet");
   }
-  
+
+  /**
+   *
+   * @return the children of the node or an empty list if there are no children
+   *
+   */
   public List<JmmNode> getChildren() {
     return (children == null) ? new ArrayList<>() : Arrays.asList((JmmNode[])children);
   }
-  
+
+  /**
+   *
+   * @return the number of children of the node
+   */
   public int getNumChildren() {
     return jjtGetNumChildren();
   }
-  
+
+  /**
+   * Inserts a node at the given position
+   *
+   * @param child
+   * @param index
+   */
   public void add(JmmNode child, int index) {
     if(!(child instanceof Node)) {
   	throw new RuntimeException("Node not supported: " + child.getClass());  

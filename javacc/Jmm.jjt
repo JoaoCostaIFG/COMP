@@ -213,7 +213,7 @@ void Expression() : {}
 void LessThanExpression() : {}
 {
     AdditiveExpression()
-    (<LESSTHAN> AdditiveExpression())*
+    (<LESSTHAN> AdditiveExpression() )*
 }
 
 void AdditiveExpression() : {}

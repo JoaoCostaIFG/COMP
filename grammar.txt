@@ -35,30 +35,8 @@ Statement ->    "{" {Statement} "}"
                 |   "while" "(" Expression ")" Statement
                 |   [Identifier ["[" Expression "]"] "="] Expression ";"
 
-Expression ->
-    (
-        Integer
-        |   "true"
-        |   "false"
-        |   "this"
-        |   "new" ("int" "[" Expression "]"
-                    |   Identifier "(" ")")
-        |   "!" Expression
-        |   "(" Expression ")"
-        |   Identifier>
-    ) ExpressionTail
-
-ExpressionTail ->
-    [(ArithmeticExpression
-    |   "[" Expression "]"
-    |   ".length"
-    |   "." Identifier "(" [Expression ("," Expression)*] ")")
-    ) ExpressionTail()]
-
-Op ->   && | < | + | - | * | /
-
 Expression ->   LessThanTerm
-                ("&&" LessThanTerm #And(2))*
+                    ("&&" LessThanTerm #And(2))*
 
 LessThanTerm ->   ArithmeticExpression
                         ("<" ArithmeticExpression #LessThan(2))*
@@ -98,6 +76,7 @@ NewTerm ->    "int" "[" Expression "]"
                     | Identifier "(" ")"
 
 PRECEDENCE (less to more):
+    =
     &&
     <
     + -
@@ -114,3 +93,29 @@ Warning: Choice conflict in [...] construct at line 175, column 9.
          Expansion nested within construct and expansion following construct
          have common prefixes, one of which is: <IDENTIFIER>
          Consider using a lookahead of 2 or more for nested expansion.
+
+
+// IMPORTANT CHANGELOG
+// START OPERATOR PRECEDENCE UPDATE
+Expression ->
+    (
+        Integer
+        |   "true"
+        |   "false"
+        |   "this"
+        |   "new" ("int" "[" Expression "]"
+                    |   Identifier "(" ")")
+        |   "!" Expression
+        |   "(" Expression ")"
+        |   Identifier>
+    ) ExpressionTail
+
+ExpressionTail ->
+    [(ArithmeticExpression
+    |   "[" Expression "]"
+    |   ".length"
+    |   "." Identifier "(" [Expression ("," Expression)*] ")")
+    ) ExpressionTail()]
+
+Op ->   && | < | + | - | * | /
+// CEASE OPERATOR PRECEDENCE UPDATE

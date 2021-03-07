@@ -169,16 +169,6 @@ void Type() : {}
     |   <IDENTIFIER>
 }
 
-void Statement() : {}
-{
-    <SCURL> (Statement())* <ECURL> // statment block
-    |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement() // if then else
-    |   WhileLoop() // while loop
-    |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
-    // TODO assign go from statement to expression
-    // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
-}
-
 void WhileLoop() : {}
 {
     <WHILE>
@@ -208,7 +198,28 @@ void WhileLoop() : {}
     }
 }
 
-void Expression() : {Token op;}
+void Statement() : {}
+{
+    <SCURL> (Statement())* <ECURL> // statment block
+    |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement() // if then else
+    |   WhileLoop() // while loop
+    |   Expression() <SEMICOLON>
+    //|   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
+    // TODO assign go from statement to expression
+    // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
+}
+
+void Expression() : {}
+{
+    [LOOKAHEAD(5) AssignLeft() <ASSIGN>]  AndTerm()
+}
+
+void AssignLeft() : {}
+{
+    <IDENTIFIER> [<SBRAK> AndTerm() <EBRAK>]
+}
+
+void AndTerm() : {Token op;}
 {
     LessThanTerm()
     (op=<AND> LessThanTerm())*

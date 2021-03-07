@@ -11,5 +11,7 @@ class Nachos {
         length = 123;
 
         1as = a;
+
+        this = 1;
 	}
 }

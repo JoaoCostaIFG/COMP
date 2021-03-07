@@ -5,7 +5,7 @@
 class Nachos {
 	public static /* a */ void main(String[] args) {
 	    int EOF;
-	    // int length; // CAN'T WORK
+
 	    EOF = 0xa8192;
         boots[0] = 10l + 9l * 8l;
         boots[0L] = 7l * 6l + 5l;

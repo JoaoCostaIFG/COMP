@@ -1,9 +1,12 @@
 options
 {
     LOOKAHEAD=1;
+    //NODE_DEFAULT_VOID = true; // don't generate nodes by default
+
     //CHOICE_AMBIGUITY_CHECK=6;
     //DEBUG_LOOKAHEAD=true;
     //DEBUG_PARSER=true;
+
     //FORCE_LA_CHECK=true;
 }
 
@@ -67,7 +70,7 @@ TOKEN:
     |   <CLASS: "class"> | <EXTENDS: "extends">
     |   <IMPORT: "import">
     |   <RET: "return">
-    |   <LEN: ".length"> // TODO storing as .length because length can be an identifier
+    |   <LEN: "length"> // TODO store as .length because length can be an identifier? (is reserved)
     // |   <LF>: "\n"
 }
 
@@ -100,7 +103,7 @@ TOKEN : {
 TOKEN : {
     <ASSIGN: "=">
     |   <NOT: "!"> | <AND: "&&"> | <LESSTHAN: "<">
-    |   <ADD: "+"> | <SUB: "-"> | <MULT: "*"> | <DIV: "/">
+    |   <ADD: "+"> | <SUB: "-"> | <MUL: "*"> | <DIV: "/">
 }
 
 SimpleNode Program() : {}
@@ -172,6 +175,7 @@ void Statement() : {}
     |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement() // if then else
     |   WhileLoop() // while loop
     |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
+    // TODO assign go from statement to expression
     // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
 }
 
@@ -204,46 +208,45 @@ void WhileLoop() : {}
     }
 }
 
-void Expression() : {}
+void Expression() : {Token op;}
 {
-    LessThanExpression()
-    (<AND> LessThanExpression() #And(2))*
+    LessThanTerm()
+    (op=<AND> LessThanTerm())*
 }
 
-void LessThanExpression() : {}
+void LessThanTerm() #void : {Token op;}
 {
-    AdditiveExpression()
-    (<LESSTHAN> AdditiveExpression() )*
+    AdditiveTerm()
+    (op=<LESSTHAN> AdditiveTerm())*
 }
 
-void AdditiveExpression() : {}
+void AdditiveTerm() #void : {Token op;}
 {
-    MultiplicativeExpression()
-    (<ADD> MultiplicativeExpression()
-    |   <SUB> MultiplicativeExpression())*
+    MultiplicativeTerm()
+    (op=<ADD> MultiplicativeTerm()
+    |   op=<SUB> MultiplicativeTerm())*
 }
 
-void MultiplicativeExpression() : {}
+void MultiplicativeTerm() : {Token op;}
 {
-    NotExpression()
-    ( <MULT> NotExpression()
-    |   <DIV> NotExpression())*
+    NotTerm()
+    (op=<MUL> {jjtThis.put("op", op.image);} NotTerm()
+    |   op=<DIV> {jjtThis.put("op", op.image);} NotTerm())*
 }
 
-void NotExpression() : {}
+void NotTerm() #void : {}
 {
-    <NOT> NotExpression()
-    |   DotExpression()
+    <NOT> NotTerm()
+    |   DotTerm()
 }
 
-void DotExpression() : {}
+void DotTerm() #void : {}
 {
-    ArrayAccessExpression()
-    (<LEN>
-    |   <DOT> DotExpansion())*
+    ArrayAccessTerm()
+    (<DOT> (<LEN> | DotExpansion()))*
 }
 
-void DotExpansion() : {}
+void DotExpansion() #void : {}
 {
     <IDENTIFIER>
     <SPAR>
@@ -251,23 +254,23 @@ void DotExpansion() : {}
     <EPAR>
 }
 
-void ArrayAccessExpression() : {}
+void ArrayAccessTerm() #void : {}
 {
     ExpressionTerminal() [<SBRAK> Expression() <EBRAK>]
 }
 
-void ExpressionTerminal() : {}
+void ExpressionTerminal() #void : { Token t; }
 {
-    <TRUE>
-    |   <FALSE>
-    |   <THIS>
+    <TRUE> #BoolLiteral
+    |   <FALSE> #BoolLiteral
+    |   <THIS> #ThisLiteral
     |   <SPAR> Expression() <EPAR>
-    |   <NEW> NewExpression()
-    |   <INTEGER_LITERAL>
-    |   <IDENTIFIER>
+    |   <NEW> NewTerm() #NewLiteral
+    |   t = <INTEGER_LITERAL> #IntegerLiteral
+    |   t = <IDENTIFIER> #Identifier
 }
 
-void NewExpression() : {}  // 04:14
+void NewTerm() : {}  // 04:14
 {
     <INT> <SBRAK> Expression() <EBRAK> // array allocation
     |   <IDENTIFIER> <SPAR> <EPAR> // class constructor

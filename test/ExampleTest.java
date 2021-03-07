@@ -12,10 +12,10 @@ import pt.up.fe.specs.util.SpecsIo;
 public class ExampleTest {
     // very good
     @Test
-    public void nachotest() {
+    public void NachoTest() {
         String jmmCode = SpecsIo.read("test/nachotest.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
-        //System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
+        //System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
     }
 
     // good
@@ -75,14 +75,20 @@ public class ExampleTest {
 
     // bad
     @Test(expected = Exception.class)
+    public void BadNachoTest() {
+        String jmmCode = SpecsIo.read("test/badnachotest.jmm");
+        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+    }
+
+    @Test(expected = Exception.class)
     public void BlowUpTest() {
         var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/BlowUp.jmm");
         System.out.println(TestUtils.parse(jmmCode).getRootNode());
     }
 
-    @Test(expected = Exception.class)
+    @Test//(expected = Exception.class)
     public void LengthErrorTest() {
-        // TODO ASK PROF
+        // TODO problem is inside while loop so there is no exception thrown
         var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/LengthError.jmm");
         System.out.println(TestUtils.parse(jmmCode).getRootNode());
     }

@@ -57,24 +57,24 @@ ExpressionTail ->
 
 Op ->   && | < | + | - | * | /
 
-Expression ->   LessThanExpression
-                ("&&" LessThanExpression #And(2))*
+Expression ->   LessThanTerm
+                ("&&" LessThanTerm #And(2))*
 
-LessThanExpression ->   ArithmeticExpression
+LessThanTerm ->   ArithmeticExpression
                         ("<" ArithmeticExpression #LessThan(2))*
 
-AdditiveExpression ->   MultiplicativeExpression
-                        ("+" MultiplicativeExpression #Add(2)
-                        | "-" MultiplicativeExpression #Sub(2))*
+AdditiveTerm ->   MultiplicativeTerm
+                        ("+" MultiplicativeTerm #Add(2)
+                        | "-" MultiplicativeTerm #Sub(2))*
 
-MultiplicativeExpression -> UnaryExpression
+MultiplicativeTerm -> UnaryExpression
                             ("*" UnaryExpression #Mul(2)
                             | "/" UnaryExpression #Div(2))*
 
-NotExpression ->    "!" NotExpression
-                    | DotExpression
+NotTerm ->    "!" NotTerm
+                    | DotTerm
 
-DotExpression ->    ArrayAccessExpression
+DotTerm ->    ArrayAccessTerm
                     (".length"
                     | "." DotExpansion)*
 
@@ -83,18 +83,18 @@ DotExpansion -> Identifier
                     [Expression ("," Expression)*]
                 ")"
 
-ArrayAccessExpression ->    ExpressionTerminal
+ArrayAccessTerm ->    ExpressionTerminal
                             ["[" Expression "]"]
 
 ExpressionTerminal ->   "true"
                         | "false"
                         | "this"
                         | "(" Expression ")"
-                        | "new" NewExpression
+                        | "new" NewTerm
                         | Integer
                         | Identifier
 
-NewExpression ->    "int" "[" Expression "]"
+NewTerm ->    "int" "[" Expression "]"
                     | Identifier "(" ")"
 
 PRECEDENCE (less to more):

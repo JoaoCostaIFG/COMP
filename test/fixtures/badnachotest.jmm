@@ -1,0 +1,15 @@
+        /* asd adsd asp dkapsk d
+        apdkaspokdopask
+        asdioajdoiaj*/
+
+// THIS TEST HAS TO FAIL
+
+class Nachos {
+	public static /* a */ void main(String[] args) {
+	    int length;
+
+        length = 123;
+
+        1as = a;
+	}
+}

@@ -9,7 +9,6 @@ options
 
 PARSER_BEGIN(Jmm)
 
-
 import java.util.Arrays;
 public class Jmm
 {
@@ -68,7 +67,7 @@ TOKEN:
     |   <CLASS: "class"> | <EXTENDS: "extends">
     |   <IMPORT: "import">
     |   <RET: "return">
-    |   <LEN: ".length"> // storing as .length because length can be an identifier
+    |   <LEN: ".length"> // TODO storing as .length because length can be an identifier
     // |   <LF>: "\n"
 }
 
@@ -169,9 +168,9 @@ void Type() : {}
 
 void Statement() : {}
 {
-    <SCURL> (Statement())* <ECURL>
-    |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement()
-    |   WhileLoop()
+    <SCURL> (Statement())* <ECURL> // statment block
+    |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement() // if then else
+    |   WhileLoop() // while loop
     |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
     // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
 }
@@ -191,7 +190,7 @@ void WhileLoop() : {}
         }
     } catch (ParseException e) {
         error_skipto(e, "couldn't parse expression starting at '" +
-            getToken(1).image + "' inside while loop",
+            getToken(0).image + "' inside while loop",
             new Integer[]{ EPAR, SCURL, SEMICOLON },
             new Integer[]{ EPAR, SEMICOLON });
     }
@@ -199,7 +198,7 @@ void WhileLoop() : {}
     try { Statement() }
     catch (ParseException e) {
         error_skipto(e, "couldn't parse statement starting at '" +
-        getToken(1).image + "' in while loop body",
+        getToken(0).image + "' in while loop body",
         new Integer[]{ ECURL, SEMICOLON },
         new Integer[]{ ECURL, SEMICOLON });
     }
@@ -207,31 +206,72 @@ void WhileLoop() : {}
 
 void Expression() : {}
 {
-    (<INTEGER_LITERAL>
-    |   <TRUE>
+    LessThanExpression()
+    (<AND> LessThanExpression() #And(2))*
+}
+
+void LessThanExpression() : {}
+{
+    AdditiveExpression()
+    (<LESSTHAN> AdditiveExpression())*
+}
+
+void AdditiveExpression() : {}
+{
+    MultiplicativeExpression()
+    (<ADD> MultiplicativeExpression()
+    |   <SUB> MultiplicativeExpression())*
+}
+
+void MultiplicativeExpression() : {}
+{
+    NotExpression()
+    ( <MULT> NotExpression()
+    |   <DIV> NotExpression())*
+}
+
+void NotExpression() : {}
+{
+    <NOT> NotExpression()
+    |   DotExpression()
+}
+
+void DotExpression() : {}
+{
+    ArrayAccessExpression()
+    (<LEN>
+    |   <DOT> DotExpansion())*
+}
+
+void DotExpansion() : {}
+{
+    <IDENTIFIER>
+    <SPAR>
+        [Expression() (<COMMA> Expression())*]
+    <EPAR>
+}
+
+void ArrayAccessExpression() : {}
+{
+    ExpressionTerminal() [<SBRAK> Expression() <EBRAK>]
+}
+
+void ExpressionTerminal() : {}
+{
+    <TRUE>
     |   <FALSE>
     |   <THIS>
-    |   <NEW> (<INT> <SBRAK> Expression() <EBRAK>
-                |   <IDENTIFIER> <SPAR> <EPAR>)
-    |   <NOT> Expression()
     |   <SPAR> Expression() <EPAR>
-    |   <IDENTIFIER>) ExpressionTail()
+    |   <NEW> NewExpression()
+    |   <INTEGER_LITERAL>
+    |   <IDENTIFIER>
 }
 
-void ExpressionTail() : {}
+void NewExpression() : {}  // 04:14
 {
-    [LOOKAHEAD(2) (Op() Expression()
-    |   <SBRAK> Expression() <EBRAK>
-    |   <LEN>
-    |   <DOT> <IDENTIFIER> <SPAR> [Expression() (<COMMA> Expression())*] <EPAR>
-    ) ExpressionTail()]
+    <INT> <SBRAK> Expression() <EBRAK> // array allocation
+    |   <IDENTIFIER> <SPAR> <EPAR> // class constructor
 }
-
-void Op() : {}
-{
-    <AND> | <LESSTHAN> | <ADD> | <SUB> | <MULT> | <DIV>
-}
-
 
 JAVACODE
 void error_skipto(ParseException e, String errMsg, Integer[] skipto, Integer[] toconsume) {

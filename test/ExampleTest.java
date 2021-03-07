@@ -10,7 +10,7 @@ import pt.up.fe.comp.TestUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
 public class ExampleTest {
-
+    // very good
     @Test
     public void nachotest() {
         String jmmCode = SpecsIo.read("test/nachotest.jmm");
@@ -18,6 +18,7 @@ public class ExampleTest {
         //System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
     }
 
+    // good
     @Test
     public void findMaximumTest() {
         var jmmCode = SpecsIo.getResource("fixtures/public/FindMaximum.jmm");
@@ -69,6 +70,20 @@ public class ExampleTest {
     @Test
     public void WhileAndIfTest() {
         var jmmCode = SpecsIo.getResource("fixtures/public/WhileAndIF.jmm");
+        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+    }
+
+    // bad
+    @Test(expected = Exception.class)
+    public void BlowUpTest() {
+        var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/BlowUp.jmm");
+        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+    }
+
+    @Test(expected = Exception.class)
+    public void LengthErrorTest() {
+        // TODO ASK PROF
+        var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/LengthError.jmm");
         System.out.println(TestUtils.parse(jmmCode).getRootNode());
     }
 }

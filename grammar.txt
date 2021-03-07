@@ -57,30 +57,60 @@ ExpressionTail ->
 
 Op ->   && | < | + | - | * | /
 
-Expression ->   LogicalExpression ExpressionTail
+Expression ->   LessThanExpression
+                ("&&" LessThanExpression #And(2))*
 
-ArrayAccessExpression ->
+LessThanExpression ->   ArithmeticExpression
+                        ("<" ArithmeticExpression #LessThan(2))*
 
-LogicalExpression ->    ArithmeticExpression
-                        ("&&" ArithmeticExpression #And(2)
-                        | "<" ArithmeticExpression #LessThan(2))*
-
-ArithmeticExpression ->     MultiplicativeExpression
-                            ("+" MultiplicativeExpression #Add(2)
-                            | "-" MultiplicativeExpression #Sub(2))*
+AdditiveExpression ->   MultiplicativeExpression
+                        ("+" MultiplicativeExpression #Add(2)
+                        | "-" MultiplicativeExpression #Sub(2))*
 
 MultiplicativeExpression -> UnaryExpression
                             ("*" UnaryExpression #Mul(2)
                             | "/" UnaryExpression #Div(2))*
 
-UnaryExpression ->  "!" Expression
-                    |   "(" Expression ")"
-                    |   "new" ("int" "[" Expression "]"
-                                |   Identifier "(" ")")
-                    |   ExpressionTerminals
+NotExpression ->    "!" NotExpression
+                    | DotExpression
 
-ExpressionTerminals ->  "true"
-                        |   "false"
-                        |   "this"
-                        |   Integer
-                        |   Identifier
+DotExpression ->    ArrayAccessExpression
+                    (".length"
+                    | "." DotExpansion)*
+
+DotExpansion -> Identifier
+                "("
+                    [Expression ("," Expression)*]
+                ")"
+
+ArrayAccessExpression ->    ExpressionTerminal
+                            ["[" Expression "]"]
+
+ExpressionTerminal ->   "true"
+                        | "false"
+                        | "this"
+                        | "(" Expression ")"
+                        | "new" NewExpression
+                        | Integer
+                        | Identifier
+
+NewExpression ->    "int" "[" Expression "]"
+                    | Identifier "(" ")"
+
+PRECEDENCE (less to more):
+    &&
+    <
+    + -
+    * /
+    !
+    [] .
+    (Expr) new
+
+Warning: Choice conflict in (...)* construct at line 159, column 5.
+         Expansion nested within construct and expansion following construct
+         have common prefixes, one of which is: <IDENTIFIER>
+         Consider using a lookahead of 2 or more for nested expansion.
+Warning: Choice conflict in [...] construct at line 175, column 9.
+         Expansion nested within construct and expansion following construct
+         have common prefixes, one of which is: <IDENTIFIER>
+         Consider using a lookahead of 2 or more for nested expansion.

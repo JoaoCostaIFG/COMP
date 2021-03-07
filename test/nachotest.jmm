@@ -11,13 +11,16 @@ class Nachos {
 
         numero = 129_2312_23_12;
 
+        L[i] = L.length - i;
         !false.length; // TODO :)
         !new int[nachos[2]].length < true;
         true.break(1.length);
         false.$(9999l - 10000L) < 1;
         false[true] < $$$$$$$$$$$$$$$$$;
+        a.length.length.length;
 
         true && this && false;
+        this.asd(this.asd(true), false);
 
 	    while (asj$d7as_211d$sa < sim) {
             if (boots < cats) {

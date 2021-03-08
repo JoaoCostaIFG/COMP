@@ -5,8 +5,8 @@ options
 
     //CHOICE_AMBIGUITY_CHECK=5;
     //OTHER_AMBIGUITY_CHECK=3;
-    DEBUG_PARSER=true;
-    DEBUG_LOOKAHEAD=true;
+    //DEBUG_PARSER=true;
+    //DEBUG_LOOKAHEAD=true;
     //DEBUG_TOKEN_MANAGER=true;
 
     //FORCE_LA_CHECK=true;
@@ -171,6 +171,23 @@ void Type() : {}
     |   <IDENTIFIER>
 }
 
+void Statement() : {}
+{
+    <SCURL> (Statement())* <ECURL> // block statment
+    |   IfStatement() // if then else
+    |   WhileLoop() // while loop
+    |   [LOOKAHEAD(IdentifierOrArrayAccesss() <ASSIGN>) IdentifierOrArrayAccesss() <ASSIGN>] Expression() <SEMICOLON>
+    // LOOKAHEAD is used here to distinguish between: a[0] = 1; and a[0];
+}
+
+void IfStatement() : {}
+{
+    <IF> <SPAR> Expression() <EPAR>
+        Statement()
+    <ELSE>
+        Statement()
+}
+
 void WhileLoop() : {}
 {
     <WHILE>
@@ -200,14 +217,9 @@ void WhileLoop() : {}
     }
 }
 
-void Statement() : {}
+void IdentifierOrArrayAccesss() : {}
 {
-    <SCURL> (Statement())* <ECURL> // statment block
-    |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement() // if then else
-    |   WhileLoop() // while loop
-    |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
-    // TODO assign go from statement to expression
-    // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
+    <IDENTIFIER> [<SBRAK> Expression() <EBRAK>]
 }
 
 void Expression() : {Token op;}

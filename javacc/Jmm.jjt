@@ -118,9 +118,9 @@ void ImportDeclaration() : {}
     (<IMPORT> <IDENTIFIER> (<DOT> <IDENTIFIER>)* <SEMICOLON>)*
 }
 
-void ClassDeclaration() : {}
+void ClassDeclaration() : {Token className, extendsClassName;}
 {
-    <CLASS> <IDENTIFIER> [<EXTENDS> <IDENTIFIER>] // can only extend once
+    <CLASS> className=<IDENTIFIER> {jjtThis.put("className", className.image);} [<EXTENDS> extendsClassName=<IDENTIFIER> {jjtThis.put("extends", extendsClassName.image);}] // can only extend once
     <SCURL>
         ClassBody()
     <ECURL>
@@ -132,15 +132,15 @@ void ClassBody() : {}
     (MethodDeclaration())*
 }
 
-void VarDeclaration() : {}
+void VarDeclaration() : {Token varName;}
 {
-    Type() <IDENTIFIER> <SEMICOLON>
+    Type() varName=<IDENTIFIER> {jjtThis.put("varName", varName.image);} <SEMICOLON>
 }
 
-void MethodDeclaration() : {}
+void MethodDeclaration() : {Token methodName;}
 {
     <PUBLIC>
-    (Type() <IDENTIFIER>
+    (Type() methodName=<IDENTIFIER> {jjtThis.put("methodName", methodName.image);}
     <SPAR>
         [Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*]
     <EPAR>
@@ -149,7 +149,7 @@ void MethodDeclaration() : {}
         <RET> Expression() <SEMICOLON>
     <ECURL>
     |
-    <STATIC> <VOID> <MAIN>
+    <STATIC> <VOID> methodName=<MAIN> {jjtThis.put("methodName", methodName.image);}
     <SPAR>
         <STRING> <SBRAK> <EBRAK> <IDENTIFIER>
     <EPAR>
@@ -286,7 +286,7 @@ void ExpressionTerminal() #void : { Token t; }
     |   <THIS> #ThisLiteral
     |   <SPAR> Expression() <EPAR>
     |   <NEW> NewTerm() #NewLiteral
-    |   t = <INTEGER_LITERAL> #IntegerLiteral
+    |   t = <INTEGER_LITERAL> {jjtThis.put("value", t.image);} #IntegerLiteral
     |   t = <IDENTIFIER> #Identifier
 }
 

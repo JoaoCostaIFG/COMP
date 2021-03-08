@@ -9,4 +9,4 @@ COMP2021-*.jar
 gradle/
 gradlew
 gradlew.bat
-
+result.json

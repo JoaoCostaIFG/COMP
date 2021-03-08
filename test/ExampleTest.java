@@ -3,6 +3,9 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Properties;
 import java.io.StringReader;
 
@@ -21,8 +24,17 @@ public class ExampleTest {
     @Test
     public void ArrayAssignTest() {
         String jmmCode = SpecsIo.read("test/arrayassign.jmm");
-//        System.out.println(TestUtils.parse(jmmCode).getRootNode());
-        System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
+        //System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        //System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
+        try {
+            FileWriter myWriter = new FileWriter("result.json");
+            myWriter.write(TestUtils.parse(jmmCode).getRootNode().toJson());
+            myWriter.close();
+            System.err.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            System.err.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
     // good

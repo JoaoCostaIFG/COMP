@@ -1,6 +1,7 @@
-import nachos;
+import nachos.dumb;
+import irao.very.smart;
 
-class ArrayAccess {
+class ArrayAccess extends Access {
     public int f() {
         a[0] = 1;
         a[2];

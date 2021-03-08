@@ -110,20 +110,26 @@ TOKEN : {
 
 SimpleNode Program() : {}
 {
-  ImportDeclaration() ClassDeclaration() <EOF>  {return jjtThis;}
+    ImportDeclarations() ClassDeclaration() <EOF>  { return jjtThis; }
 }
 
-void ImportDeclaration() : {String importPath = "";Token packageName;}
+void ImportDeclarations() : {}
 {
-    (<IMPORT> packageName=<IDENTIFIER> { importPath = packageName.image;}
-        (<DOT> packageName=<IDENTIFIER>{ importPath += "." + packageName.image;})* <SEMICOLON>)*
-        {jjtThis.put("importPath", importPath);}
+    (ImportDeclaration())*
 }
 
-void ClassDeclaration() : {Token className, extendsName;}
+void ImportDeclaration() : { StringBuilder importPath = new StringBuilder(); Token packageName; }
 {
-    <CLASS> className=<IDENTIFIER> {jjtThis.put("className", className.image);}
-    [<EXTENDS> extendsName=<IDENTIFIER> {jjtThis.put("extendsName", extendsName.image);}] // can only extend once
+    <IMPORT> packageName=<IDENTIFIER> { importPath=new StringBuilder(packageName.image); }
+        (<DOT> packageName=<IDENTIFIER>{ importPath.append("." + packageName.image); })* <SEMICOLON>
+        { jjtThis.put("importPath", importPath.toString()); }
+}
+
+void ClassDeclaration() : { Token className, extendsName; }
+{
+    // class can only extend one other class
+    <CLASS> className=<IDENTIFIER> { jjtThis.put("className", className.image); }
+    [<EXTENDS> extendsName=<IDENTIFIER> { jjtThis.put("extendsName", extendsName.image); }]
     <SCURL>
         ClassBody()
     <ECURL>
@@ -135,43 +141,62 @@ void ClassBody() : {}
     (MethodDeclaration())*
 }
 
-void VarDeclaration() : {Token varName;}
+void VarDeclaration() : { Token varName; }
 {
-    Type() varName=<IDENTIFIER> {jjtThis.put("varName", varName.image);} <SEMICOLON>
+    // TODO create method to merge with another node
+    Type() varName=<IDENTIFIER> { jjtThis.put("varName", varName.image); } <SEMICOLON>
 }
 
-void MethodDeclaration() : {Token methodName;}
+void MethodDeclaration() : { Token methodName; }
 {
     <PUBLIC>
-    (Type() methodName=<IDENTIFIER> {jjtThis.put("methodName", methodName.image);}
-    <SPAR>
-        [Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*]
-    <EPAR>
-    <SCURL>
-        MethodBody()
-        <RET> Expression() <SEMICOLON>
-    <ECURL>
-    |
-    <STATIC> <VOID> methodName=<MAIN> {jjtThis.put("methodName", methodName.image);}
+    (<STATIC> <VOID> methodName=<MAIN>
     <SPAR>
         <STRING> <SBRAK> <EBRAK> <IDENTIFIER>
     <EPAR>
     <SCURL>
         MethodBody()
+    <ECURL>
+    |
+    Type() methodName=<IDENTIFIER>
+    <SPAR>
+        MethodParameters()
+    <EPAR>
+    <SCURL>
+        MethodBody()
+        (<RET> Expression() <SEMICOLON>) #Return
     <ECURL>)
+    {
+        jjtThis.put("methodName", methodName.image);
+    }
+}
+
+void MethodParameters() #void : { Token paramName; }
+{
+    [(MethodParameter()  (<COMMA> MethodParameter())*) #MethodParameters]
+}
+
+void MethodParameter() : { Token paramName; }
+{
+    Type() paramName=<IDENTIFIER> { jjtThis.put("paramName", paramName.image); }
 }
 
 void MethodBody() : {}
 {
     (LOOKAHEAD(2) VarDeclaration())*
-    (Statement())* // TODO maybe LOOKAHEAD(2) ?
+    (Statement())*
 }
 
-void Type() : {}
+void Type() : { Token t; boolean isArray=false; }
 {
-    <INT> [<SBRAK> <EBRAK>]
-    |   <BOOL>
-    |   <IDENTIFIER>
+    (t=<INT> [<SBRAK> <EBRAK> { isArray=true; }]
+    |   t=<BOOL>
+    |   t=<IDENTIFIER>)
+    {
+        jjtThis.put("dataType", t.image);
+        jjtThis.put("isArray", isArray ? "yes" : "no");
+        //return jjtThis;
+    }
 }
 
 void Statement() : {}

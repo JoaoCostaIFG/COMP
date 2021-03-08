@@ -166,10 +166,10 @@ class SimpleNode implements Node, JmmNode {
     public void dump(String prefix) {
         System.out.println(toString(prefix));
 
-        String op = get("op");
-        if (op != null) {
-            System.out.println(prefix + op);
-        }
+//        String op = get("op");
+//        if (op != null) {
+//            System.out.println(prefix + op);
+//        }
 
         if (children != null) {
             for (int i = 0; i < children.length; ++i) {

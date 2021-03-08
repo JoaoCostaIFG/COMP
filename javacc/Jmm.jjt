@@ -8,6 +8,7 @@ options
     //DEBUG_PARSER=true;
     //DEBUG_LOOKAHEAD=true;
     //DEBUG_TOKEN_MANAGER=true;
+    MULTI=true;
 
     //FORCE_LA_CHECK=true;
 }
@@ -237,15 +238,15 @@ void LessThanTerm() #void : {Token op;}
 void AdditiveTerm() #void : {Token op;}
 {
     MultiplicativeTerm()
-    (op=<ADD> MultiplicativeTerm()
-    |   op=<SUB> MultiplicativeTerm())*
+    (op=<ADD> MultiplicativeTerm() #Add(2)
+    |   op=<SUB> MultiplicativeTerm() #Sub(2))*
 }
 
-void MultiplicativeTerm() : {Token op;}
+void MultiplicativeTerm() #void : {Token op;}
 {
     NotTerm()
-    (op=<MUL> {jjtThis.put("op", op.image);} NotTerm()
-    |   op=<DIV> {jjtThis.put("op", op.image);} NotTerm())*
+    (op=<MUL>  NotTerm() #Mult(2)
+    |   op=<DIV> NotTerm() #Div(2))*
 }
 
 void NotTerm() #void : {}
@@ -287,7 +288,7 @@ void ExpressionTerminal() #void : { Token t; }
     |   <SPAR> Expression() <EPAR>
     |   <NEW> NewTerm() #NewLiteral
     |   t = <INTEGER_LITERAL> {jjtThis.put("value", t.image);} #IntegerLiteral
-    |   t = <IDENTIFIER> #Identifier
+    |   t = <IDENTIFIER> {jjtThis.put("name", t.image);} #Identifier
 }
 
 void NewTerm() : {}  // 04:14

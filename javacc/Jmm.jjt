@@ -8,7 +8,6 @@ options
     //DEBUG_PARSER=true;
     //DEBUG_LOOKAHEAD=true;
     //DEBUG_TOKEN_MANAGER=true;
-    MULTI=true;
 
     //FORCE_LA_CHECK=true;
 }
@@ -114,14 +113,17 @@ SimpleNode Program() : {}
   ImportDeclaration() ClassDeclaration() <EOF>  {return jjtThis;}
 }
 
-void ImportDeclaration() : {}
+void ImportDeclaration() : {String importPath = "";Token packageName;}
 {
-    (<IMPORT> <IDENTIFIER> (<DOT> <IDENTIFIER>)* <SEMICOLON>)*
+    (<IMPORT> packageName=<IDENTIFIER> { importPath = packageName.image;}
+        (<DOT> packageName=<IDENTIFIER>{ importPath += "." + packageName.image;})* <SEMICOLON>)*
+        {jjtThis.put("importPath", importPath);}
 }
 
-void ClassDeclaration() : {Token className, extendsClassName;}
+void ClassDeclaration() : {Token className, extendsName;}
 {
-    <CLASS> className=<IDENTIFIER> {jjtThis.put("className", className.image);} [<EXTENDS> extendsClassName=<IDENTIFIER> {jjtThis.put("extends", extendsClassName.image);}] // can only extend once
+    <CLASS> className=<IDENTIFIER> {jjtThis.put("className", className.image);}
+    [<EXTENDS> extendsName=<IDENTIFIER> {jjtThis.put("extendsName", extendsName.image);}] // can only extend once
     <SCURL>
         ClassBody()
     <ECURL>
@@ -249,7 +251,7 @@ void MultiplicativeTerm() #void : {Token op;}
     |   op=<DIV> NotTerm() #Div(2))*
 }
 
-void NotTerm() #void : {}
+void NotTerm() : {}
 {
     <NOT> NotTerm()
     |   DotTerm()

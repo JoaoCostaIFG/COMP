@@ -21,7 +21,8 @@ public class ExampleTest {
     @Test
     public void ArrayAssignTest() {
         String jmmCode = SpecsIo.read("test/arrayassign.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+//        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
     }
 
     // good

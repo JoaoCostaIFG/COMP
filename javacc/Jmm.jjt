@@ -250,33 +250,33 @@ void IdentifierOrArrayAccesss() : {}
     <IDENTIFIER> [<SBRAK> Expression() <EBRAK>]
 }
 
-void Expression() : {Token op;}
+void Expression() : {}
 {
     LessThanTerm()
-    (op=<AND> LessThanTerm())*
+    (<AND> LessThanTerm())*
 }
 
-void LessThanTerm() #void : {Token op;}
+void LessThanTerm() #void : {}
 {
     AdditiveTerm()
-    (op=<LESSTHAN> AdditiveTerm())*
+    (<LESSTHAN> AdditiveTerm())*
 }
 
-void AdditiveTerm() #void : {Token op;}
+void AdditiveTerm() #void : {}
 {
     MultiplicativeTerm()
-    (op=<ADD> MultiplicativeTerm() #Add(2)
-    |   op=<SUB> MultiplicativeTerm() #Sub(2))*
+    (<ADD> MultiplicativeTerm() #Add(2)
+    |   <SUB> MultiplicativeTerm() #Sub(2))*
 }
 
-void MultiplicativeTerm() #void : {Token op;}
+void MultiplicativeTerm() #void : {}
 {
     NotTerm()
-    (op=<MUL>  NotTerm() #Mult(2)
-    |   op=<DIV> NotTerm() #Div(2))*
+    (<MUL>  NotTerm() #Mult(2)
+    |   <DIV> NotTerm() #Div(2))*
 }
 
-void NotTerm() : {}
+void NotTerm() #void : {}
 {
     <NOT> NotTerm()
     |   DotTerm()
@@ -309,8 +309,8 @@ void ArrayAccessTerm() #void : {}
 
 void ExpressionTerminal() #void : { Token t; }
 {
-    <TRUE> #BoolLiteral
-    |   <FALSE> #BoolLiteral
+    t=<TRUE> { jjtThis.put("value", t.image); } #BoolLiteral
+    |   t=<FALSE> { jjtThis.put("value", t.image); } #BoolLiteral
     |   <THIS> #ThisLiteral
     |   <SPAR> Expression() <EPAR>
     |   <NEW> NewTerm() #NewLiteral
@@ -318,10 +318,10 @@ void ExpressionTerminal() #void : { Token t; }
     |   t = <IDENTIFIER> {jjtThis.put("name", t.image);} #Identifier
 }
 
-void NewTerm() : {}  // 04:14
+void NewTerm() #void : {Token className;}  // 04:14
 {
     <INT> <SBRAK> Expression() <EBRAK> // array allocation
-    |   <IDENTIFIER> <SPAR> <EPAR> // class constructor
+    |   className=<IDENTIFIER> <SPAR> <EPAR> {jjtThis.put("newClass", className.image);} #ClassConstructor // class constructor
 }
 
 JAVACODE

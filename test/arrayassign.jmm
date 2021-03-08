@@ -3,8 +3,12 @@ import irao.very.smart;
 
 class ArrayAccess extends Access {
     public int f() {
+        int b;
+
+        b = new something();
         a[0] = 1;
         a[2];
+
 
         return 0;
     }

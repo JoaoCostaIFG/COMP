@@ -3,9 +3,11 @@ options
     LOOKAHEAD=1;
     //NODE_DEFAULT_VOID = true; // don't generate nodes by default
 
-    //CHOICE_AMBIGUITY_CHECK=6;
-    //DEBUG_LOOKAHEAD=true;
-    //DEBUG_PARSER=true;
+    //CHOICE_AMBIGUITY_CHECK=5;
+    //OTHER_AMBIGUITY_CHECK=3;
+    DEBUG_PARSER=true;
+    DEBUG_LOOKAHEAD=true;
+    //DEBUG_TOKEN_MANAGER=true;
 
     //FORCE_LA_CHECK=true;
 }
@@ -203,23 +205,12 @@ void Statement() : {}
     <SCURL> (Statement())* <ECURL> // statment block
     |   <IF> <SPAR> Expression() <EPAR> Statement() <ELSE> Statement() // if then else
     |   WhileLoop() // while loop
-    |   Expression() <SEMICOLON>
-    //|   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
+    |   [LOOKAHEAD(5) <IDENTIFIER> [<SBRAK> Expression() <EBRAK>] <ASSIGN>] Expression() <SEMICOLON>
     // TODO assign go from statement to expression
     // IMP LOOKAHEAD(5) to disambiuate a[0] = 1; and a[0];
 }
 
-void Expression() : {}
-{
-    [LOOKAHEAD(5) AssignLeft() <ASSIGN>]  AndTerm()
-}
-
-void AssignLeft() : {}
-{
-    <IDENTIFIER> [<SBRAK> AndTerm() <EBRAK>]
-}
-
-void AndTerm() : {Token op;}
+void Expression() : {Token op;}
 {
     LessThanTerm()
     (op=<AND> LessThanTerm())*

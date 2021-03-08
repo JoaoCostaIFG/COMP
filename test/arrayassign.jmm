@@ -1,0 +1,8 @@
+class ArrayAccess {
+    public int f() {
+        //a[0] = 1;
+        a[2];
+
+        return 0;
+    }
+}

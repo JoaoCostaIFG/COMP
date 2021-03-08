@@ -18,6 +18,12 @@ public class ExampleTest {
         System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
     }
 
+    @Test
+    public void ArrayAssignTest() {
+        String jmmCode = SpecsIo.read("test/arrayassign.jmm");
+        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+    }
+
     // good
     @Test
     public void findMaximumTest() {

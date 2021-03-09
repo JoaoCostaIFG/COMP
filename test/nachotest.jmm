@@ -13,6 +13,14 @@ class Nachos {
 
         numero = 129_2312_23_12l;  // not integer (too >)
 
+        a[1][0];
+        this[1][0];
+        1<2[1][0];
+        this.a(1,2)[1][0];
+
+        new int[1 < 2][this.a(1,2)[1][0]];
+        this.a(new int[1])[new int[2]];
+
         L[i] = L.length - i;
         !false.length; // TODO :)
         !new int[nachos[2]].length < true;

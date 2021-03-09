@@ -199,12 +199,12 @@ void Type() : { Token t; boolean isArray=false; }
     }
 }
 
-void Statement() : {}
+void Statement() #void : {}
 {
     <SCURL> (Statement())* <ECURL> // block statment
     |   IfStatement() // if then else
     |   WhileLoop() // while loop
-    |   [LOOKAHEAD(IdentifierOrArrayAccesss() <ASSIGN>) IdentifierOrArrayAccesss() <ASSIGN>] Expression() <SEMICOLON>
+    |   ([LOOKAHEAD(Assignment()) Assignment()] Expression() <SEMICOLON>) #Expression // assignment or just expression
     // LOOKAHEAD is used here to distinguish between: a[0] = 1; and a[0];
 }
 
@@ -245,21 +245,31 @@ void WhileLoop() : {}
     }
 }
 
-void IdentifierOrArrayAccesss() : {}
+void Assignment() #void : {}
 {
-    <IDENTIFIER> [<SBRAK> Expression() <EBRAK>]
+    IdentifierOrArrayAccesss() <ASSIGN>
 }
 
-void Expression() : {}
+void IdentifierOrArrayAccesss() #Assignment : { Token varName; }
+{
+    varName=<IDENTIFIER> [<SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAccess", "yes"); }]
+    { jjtThis.put("varName", varName.image); }
+}
+
+void Expression() #void : {}
 {
     LessThanTerm()
-    (<AND> LessThanTerm())*
+    (<AND> LessThanTerm() #And(2))*
+
+    // this (and the other similar constructs) could also be written as (recursive form):
+    // LessThanTerm()
+    // [<AND> Expression()]
 }
 
 void LessThanTerm() #void : {}
 {
     AdditiveTerm()
-    (<LESSTHAN> AdditiveTerm())*
+    (<LESSTHAN> AdditiveTerm() #LessThan(2))*
 }
 
 void AdditiveTerm() #void : {}
@@ -271,27 +281,31 @@ void AdditiveTerm() #void : {}
 
 void MultiplicativeTerm() #void : {}
 {
-    NotTerm()
-    (<MUL>  NotTerm() #Mult(2)
-    |   <DIV> NotTerm() #Div(2))*
+    UnaryTerm()
+    (<MUL>  UnaryTerm() #Mult(2)
+    |   <DIV> UnaryTerm() #Div(2))*
 }
 
-void NotTerm() #void : {}
+void UnaryTerm() #void : {}
 {
-    <NOT> NotTerm()
-    |   DotTerm()
+    <NOT> UnaryTerm() #Not
+    |   PostfixTerm()
+}
+
+void PostfixTerm() #void : {}
+{
+    PrimaryTerm()
+    (<SBRAK> Expression() <EBRAK> #ArrayAccess
+    |   DotTerm() #Dot)*
 }
 
 void DotTerm() #void : {}
 {
     // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
     // and match like so:
-    // ArrayAccessTerm()
-    // (<LEN>
-    // |    <DOT> DotExpansion())*
+    // <LEN> | <DOT> DotExpansion()
 
-    ArrayAccessTerm()
-    (<DOT> (<LEN> | DotExpansion()))*
+    <DOT> (<LEN> | DotExpansion())
 }
 
 void DotExpansion() #void : {}
@@ -302,26 +316,21 @@ void DotExpansion() #void : {}
     <EPAR>
 }
 
-void ArrayAccessTerm() #void : {}
+void PrimaryTerm() #void : { Token t; }
 {
-    ExpressionTerminal() [<SBRAK> Expression() <EBRAK>]
-}
-
-void ExpressionTerminal() #void : { Token t; }
-{
-    t=<TRUE> { jjtThis.put("value", t.image); } #BoolLiteral
-    |   t=<FALSE> { jjtThis.put("value", t.image); } #BoolLiteral
-    |   <THIS> #ThisLiteral
+    <TRUE> { jjtThis.put("value", "true"); } #Constant
+    |   <FALSE> { jjtThis.put("value", "false"); } #Constant
+    |   <THIS> { jjtThis.put("value", "this"); } #Constant
     |   <SPAR> Expression() <EPAR>
-    |   <NEW> NewTerm() #NewLiteral
-    |   t = <INTEGER_LITERAL> {jjtThis.put("value", t.image);} #IntegerLiteral
-    |   t = <IDENTIFIER> {jjtThis.put("name", t.image);} #Identifier
+    |   <NEW> NewTerm()
+    |   t = <INTEGER_LITERAL> { jjtThis.put("value", t.image); } #Constant
+    |   t = <IDENTIFIER> { jjtThis.put("name", t.image); } #Variable
 }
 
-void NewTerm() #void : {Token className;}  // 04:14
+void NewTerm() #void : { Token t; }  // 04:14
 {
-    <INT> <SBRAK> Expression() <EBRAK> // array allocation
-    |   className=<IDENTIFIER> <SPAR> <EPAR> {jjtThis.put("newClass", className.image);} #ClassConstructor // class constructor
+    <INT> <SBRAK> Expression() <EBRAK> #ArrayAlloc // array allocation
+    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("name", t.image); } #ClassConstructor // class constructor
 }
 
 JAVACODE

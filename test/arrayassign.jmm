@@ -6,9 +6,9 @@ class ArrayAccess extends Access {
         int b;
 
         a[0] = 1;
-        a[2];
-        a.length;
-        1 + 2;
+        //a[2];
+        //a.length;
+        //1 + 2;
 
         return 0;
     }

@@ -295,7 +295,7 @@ void UnaryTerm() #void : {}
 void PostfixTerm() #void : {}
 {
     PrimaryTerm()
-    (<SBRAK> Expression() <EBRAK> #ArrayAccess
+    (<SBRAK> Expression() #ArrayAccess(2) <EBRAK>
     |   DotTerm() #Dot)*
 }
 

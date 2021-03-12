@@ -286,7 +286,7 @@ void PostfixTerm() #void : {}
     |   DotTerm() #Dot(2))*
 }
 
-void DotTerm() #DotRHS : {}
+void DotTerm() #void : {}
 {
     // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
     // and match like so:
@@ -314,10 +314,10 @@ void PrimaryTerm() #void : { Token t; }
     |   t = <IDENTIFIER> { jjtThis.put("name", t.image); } #Variable
 }
 
-void NewTerm() #New : { Token t; }  // 04:14
+void NewTerm() #void : { Token t; }  // 04:14
 {
-    <INT> <SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAlloc", "yes"); } // array allocation
-    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("className", t.image); } // class constructor
+    <INT> <SBRAK> Expression() <EBRAK> #NewArray(1)  // array allocation
+    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("className", t.image); } #NewClass // class constructor
 }
 
 JAVACODE

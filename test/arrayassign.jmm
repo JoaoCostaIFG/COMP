@@ -5,8 +5,11 @@ class ArrayAccess extends Access {
     public int f() {
         //int b;
 
-        //a[0] = 1;
-        //a[2];
+        a[0] = 1;
+        a[2];
+
+        // new int [1 + 2];
+        // new CLASSSS();
 
         //while (1 <  && 2 < ) {
         //    nachoscute;

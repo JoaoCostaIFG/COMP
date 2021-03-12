@@ -3,10 +3,21 @@ import irao.very.smart;
 
 class ArrayAccess extends Access {
     public int f() {
-        int b;
+        //int b;
 
-        a[0] = 1;
+        //a[0] = 1;
         //a[2];
+
+        //while (1 <  && 2 < ) {
+        //    nachoscute;
+        //}
+
+        //if (1 < 2) {
+        //    3;
+        //} else {
+        //    iraodumb;
+        //}
+
         //a.length;
         //1 + 2;
 

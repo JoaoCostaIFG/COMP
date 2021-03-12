@@ -23,8 +23,6 @@ public class Jmm
 		SimpleNode root = jmm.Program(); // returns reference to root node
 
 		root.dump(""); // prints the tree on the screen
-
-		//System.out.println("Expression value: "+myCalc.eval(root));
     }
 }
 
@@ -185,6 +183,7 @@ void MethodBody() : {}
 {
     (LOOKAHEAD(2) VarDeclaration())*
     (Statement())*
+    // (VarDeclaration() | Statement())*
 }
 
 void Type() : { Token t; boolean isArray=false; }
@@ -204,45 +203,33 @@ void Statement() #void : {}
     <SCURL> (Statement())* <ECURL> // block statment
     |   IfStatement() // if then else
     |   WhileLoop() // while loop
-    |   ([LOOKAHEAD(Assignment()) Assignment()] Expression() <SEMICOLON>) #Expression // assignment or just expression
+    |   ([LOOKAHEAD(Assignment()) Assignment()] Expression() <SEMICOLON>) // assignment or just expression
     // LOOKAHEAD is used here to distinguish between: a[0] = 1; and a[0];
 }
 
-void IfStatement() : {}
+void IfStatement() #If : {}
 {
-    <IF> <SPAR> Expression() <EPAR>
-        Statement()
+    <IF> <SPAR> Expression() #Cond <EPAR>
+        Statement() #SuccessStatement
     <ELSE>
-        Statement()
+        Statement() #ElseStatement
 }
 
 void WhileLoop() : {}
 {
-    <WHILE>
-    try { <SPAR> } // report missing start parentheses "("
-    catch (ParseException e) {
-        error_ignore(e, "expected '(' at the start of the while loop expression");
-    }
+    <WHILE> <SPAR>
 
-    try { Expression()
-        try { <EPAR> }
-        catch (ParseException e) {
-            error_ignore(e, "expected ')' at the end of the while loop expression");
-        }
+    try {
+        Expression() #Cond
+        <EPAR>
     } catch (ParseException e) {
         error_skipto(e, "couldn't parse expression starting at '" +
-            getToken(0).image + "' inside while loop",
-            new Integer[]{ EPAR, SCURL, SEMICOLON },
-            new Integer[]{ EPAR, SEMICOLON });
+            getToken(0).image + "' in while loop expression",
+            new Integer[]{ EPAR, SCURL },
+            new Integer[]{ EPAR });
     }
 
-    try { Statement() }
-    catch (ParseException e) {
-        error_skipto(e, "couldn't parse statement starting at '" +
-        getToken(0).image + "' in while loop body",
-        new Integer[]{ ECURL, SEMICOLON },
-        new Integer[]{ ECURL, SEMICOLON });
-    }
+    Statement() #Body
 }
 
 void Assignment() #void : {}
@@ -296,23 +283,23 @@ void PostfixTerm() #void : {}
 {
     PrimaryTerm()
     (<SBRAK> Expression() #ArrayAccess(2) <EBRAK>
-    |   DotTerm() #Dot)*
+    |   DotTerm() #Dot(2))*
 }
 
-void DotTerm() #void : {}
+void DotTerm() #DotRHS : {}
 {
     // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
     // and match like so:
     // <LEN> | <DOT> DotExpansion()
 
-    <DOT> (<LEN> | DotExpansion())
+    <DOT> (<LEN> #Len | DotExpansion())
 }
 
-void DotExpansion() #void : {}
+void DotExpansion() #FuncCall : { Token t; }
 {
-    <IDENTIFIER>
+    t=<IDENTIFIER> { jjtThis.put("methodName", t.image); }
     <SPAR>
-        [Expression() (<COMMA> Expression())*]
+        [(Expression() (<COMMA> Expression())*) #Args]
     <EPAR>
 }
 
@@ -327,10 +314,10 @@ void PrimaryTerm() #void : { Token t; }
     |   t = <IDENTIFIER> { jjtThis.put("name", t.image); } #Variable
 }
 
-void NewTerm() #void : { Token t; }  // 04:14
+void NewTerm() #New : { Token t; }  // 04:14
 {
-    <INT> <SBRAK> Expression() <EBRAK> #ArrayAlloc // array allocation
-    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("name", t.image); } #ClassConstructor // class constructor
+    <INT> <SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAlloc", "yes"); } // array allocation
+    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("className", t.image); } // class constructor
 }
 
 JAVACODE

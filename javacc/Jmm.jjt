@@ -181,9 +181,15 @@ void MethodParameter() : { Token paramName; }
 
 void MethodBody() : {}
 {
-    (LOOKAHEAD(2) VarDeclaration())*
-    (Statement())*
-    // (VarDeclaration() | Statement())*
+    // The lines bellow make use of a LOOKAHEAD to keep the grammar correct
+    //(LOOKAHEAD(2) VarDeclaration())*
+    //(Statement())*
+    // They were changed to the lines bellow to facilitate the removal of the
+    // LOOKAHEAD with the permission of the teacher.
+    // The grammar now allows variables to be declared after other statements
+    // have been written.
+    // e.g.: i = 1; int a; // this is now valid
+    (VarDeclaration() | Statement())*
 }
 
 void Type() : { Token t; boolean isArray=false; }
@@ -223,10 +229,10 @@ void WhileLoop() : {}
         Expression() #Cond
         <EPAR>
     } catch (ParseException e) {
-        error_skipto(e, "couldn't parse expression starting at '" +
-            getToken(0).image + "' in while loop expression",
-            new Integer[]{ EPAR, SCURL },
-            new Integer[]{ EPAR });
+        error_print(e, "couldn't parse expression starting at '" +
+            getToken(0).image + "' in while loop expression");
+        error_skipto(new Integer[]{ EPAR, SCURL }, new Integer[]{});
+        error_consume(new Integer[]{ EPAR });
     }
 
     Statement() #Body
@@ -321,10 +327,13 @@ void NewTerm() #void : { Token t; }  // 04:14
 }
 
 JAVACODE
-void error_skipto(ParseException e, String errMsg, Integer[] skipto, Integer[] toconsume) {
+void error_print(ParseException e, String errMsg) {
     e.setErrMsg(errMsg);
     System.err.println(e.getErrMsg());  // print the error message
+}
 
+JAVACODE
+void error_skipto(Integer[] skipto, Integer[] toconsume) {
     Token t = getToken(1);
     // consume tokens until the next token is of "kind"
     while (!Arrays.asList(skipto).contains(t.kind) && t.kind != 0) {
@@ -336,7 +345,9 @@ void error_skipto(ParseException e, String errMsg, Integer[] skipto, Integer[] t
 }
 
 JAVACODE
-void error_ignore(ParseException e, String errMsg) {
-    e.setErrMsg(errMsg);
-    System.err.println(e.getErrMsg());  // print the error message
+void error_consume(Integer[] toConsume) {
+    // consume tokens until the next token until we find one that shouldn't be consumed
+    while (Arrays.asList(toConsume).contains(getToken(1).kind)) {
+        getNextToken();
+    }
 }

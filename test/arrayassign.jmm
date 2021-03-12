@@ -8,22 +8,6 @@ class ArrayAccess extends Access {
         a[0] = 1;
         a[2];
 
-        // new int [1 + 2];
-        // new CLASSSS();
-
-        //while (1 <  && 2 < ) {
-        //    nachoscute;
-        //}
-
-        //if (1 < 2) {
-        //    3;
-        //} else {
-        //    iraodumb;
-        //}
-
-        //a.length;
-        //1 + 2;
-
         return 0;
     }
 }

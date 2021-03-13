@@ -1,0 +1,13 @@
+import nachos.dumb;
+import irao.very.smart;
+
+class ArrayAccess extends Access {
+    public int f() {
+        //int b;
+
+        a[0] = 1;
+        a[2];
+
+        return 0;
+    }
+}

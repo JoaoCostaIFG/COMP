@@ -1,0 +1,353 @@
+options
+{
+    LOOKAHEAD=1;
+    //NODE_DEFAULT_VOID = true; // don't generate nodes by default
+
+    //CHOICE_AMBIGUITY_CHECK=5;
+    //OTHER_AMBIGUITY_CHECK=3;
+    //DEBUG_PARSER=true;
+    //DEBUG_LOOKAHEAD=true;
+    //DEBUG_TOKEN_MANAGER=true;
+
+    //FORCE_LA_CHECK=true;
+}
+
+PARSER_BEGIN(Jmm)
+
+import java.util.Arrays;
+public class Jmm
+{
+    public static void main(String[] args) throws ParseException {
+      	System.out.println("Write a jmm arithmetic:");
+		Jmm jmm = new Jmm(System.in);
+		SimpleNode root = jmm.Program(); // returns reference to root node
+
+		root.dump(""); // prints the tree on the screen
+    }
+}
+
+PARSER_END(Jmm)
+
+SKIP :
+{
+	" " | "\r" | "\t" | "\n"
+}
+// comments (source: https://javacc.github.io/javacc/documentation/bnf.html)
+<DEFAULT> MORE : { "//" : IN_SINGLE_LINE_COMMENT
+                 | <"/**" ~["/"]> : IN_FORMAL_COMMENT
+                 | "/*" : IN_MULTI_LINE_COMMENT
+                 | "/*@bgen(jjtree" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_SINGLE_LINE_COMMENT> SPECIAL_TOKEN : {
+  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n"> : DEFAULT
+}
+
+<IN_FORMAL_COMMENT> SPECIAL_TOKEN : {
+  <FORMAL_COMMENT: "*/"> : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT> SPECIAL_TOKEN : {
+  <MULTI_LINE_COMMENT: "*/"> : DEFAULT
+}
+
+<IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT> MORE : {
+  <~[]>
+}
+
+// reserved words and literals
+TOKEN:
+{
+    <NEW: "new">
+    |   <THIS: "this">
+    |   <TRUE: "true"> | <FALSE: "false">
+    |   <IF: "if"> | <ELSE: "else">
+    |   <WHILE: "while">
+    |   <BOOL: "boolean"> | <INT: "int">
+    |   <VOID: "void">
+    |   <PUBLIC: "public"> | <STATIC: "static">
+    |   <MAIN: "main"> | <STRING: "String">
+    |   <CLASS: "class"> | <EXTENDS: "extends">
+    |   <IMPORT: "import">
+    |   <RET: "return">
+    |   <LEN: "length"> // IMP storing as .length would enable variables to be called "length" (see DotTer())
+    // |   <LF>: "\n" // we skip "\n" instead of matching it
+}
+
+// integer literals and identifiers
+// IMP: unicode literal matching is not ok
+TOKEN : {
+    <IDENTIFIER: <LETTER> (<LETTERNUM>)*>
+    |   <#LETTER: ["A"-"Z", "a"-"z", "_", "$"]>
+    |   <#LETTERNUM: ["A"-"Z", "a"-"z", "0"-"9", "_", "$"]>
+    |   <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])?
+        |   <HEX_LITERAL> (["l","L"])?
+        |   <OCTAL_LITERAL> (["l","L"])?
+        |   <BINARY_LITERAL> (["l","L"])?>
+    | <#DECIMAL_LITERAL: ["1"-"9"] (("_")* ["0"-"9"])*>
+    | <#HEX_LITERAL: "0" ["x","X"] ["0"-"9","a"-"f","A"-"F"] (("_")* ["0"-"9","a"-"f","A"-"F"])*>
+    | <#OCTAL_LITERAL: "0" (("_")* ["0"-"7"])*>
+    | <#BINARY_LITERAL: "0" ["b","B"] ["0","1"] (("_")* ["0","1"])*>
+}
+
+// separators
+TOKEN : {
+    <SPAR: "("> | <EPAR: ")">
+    |   <SBRAK: "["> | <EBRAK: "]" >
+    |   <SCURL: "{"> | <ECURL: "}">
+    |   <DOT: "."> | <COMMA: ",">
+    |   <SEMICOLON: ";">
+}
+
+// operators
+TOKEN : {
+    <ASSIGN: "=">
+    |   <NOT: "!"> | <AND: "&&"> | <LESSTHAN: "<">
+    |   <ADD: "+"> | <SUB: "-"> | <MUL: "*"> | <DIV: "/">
+}
+
+SimpleNode Program() : {}
+{
+    ImportDeclarations() ClassDeclaration() <EOF>  { return jjtThis; }
+}
+
+void ImportDeclarations() : {}
+{
+    (ImportDeclaration())*
+}
+
+void ImportDeclaration() : { StringBuilder importPath = new StringBuilder(); Token packageName; }
+{
+    <IMPORT> packageName=<IDENTIFIER> { importPath=new StringBuilder(packageName.image); }
+        (<DOT> packageName=<IDENTIFIER>{ importPath.append("." + packageName.image); })* <SEMICOLON>
+        { jjtThis.put("importPath", importPath.toString()); }
+}
+
+void ClassDeclaration() : { Token className, extendsName; }
+{
+    // class can only extend one other class
+    <CLASS> className=<IDENTIFIER> { jjtThis.put("className", className.image); }
+    [<EXTENDS> extendsName=<IDENTIFIER> { jjtThis.put("extendsName", extendsName.image); }]
+    <SCURL>
+        ClassBody()
+    <ECURL>
+}
+
+void ClassBody() : {}
+{
+    (VarDeclaration())*
+    (MethodDeclaration())*
+}
+
+void VarDeclaration() : { Token varName; }
+{
+    // TODO create method to merge with another node
+    Type() varName=<IDENTIFIER> { jjtThis.put("varName", varName.image); } <SEMICOLON>
+}
+
+void MethodDeclaration() : { Token methodName; }
+{
+    <PUBLIC>
+    (<STATIC> <VOID> methodName=<MAIN>
+    <SPAR>
+        <STRING> <SBRAK> <EBRAK> <IDENTIFIER>
+    <EPAR>
+    <SCURL>
+        MethodBody()
+    <ECURL>
+    |
+    Type() methodName=<IDENTIFIER>
+    <SPAR>
+        MethodParameters()
+    <EPAR>
+    <SCURL>
+        MethodBody()
+        (<RET> Expression() <SEMICOLON>) #Return
+    <ECURL>)
+    {
+        jjtThis.put("methodName", methodName.image);
+    }
+}
+
+void MethodParameters() #void : { Token paramName; }
+{
+    [(MethodParameter()  (<COMMA> MethodParameter())*) #MethodParameters]
+}
+
+void MethodParameter() : { Token paramName; }
+{
+    Type() paramName=<IDENTIFIER> { jjtThis.put("paramName", paramName.image); }
+}
+
+void MethodBody() : {}
+{
+    // The lines bellow make use of a LOOKAHEAD to keep the grammar correct
+    //(LOOKAHEAD(2) VarDeclaration())*
+    //(Statement())*
+    // They were changed to the lines bellow to facilitate the removal of the
+    // LOOKAHEAD with the permission of the teacher.
+    // The grammar now allows variables to be declared after other statements
+    // have been written.
+    // e.g.: i = 1; int a; // this is now valid
+    (VarDeclaration() | Statement())*
+}
+
+void Type() : { Token t; boolean isArray=false; }
+{
+    (t=<INT> [<SBRAK> <EBRAK> { isArray=true; }]
+    |   t=<BOOL>
+    |   t=<IDENTIFIER>)
+    {
+        jjtThis.put("dataType", t.image);
+        jjtThis.put("isArray", isArray ? "yes" : "no");
+        //return jjtThis;
+    }
+}
+
+void Statement() #void : {}
+{
+    <SCURL> (Statement())* <ECURL> // block statment
+    |   IfStatement() // if then else
+    |   WhileLoop() // while loop
+    |   ([LOOKAHEAD(Assignment()) Assignment()] Expression() <SEMICOLON>) // assignment or just expression
+    // LOOKAHEAD is used here to distinguish between: a[0] = 1; and a[0];
+}
+
+void IfStatement() #If : {}
+{
+    <IF> <SPAR> Expression() #Cond <EPAR>
+        Statement() #SuccessStatement
+    <ELSE>
+        Statement() #ElseStatement
+}
+
+void WhileLoop() : {}
+{
+    <WHILE> <SPAR>
+
+    try {
+        Expression() #Cond
+        <EPAR>
+    } catch (ParseException e) {
+        error_print(e, "couldn't parse expression starting at '" +
+            getToken(0).image + "' in while loop expression");
+        error_skipto(new Integer[]{ EPAR, SCURL }, new Integer[]{});
+        error_consume(new Integer[]{ EPAR });
+    }
+
+    Statement() #Body
+}
+
+void Assignment() #void : {}
+{
+    IdentifierOrArrayAccesss() <ASSIGN>
+}
+
+void IdentifierOrArrayAccesss() #Assignment : { Token varName; }
+{
+    varName=<IDENTIFIER> [<SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAccess", "yes"); }]
+    { jjtThis.put("varName", varName.image); }
+}
+
+void Expression() #void : {}
+{
+    LessThanTerm()
+    (<AND> LessThanTerm() #And(2))*
+
+    // this (and the other similar constructs) could also be written as (recursive form):
+    // LessThanTerm()
+    // [<AND> Expression()]
+}
+
+void LessThanTerm() #void : {}
+{
+    AdditiveTerm()
+    (<LESSTHAN> AdditiveTerm() #LessThan(2))*
+}
+
+void AdditiveTerm() #void : {}
+{
+    MultiplicativeTerm()
+    (<ADD> MultiplicativeTerm() #Add(2)
+    |   <SUB> MultiplicativeTerm() #Sub(2))*
+}
+
+void MultiplicativeTerm() #void : {}
+{
+    UnaryTerm()
+    (<MUL>  UnaryTerm() #Mult(2)
+    |   <DIV> UnaryTerm() #Div(2))*
+}
+
+void UnaryTerm() #void : {}
+{
+    <NOT> UnaryTerm() #Not
+    |   PostfixTerm()
+}
+
+void PostfixTerm() #void : {}
+{
+    PrimaryTerm()
+    (<SBRAK> Expression() #ArrayAccess(2) <EBRAK>
+    |   DotTerm() #Dot(2))*
+}
+
+void DotTerm() #void : {}
+{
+    // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
+    // and match like so:
+    // <LEN> | <DOT> DotExpansion()
+
+    <DOT> (<LEN> #Len | DotExpansion())
+}
+
+void DotExpansion() #FuncCall : { Token t; }
+{
+    t=<IDENTIFIER> { jjtThis.put("methodName", t.image); }
+    <SPAR>
+        [(Expression() (<COMMA> Expression())*) #Args]
+    <EPAR>
+}
+
+void PrimaryTerm() #void : { Token t; }
+{
+    <TRUE> { jjtThis.put("value", "true"); } #Constant
+    |   <FALSE> { jjtThis.put("value", "false"); } #Constant
+    |   <THIS> { jjtThis.put("value", "this"); } #Constant
+    |   <SPAR> Expression() <EPAR>
+    |   <NEW> NewTerm()
+    |   t = <INTEGER_LITERAL> { jjtThis.put("value", t.image); } #Constant
+    |   t = <IDENTIFIER> { jjtThis.put("name", t.image); } #Variable
+}
+
+void NewTerm() #void : { Token t; }  // 04:14
+{
+    <INT> <SBRAK> Expression() <EBRAK> #NewArray(1)  // array allocation
+    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("className", t.image); } #NewClass // class constructor
+}
+
+JAVACODE
+void error_print(ParseException e, String errMsg) {
+    e.setErrMsg(errMsg);
+    System.err.println(e.getErrMsg());  // print the error message
+}
+
+JAVACODE
+void error_skipto(Integer[] skipto, Integer[] toconsume) {
+    Token t = getToken(1);
+    // consume tokens until the next token is of "kind"
+    while (!Arrays.asList(skipto).contains(t.kind) && t.kind != 0) {
+        getNextToken();
+        t = getToken(1);
+    }
+
+    if (Arrays.asList(toconsume).contains(t.kind)) getNextToken();
+}
+
+JAVACODE
+void error_consume(Integer[] toConsume) {
+    // consume tokens until the next token until we find one that shouldn't be consumed
+    while (Arrays.asList(toConsume).contains(getToken(1).kind)) {
+        getNextToken();
+    }
+}

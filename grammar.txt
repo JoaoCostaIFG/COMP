@@ -35,6 +35,67 @@ Statement ->    "{" {Statement} "}"
                 |   "while" "(" Expression ")" Statement
                 |   [Identifier ["[" Expression "]"] "="] Expression ";"
 
+Expression ->   LessThanTerm
+                    ("&&" LessThanTerm #And(2))*
+
+LessThanTerm ->   ArithmeticExpression
+                        ("<" ArithmeticExpression #LessThan(2))*
+
+AdditiveTerm ->   MultiplicativeTerm
+                        ("+" MultiplicativeTerm #Add(2)
+                        | "-" MultiplicativeTerm #Sub(2))*
+
+MultiplicativeTerm -> UnaryExpression
+                            ("*" UnaryExpression #Mul(2)
+                            | "/" UnaryExpression #Div(2))*
+
+NotTerm ->    "!" NotTerm
+                    | DotTerm
+
+DotTerm ->    ArrayAccessTerm
+                    (".length"
+                    | "." DotExpansion)*
+
+DotExpansion -> Identifier
+                "("
+                    [Expression ("," Expression)*]
+                ")"
+
+ArrayAccessTerm ->    ExpressionTerminal
+                            ["[" Expression "]"]
+
+ExpressionTerminal ->   "true"
+                        | "false"
+                        | "this"
+                        | "(" Expression ")"
+                        | "new" NewTerm
+                        | Integer
+                        | Identifier
+
+NewTerm ->    "int" "[" Expression "]"
+                    | Identifier "(" ")"
+
+PRECEDENCE (less to more):
+    =
+    &&
+    <
+    + -
+    * /
+    !
+    [] .
+    (Expr) new
+
+Warning: Choice conflict in (...)* construct at line 161, column 5.
+         Expansion nested within construct and expansion following construct
+         have common prefixes, one of which is: <IDENTIFIER>
+         Consider using a lookahead of 2 or more for nested expansion.
+Warning: Choice conflict in [...] construct at line 206, column 9.
+         Expansion nested within construct and expansion following construct
+         have common prefixes, one of which is: <IDENTIFIER>
+         Consider using a lookahead of 2 or more for nested expansion.
+
+// IMPORTANT CHANGELOG
+// START OPERATOR PRECEDENCE UPDATE
 Expression ->
     (
         Integer
@@ -49,34 +110,11 @@ Expression ->
     ) ExpressionTail
 
 ExpressionTail ->
-    [(Op Expression
+    [(ArithmeticExpression
     |   "[" Expression "]"
     |   ".length"
     |   "." Identifier "(" [Expression ("," Expression)*] ")")
     ) ExpressionTail()]
 
 Op ->   && | < | + | - | * | /
-
-
-Warning: Choice conflict in (...)* construct at line 122, column 5.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: <IDENTIFIER>
-         Consider using a lookahead of 2 or more for nested expansion.
-Warning: Choice conflict involving two expansions at
-         line 138, column 9 and line 139, column 9 respectively.
-         A common prefix is: <IDENTIFIER> "["
-         Consider using a lookahead of 3 or more for earlier expansion.
-Warning: Choice conflict in [...] construct at line 157, column 5.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: "&&"
-         Consider using a lookahead of 2 or more for nested expansion.
-
-Warning: Choice conflict in [...] construct at line 138, column 9.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: <IDENTIFIER>
-         Consider using a lookahead of 2 or more for nested expansion.
-
-Warning: Choice conflict in [...] construct at line 182, column 5.
-         Expansion nested within construct and expansion following construct
-         have common prefixes, one of which is: "&&"
-         Consider using a lookahead of 2 or more for nested expansion.
+// CEASE OPERATOR PRECEDENCE UPDATE

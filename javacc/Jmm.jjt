@@ -182,14 +182,14 @@ void MethodParameter() : { Token paramName; }
 void MethodBody() : {}
 {
     // The lines bellow make use of a LOOKAHEAD to keep the grammar correct
-    //(LOOKAHEAD(2) VarDeclaration())*
-    //(Statement())*
+    (LOOKAHEAD(2) VarDeclaration())*
+    (Statement())*
     // They were changed to the lines bellow to facilitate the removal of the
     // LOOKAHEAD with the permission of the teacher.
     // The grammar now allows variables to be declared after other statements
     // have been written.
     // e.g.: i = 1; int a; // this is now valid
-    (VarDeclaration() | Statement())*
+    //(VarDeclaration() | Statement())*
 }
 
 void Type() : { Token t; boolean isArray=false; }

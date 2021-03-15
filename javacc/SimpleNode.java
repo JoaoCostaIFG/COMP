@@ -71,16 +71,7 @@ class SimpleNode implements Node, JmmNode {
      * @return the children of the node or an empty list if there are no children
      */
     public List<JmmNode> getChildren() {
-        if (children == null)
-            return new ArrayList<>();
-
-        List<JmmNode> ret = new ArrayList<>();
-        for (int i = 0; i < children.length; ++i) {
-            ret.add((JmmNode) children[i]);
-        }
-
-        return ret;
-        //return (children == null) ? new ArrayList<>() : Arrays.asList((JmmNode[]) children);
+        return JmmNode.convertChildren(children);
     }
 
     /**

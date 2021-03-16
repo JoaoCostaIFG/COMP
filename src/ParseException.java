@@ -194,9 +194,9 @@ public class ParseException extends Exception {
     private String errMsg = null;
 
     public void setErrMsg(String errMsg) {
-        this.errMsg = "error [line " + currentToken.next.beginLine +
-                ", column " + currentToken.next.beginColumn + "]: " + errMsg +
-                ". Found '" + currentToken.next.image + "'.";
+        this.errMsg = "error [line " + currentToken.beginLine +
+                ", column " + currentToken.beginColumn + "]: " + errMsg +
+                ". Found '" + currentToken.image + "'.";
     }
 
     public String getErrMsg() {

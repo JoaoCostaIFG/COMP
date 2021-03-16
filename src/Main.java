@@ -1,10 +1,8 @@
 
 import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
-import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.io.StringReader;
 
 public class Main implements JmmParser {
@@ -15,7 +13,7 @@ public class Main implements JmmParser {
             	
     		root.dump(""); // prints the tree on the screen
     	
-    		return new JmmParserResult(root, new ArrayList<Report>());
+    		return new JmmParserResult(root, jmm.getReports());
 		} catch(ParseException e) {
 			throw new RuntimeException("Error while parsing", e);
 		}

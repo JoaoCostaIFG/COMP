@@ -1,4 +1,5 @@
 import static org.junit.Assert.*;
+
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -6,151 +7,143 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.io.StringReader;
 
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.SpecsIo;
 
 public class ExampleTest {
-    //
-    // good
-    //
+    /*
+     *  helper
+     */
+    private void goodTest(String jmmCode) {
+        List<Report> reports = TestUtils.parse(jmmCode).getReports();
+        TestUtils.noErrors(reports);
+    }
+
+    private void badTest(String jmmCode, int numErrors) {
+        List<Report> reports = TestUtils.parse(jmmCode).getReports();
+        TestUtils.mustFail(reports);
+        assertEquals(TestUtils.getNumErrors(reports), numErrors);
+    }
+
+    /*
+     *  good
+     */
     @Test
     public void NachoTest() {
-        String jmmCode = SpecsIo.read("test/nachotest.jmm");
-        //System.out.println(TestUtils.parse(jmmCode).getRootNode());
-        System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
+        goodTest(SpecsIo.read("test/nachotest.jmm"));
     }
 
     @Test
     public void ArrayAssignTest() {
-        String jmmCode = SpecsIo.read("test/arrayassign.jmm");
-        //System.out.println(TestUtils.parse(jmmCode).getRootNode());
-        //System.out.println(TestUtils.parse(jmmCode).getRootNode().toJson());
-        try {
-            FileWriter myWriter = new FileWriter("result.json");
-            myWriter.write(TestUtils.parse(jmmCode).getRootNode().toJson());
-            myWriter.close();
-            System.err.println("Successfully wrote to the file.");
-        } catch (IOException e) {
-            System.err.println("An error occurred.");
-            e.printStackTrace();
-        }
+        goodTest(SpecsIo.read("test/arrayassign.jmm"));
+        //  try {
+        //      FileWriter myWriter = new FileWriter("result.json");
+        //      myWriter.write(TestUtils.parse(jmmCode).getRootNode().toJson());
+        //      myWriter.close();
+        //      System.err.println("Successfully wrote to the file.");
+        //  } catch (IOException e) {
+        //      System.err.println("An error occurred.");
+        //      e.printStackTrace();
+        //  }
     }
 
-    // good
     @Test
     public void findMaximumTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/FindMaximum.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
     }
 
     @Test
     public void helloWorldTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/HelloWorld.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
     }
 
     @Test
     public void lazySortTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/Lazysort.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
     }
 
     @Test
     public void lifeTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/Life.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/Life.jmm"));
     }
 
     @Test
     public void monteCarloPiTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"));
     }
 
     @Test
     public void QuickSortTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/QuickSort.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
     }
 
     @Test
     public void SimpleTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/Simple.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/Simple.jmm"));
     }
 
     @Test
     public void TicTacToeTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/TicTacToe.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
     }
 
     @Test
     public void WhileAndIfTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/WhileAndIF.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        goodTest(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
     }
 
     @Test
     public void TuringTest() {
         System.out.println("Weird static import thingy.");
-        //var jmmCode = SpecsIo.getResource("fixtures/private/Turing.jmm");
-        //System.out.println(TestUtils.parse(jmmCode).getRootNode());
     }
 
     @Test
     public void TicTacToeJavaTest() {
         System.out.println("The grammar doesn't accept this file (it's java not jmm).");
-        //String jmmCode = SpecsIo.read("test/fixtures/public/java/TicTacToe.java");
-        //System.out.println(TestUtils.parse(jmmCode).getRootNode());
     }
 
-    //
-    // bad
-    //
+    /*
+     *  bad
+     */
     @Test(expected = Exception.class)
     public void BadNachoTest() {
         String jmmCode = SpecsIo.read("test/badnachotest.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        TestUtils.parse(jmmCode);
     }
 
     @Test(expected = Exception.class)
     public void BlowUpTest() {
         var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/BlowUp.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        TestUtils.parse(jmmCode);
     }
 
-    // TODO problem is inside while loop so there are no exceptions thrown
-    @Test//(expected = Exception.class)
+    @Test
     public void CompleteWhileTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/CompleteWhileTest.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        badTest(SpecsIo.getResource("fixtures/public/fail/syntactical/CompleteWhileTest.jmm"), 11);
     }
 
-    @Test//(expected = Exception.class)
+    @Test
     public void LengthErrorTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/LengthError.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        badTest(SpecsIo.getResource("fixtures/public/fail/syntactical/LengthError.jmm"), 1);
     }
 
-    @Test//(expected = Exception.class)
+    @Test
     public void MissingRightParTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/MissingRightPar.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        badTest(SpecsIo.getResource("fixtures/public/fail/syntactical/MissingRightPar.jmm"), 1);
     }
 
-    @Test//(expected = Exception.class)
+    @Test
     public void MultipleSequencialTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/MultipleSequential.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        badTest(SpecsIo.getResource("fixtures/public/fail/syntactical/MultipleSequential.jmm"), 2);
     }
 
-    @Test//(expected = Exception.class)
+    @Test
     public void NestedLoopTest() {
-        var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/NestedLoop.jmm");
-        System.out.println(TestUtils.parse(jmmCode).getRootNode());
+        badTest(SpecsIo.getResource("fixtures/public/fail/syntactical/NestedLoop.jmm"), 2);
     }
 }

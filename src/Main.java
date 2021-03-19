@@ -1,21 +1,30 @@
 
+import jdk.jshell.spi.ExecutionControl;
 import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.Arrays;
 import java.io.StringReader;
+import java.util.List;
 
 public class Main implements JmmParser {
 	public JmmParserResult parse(String jmmCode) {
+		Jmm jmm = new Jmm(new StringReader(jmmCode));
 		try {
-		    Jmm jmm = new Jmm(new StringReader(jmmCode));
     		SimpleNode root = jmm.Program(); // returns reference to root node
-            	
     		root.dump(""); // prints the tree on the screen
     	
     		return new JmmParserResult(root, jmm.getReports());
 		} catch(ParseException e) {
-			throw new RuntimeException("Error while parsing", e);
+			List<Report> reports = jmm.getReports();
+			String msg = "Failed to parse the file";
+			e.setErrMsg(msg);
+			System.err.println(e.getErrMsg());
+			reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, msg));
+			return new JmmParserResult(null, jmm.getReports());
 		}
 	}
 

@@ -12,6 +12,7 @@ import java.util.Properties;
 import java.io.StringReader;
 
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.SpecsIo;
 
@@ -19,15 +20,33 @@ public class ExampleTest {
     /*
      *  helper
      */
-    private void goodTest(String jmmCode) {
-        List<Report> reports = TestUtils.parse(jmmCode).getReports();
+    private JmmParserResult goodTest(String jmmCode) {
+        JmmParserResult result = TestUtils.parse(jmmCode);
+        List<Report> reports = result.getReports();
         TestUtils.noErrors(reports);
+
+        return result;
     }
 
-    private void badTest(String jmmCode, int numErrors) {
-        List<Report> reports = TestUtils.parse(jmmCode).getReports();
+    private JmmParserResult badTest(String jmmCode, int numErrors) {
+        JmmParserResult result = TestUtils.parse(jmmCode);
+        List<Report> reports = result.getReports();
         TestUtils.mustFail(reports);
         assertEquals(TestUtils.getNumErrors(reports), numErrors);
+
+        return result;
+    }
+
+    private void outputJsonTest(String filePath, JmmParserResult result) {
+        try {
+            FileWriter myWriter = new FileWriter(filePath);
+            myWriter.write(result.toJson());
+            myWriter.close();
+            System.err.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            System.err.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -40,16 +59,8 @@ public class ExampleTest {
 
     @Test
     public void ArrayAssignTest() {
-        goodTest(SpecsIo.read("test/arrayassign.jmm"));
-        //  try {
-        //      FileWriter myWriter = new FileWriter("result.json");
-        //      myWriter.write(TestUtils.parse(jmmCode).getRootNode().toJson());
-        //      myWriter.close();
-        //      System.err.println("Successfully wrote to the file.");
-        //  } catch (IOException e) {
-        //      System.err.println("An error occurred.");
-        //      e.printStackTrace();
-        //  }
+        String jmmCode = SpecsIo.read("test/arrayassign.jmm");
+        goodTest(jmmCode);
     }
 
     @Test
@@ -110,13 +121,13 @@ public class ExampleTest {
     /*
      *  bad
      */
-    @Test(expected = Exception.class)
+    @Test
     public void BadNachoTest() {
         String jmmCode = SpecsIo.read("test/badnachotest.jmm");
         TestUtils.parse(jmmCode);
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void BlowUpTest() {
         var jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/BlowUp.jmm");
         TestUtils.parse(jmmCode);
@@ -124,7 +135,8 @@ public class ExampleTest {
 
     @Test
     public void CompleteWhileTest() {
-        badTest(SpecsIo.getResource("fixtures/public/fail/syntactical/CompleteWhileTest.jmm"), 11);
+        JmmParserResult result = badTest(SpecsIo.getResource("fixtures/public/fail/syntactical/CompleteWhileTest.jmm"), 11);
+        outputJsonTest("result.json", result);
     }
 
     @Test

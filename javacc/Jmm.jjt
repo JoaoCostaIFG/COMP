@@ -193,7 +193,7 @@ void MethodBody() : {}
     // The lines bellow make use of a LOOKAHEAD to keep the grammar correct
     (LOOKAHEAD(2) VarDeclaration())*
     (Statement())*
-    // They were changed to the lines bellow to facilitate the removal of the
+    // They could be changed to the lines bellow to facilitate the removal of the
     // LOOKAHEAD with the permission of the teacher.
     // The grammar now allows variables to be declared after other statements
     // have been written.
@@ -213,13 +213,14 @@ void Type() : { Token t; boolean isArray=false; }
     }
 }
 
-void Statement() #void : {}
+void Statement() #void : { int children_cnt=1; }
 {
     <SCURL> (Statement())* <ECURL> // block statment
     |   IfStatement() // if then else
     |   WhileLoop() // while loop
-    |   ([LOOKAHEAD(Assignment()) Assignment()] Expression() <SEMICOLON>) // assignment or just expression
-    // LOOKAHEAD is used here to distinguish between: a[0] = 1; and a[0];
+    |   [LOOKAHEAD(2) Assignment() { children_cnt = 2; }] Expression() #AssignOrExpression(children_cnt) <SEMICOLON>
+    // using semantic LOOKAHEAD instead of syntactic. This forbids contructs like: a[0];.
+    // This restricts the grammar, but helps with performance (avoids infinite LOOKAHEAD).
 }
 
 void IfStatement() #If : {}
@@ -247,14 +248,9 @@ void WhileLoop() : {}
     Statement() #Body
 }
 
-void Assignment() #void : {}
+void Assignment() #Var : { Token varName; }
 {
-    IdentifierOrArrayAccesss() <ASSIGN>
-}
-
-void IdentifierOrArrayAccesss() #Assignment : { Token varName; }
-{
-    varName=<IDENTIFIER> [<SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAccess", "yes"); }]
+    varName=<IDENTIFIER> [<SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAccess", "yes"); }] <ASSIGN>
     { jjtThis.put("varName", varName.image); }
 }
 

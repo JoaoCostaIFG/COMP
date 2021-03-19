@@ -58,12 +58,6 @@ public class ExampleTest {
     }
 
     @Test
-    public void ArrayAssignTest() {
-        String jmmCode = SpecsIo.read("test/arrayassign.jmm");
-        goodTest(jmmCode);
-    }
-
-    @Test
     public void findMaximumTest() {
         goodTest(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
     }

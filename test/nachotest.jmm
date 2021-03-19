@@ -9,12 +9,9 @@ class Nachos {
 	    EOF = 0xa8192;
         boots[0] = 10l + 9l * 8l;
         boots[0L] = 7l * 6l + 5l;
-        boots[0]; // LOOKAHEAD(5)
 
         numero = 129_2312_23_12l;  // not integer (too >)
 
-        a[1][0];
-        this[1][0];
         1<2[1][0];
         this.a(1,2)[1][0];
 

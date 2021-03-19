@@ -155,12 +155,11 @@ class SimpleNode implements Node, JmmNode {
      out its children. */
 
     public void dump(String prefix) {
-        System.out.println(toString(prefix));
+        System.out.print(toString(prefix));
 
-//        String op = get("op");
-//        if (op != null) {
-//            System.out.println(prefix + op);
-//        }
+        for (Map.Entry<String, String> entry : this.attributes.entrySet())
+            System.out.print(" - " + entry.getKey() + ": " + entry.getValue());
+        System.out.println("");
 
         if (children != null) {
             for (int i = 0; i < children.length; ++i) {

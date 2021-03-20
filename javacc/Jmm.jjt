@@ -331,12 +331,12 @@ void NewTerm() #void : { Token t; }  // 04:14
     |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("className", t.image); } #NewClass // class constructor
 }
 
+// This will print the error on the terminal and save the report
 JAVACODE
 void error_print(ParseException e, String errMsg) {
     e.setErrMsg(errMsg);
     System.err.println(e.getErrMsg());  // print the error message
-
-    this.reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, e.getErrMsg()));
+    this.reports.add(e.getReport());  // save the report
 }
 
 JAVACODE

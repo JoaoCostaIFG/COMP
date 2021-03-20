@@ -20,10 +20,9 @@ public class Main implements JmmParser {
     		return new JmmParserResult(root, jmm.getReports());
 		} catch(ParseException e) {
 			List<Report> reports = jmm.getReports();
-			String msg = "Failed to parse the file";
-			e.setErrMsg(msg);
+			e.setErrMsg("Failed to parse the given file");
 			System.err.println(e.getErrMsg());
-			reports.add(new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, msg));
+			reports.add(e.getReport());
 			return new JmmParserResult(null, jmm.getReports());
 		}
 	}

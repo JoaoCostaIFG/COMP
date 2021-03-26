@@ -127,7 +127,10 @@ void ImportDeclarations() : {}
 
 void ImportDeclaration() : { StringBuilder importPath = new StringBuilder(); Token packageName; }
 {
-    <IMPORT> packageName=<IDENTIFIER> { importPath=new StringBuilder(packageName.image); }
+    <IMPORT> packageName=<IDENTIFIER> {
+        importPath=new StringBuilder(packageName.image);
+        jjtThis.put("line", Integer.toString(packageName.beginLine));
+    }
         (<DOT> packageName=<IDENTIFIER>{ importPath.append("." + packageName.image); })* <SEMICOLON>
         { jjtThis.put("importPath", importPath.toString()); }
 }
@@ -135,7 +138,10 @@ void ImportDeclaration() : { StringBuilder importPath = new StringBuilder(); Tok
 void ClassDeclaration() : { Token className, extendsName; }
 {
     // class can only extend one other class
-    <CLASS> className=<IDENTIFIER> { jjtThis.put("className", className.image); }
+    <CLASS> className=<IDENTIFIER> {
+        jjtThis.put("className", className.image);
+        jjtThis.put("line", Integer.toString(className.beginLine));
+    }
     [<EXTENDS> extendsName=<IDENTIFIER> { jjtThis.put("extendsName", extendsName.image); }]
     <SCURL>
         ClassBody()
@@ -151,7 +157,10 @@ void ClassBody() : {}
 void VarDeclaration() : { Token varName; }
 {
     // TODO create method to merge with another node
-    Type() varName=<IDENTIFIER> { jjtThis.put("varName", varName.image); } <SEMICOLON>
+    Type() varName=<IDENTIFIER> {
+        jjtThis.put("varName", varName.image);
+        jjtThis.put("line", Integer.toString(varName.beginLine));
+    } <SEMICOLON>
 }
 
 void MethodDeclaration() : { Token methodName; }
@@ -175,17 +184,22 @@ void MethodDeclaration() : { Token methodName; }
     <ECURL>)
     {
         jjtThis.put("methodName", methodName.image);
+        jjtThis.put("line", Integer.toString(methodName.beginLine));
     }
 }
 
-void MethodParameters() #void : { Token paramName; }
+void MethodParameters() #void : {}
 {
+    // >:(((((((((((((((((((((((((((((((
     [(MethodParameter()  (<COMMA> MethodParameter())*) #MethodParameters]
 }
 
 void MethodParameter() : { Token paramName; }
 {
-    Type() paramName=<IDENTIFIER> { jjtThis.put("paramName", paramName.image); }
+    Type() paramName=<IDENTIFIER> {
+        jjtThis.put("paramName", paramName.image);
+        jjtThis.put("line", Integer.toString(paramName.beginLine));
+    }
 }
 
 void MethodBody() : {}
@@ -209,7 +223,7 @@ void Type() : { Token t; boolean isArray=false; }
     {
         jjtThis.put("dataType", t.image);
         jjtThis.put("isArray", isArray ? "yes" : "no");
-        //return jjtThis;
+        jjtThis.put("line", Integer.toString(t.beginLine));
     }
 }
 
@@ -218,7 +232,7 @@ void Statement() #void : { int children_cnt=1; }
     <SCURL> (Statement())* <ECURL> // block statment
     |   IfStatement() // if then else
     |   WhileLoop() // while loop
-    |   [LOOKAHEAD(2) Assignment() { children_cnt = 2; }] Expression() #AssignOrExpression(children_cnt) <SEMICOLON>
+    |   [LOOKAHEAD(2) Assignment() { children_cnt = 2; }] Expression() {} #AssignOrExpression(children_cnt) <SEMICOLON>
     // using semantic LOOKAHEAD instead of syntactic. This forbids contructs like: a[0];.
     // This restricts the grammar, but helps with performance (avoids infinite LOOKAHEAD).
 }
@@ -251,7 +265,10 @@ void WhileLoop() : {}
 void Assignment() #Var : { Token varName; }
 {
     varName=<IDENTIFIER> [<SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAccess", "yes"); }] <ASSIGN>
-    { jjtThis.put("varName", varName.image); }
+    {
+        jjtThis.put("varName", varName.image);
+        jjtThis.put("line", Integer.toString(varName.beginLine));
+    }
 }
 
 void Expression() #void : {}
@@ -308,7 +325,10 @@ void DotTerm() #void : {}
 
 void DotExpansion() #FuncCall : { Token t; }
 {
-    t=<IDENTIFIER> { jjtThis.put("methodName", t.image); }
+    t=<IDENTIFIER> {
+        jjtThis.put("methodName", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    }
     <SPAR>
         [(Expression() (<COMMA> Expression())*) #Args]
     <EPAR>
@@ -316,19 +336,40 @@ void DotExpansion() #FuncCall : { Token t; }
 
 void PrimaryTerm() #void : { Token t; }
 {
-    <TRUE> { jjtThis.put("type", "bool"); jjtThis.put("value", "true"); } #Literal
-    |   <FALSE> { jjtThis.put("type", "bool"); jjtThis.put("value", "false"); } #Literal
-    |   <THIS> { jjtThis.put("type", "this"); } #Literal
+    t=<TRUE> {
+        jjtThis.put("type", "bool"); jjtThis.put("value", "true");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Literal
+    |   t=<FALSE> {
+        jjtThis.put("type", "bool"); jjtThis.put("value", "false");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Literal
+    |   t=<THIS> {
+        jjtThis.put("type", "this");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Literal
     |   <SPAR> Expression() <EPAR>
     |   <NEW> NewTerm()
-    |   t = <INTEGER_LITERAL> { jjtThis.put("type", "int"); jjtThis.put("value", t.image); } #Literal
-    |   t = <IDENTIFIER> { jjtThis.put("type", "identifier"); jjtThis.put("name", t.image); } #Literal
+    |   t=<INTEGER_LITERAL> {
+        jjtThis.put("type", "int"); jjtThis.put("value", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Literal
+    |   t=<IDENTIFIER> {
+        jjtThis.put("type", "identifier"); jjtThis.put("name", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Literal
 }
 
 void NewTerm() #void : { Token t; }  // 04:14
 {
-    <INT> <SBRAK> Expression() <EBRAK> { jjtThis.put("type", "array"); } #New(1)  // array allocation
-    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("type", "class"); jjtThis.put("name", t.image); } #New // class constructor
+    t=<INT> <SBRAK> Expression() <EBRAK> {
+        jjtThis.put("type", "array");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #New(1)  // array allocation
+    |   t=<IDENTIFIER> <SPAR> <EPAR> {
+        jjtThis.put("type", "class"); jjtThis.put("name", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #New // class constructor
 }
 
 // This will print the error on the terminal and save the report

@@ -20,7 +20,6 @@ class SimpleNode implements Node, JmmNode {
 
     // added
     private final Map<String, String> attributes; // TODO String -> Object
-    public Operator op = null; // TODO ask prof??
 
     public SimpleNode(int i) {
         this.attributes = new HashMap<>();

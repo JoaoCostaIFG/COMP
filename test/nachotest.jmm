@@ -1,8 +1,9 @@
         /* asd adsd asp dkapsk d
         apdkaspokdopask
         asdioajdoiaj*/
+import amazing.lambreta;
 
-class Nachos {
+class Nachos extends Cute {
 	public static /* a */ void main(String[] args) {
 	    int EOF;
 

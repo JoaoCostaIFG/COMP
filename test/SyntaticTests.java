@@ -16,7 +16,7 @@ import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.SpecsIo;
 
-public class ExampleTest {
+public class SyntaticTests {
     /*
      *  helper
      */

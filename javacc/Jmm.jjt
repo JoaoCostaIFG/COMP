@@ -257,7 +257,7 @@ void Assignment() #Var : { Token varName; }
 void Expression() #void : {}
 {
     LessThanTerm()
-    (<AND> LessThanTerm() #And(2))*
+    (<AND> LessThanTerm() { jjtThis.put("op", "AND"); } #Binary(2))*
 
     // this (and the other similar constructs) could also be written as (recursive form):
     // LessThanTerm()
@@ -267,34 +267,34 @@ void Expression() #void : {}
 void LessThanTerm() #void : {}
 {
     AdditiveTerm()
-    (<LESSTHAN> AdditiveTerm() #LessThan(2))*
+    (<LESSTHAN> AdditiveTerm() { jjtThis.put("op", "LESSTHAN"); } #Binary(2))*
 }
 
 void AdditiveTerm() #void : {}
 {
     MultiplicativeTerm()
-    (<ADD> MultiplicativeTerm() #Add(2)
-    |   <SUB> MultiplicativeTerm() #Sub(2))*
+    (<ADD> MultiplicativeTerm() { jjtThis.put("op", "ADD"); } #Binary(2)
+    |   <SUB> MultiplicativeTerm() { jjtThis.put("op", "SUB"); } #Binary(2))*
 }
 
 void MultiplicativeTerm() #void : {}
 {
     UnaryTerm()
-    (<MUL>  UnaryTerm() #Mult(2)
-    |   <DIV> UnaryTerm() #Div(2))*
+    (<MUL>  UnaryTerm() { jjtThis.put("op", "MULT"); } #Binary(2)
+    |   <DIV> UnaryTerm() { jjtThis.put("op", "DIV"); } #Binary(2))*
 }
 
 void UnaryTerm() #void : {}
 {
-    <NOT> UnaryTerm() #Not
+    <NOT> UnaryTerm() { jjtThis.put("op", "NOT"); } #Unary
     |   PostfixTerm()
 }
 
 void PostfixTerm() #void : {}
 {
     PrimaryTerm()
-    (<SBRAK> Expression() #ArrayAccess(2) <EBRAK>
-    |   DotTerm() #Dot(2))*
+    (<SBRAK> Expression() { jjtThis.put("op", "INDEX"); } #Binary(2) <EBRAK>
+    |   DotTerm() { jjtThis.put("op", "DOT"); } #Binary(2))*
 }
 
 void DotTerm() #void : {}
@@ -316,19 +316,19 @@ void DotExpansion() #FuncCall : { Token t; }
 
 void PrimaryTerm() #void : { Token t; }
 {
-    <TRUE> { jjtThis.put("value", "true"); } #Constant
-    |   <FALSE> { jjtThis.put("value", "false"); } #Constant
-    |   <THIS> { jjtThis.put("value", "this"); } #Constant
+    <TRUE> { jjtThis.put("type", "bool"); jjtThis.put("value", "true"); } #Literal
+    |   <FALSE> { jjtThis.put("type", "bool"); jjtThis.put("value", "false"); } #Literal
+    |   <THIS> { jjtThis.put("type", "this"); } #Literal
     |   <SPAR> Expression() <EPAR>
     |   <NEW> NewTerm()
-    |   t = <INTEGER_LITERAL> { jjtThis.put("value", t.image); } #Constant
-    |   t = <IDENTIFIER> { jjtThis.put("name", t.image); } #Variable
+    |   t = <INTEGER_LITERAL> { jjtThis.put("type", "int"); jjtThis.put("value", t.image); } #Literal
+    |   t = <IDENTIFIER> { jjtThis.put("type", "identifier"); jjtThis.put("name", t.image); } #Literal
 }
 
 void NewTerm() #void : { Token t; }  // 04:14
 {
-    <INT> <SBRAK> Expression() <EBRAK> #NewArray(1)  // array allocation
-    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("className", t.image); } #NewClass // class constructor
+    <INT> <SBRAK> Expression() <EBRAK> { jjtThis.put("type", "array"); } #New(1)  // array allocation
+    |   t=<IDENTIFIER> <SPAR> <EPAR> { jjtThis.put("type", "class"); jjtThis.put("name", t.image); } #New // class constructor
 }
 
 // This will print the error on the terminal and save the report

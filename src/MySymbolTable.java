@@ -64,8 +64,8 @@ public class MySymbolTable implements SymbolTable {
         // TODO checks for no repeated main (it doesn't take UUID)
         // TODO what to do about UUID funcs in method (check for main there???)
         // 2 methods can have the same => append UUID to method name
-        // "-" can't be part of a method's name
-        String methodUUID = methodName + "-" + UUID.randomUUID().toString();
+        // ":" can't be part of a method's name
+        String methodUUID = methodName + ":" + UUID.randomUUID().toString();
         this.methods.put(methodUUID, new Method(methodUUID, returnType, parameters, localVars));
     }
 

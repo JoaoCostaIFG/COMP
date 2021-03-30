@@ -52,13 +52,13 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
 
             // return type
-            JmmNode returnNode = children.get(0);
-            if (!returnNode.getKind().equals("Type")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(returnNode.get("line")),
+            JmmNode methodTypeNode = children.get(0);
+            if (!methodTypeNode.getKind().equals("Type")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(methodTypeNode.get("line")),
                         "Method " + methodName + " doesn't have a properly formatted return type."));
                 return false;
             }
-            returnType = new Type(returnNode.get("dataType"), returnNode.get("isArray").equals("yes"));
+            returnType = new Type(methodTypeNode.get("dataType"), methodTypeNode.get("isArray").equals("yes"));
 
             // parameters
             JmmNode parametersNode = children.get(1);
@@ -84,6 +84,9 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
             // body node
             bodyNode = children.get(2);
+
+            // TODO verify return variable type to match method's type
+            JmmNode returnNode = children.get(3);
         }
 
         // get local var declarations from body

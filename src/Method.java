@@ -1,7 +1,6 @@
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Method {
@@ -22,11 +21,11 @@ public class Method {
     }
 
     public String getName() {
-        return this.uuid.split("-")[0];
+        return this.uuid.split(":")[0];
     }
 
     public String getUUID() {
-        return this.uuid.split("-")[1];
+        return this.uuid.split(":")[1];
     }
 
     public List<Symbol> getParameters() {

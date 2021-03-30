@@ -8,14 +8,16 @@ import java.util.List;
 public class MySymbolTable implements SymbolTable {
     private final List<String> imports;
     private String className, superName;
+    private List<Symbol> classFields;
 
     public MySymbolTable() {
         this.imports = new ArrayList<>();
         this.className = null;
         this.superName = null;
+        this.classFields = new ArrayList<>();
     }
 
-    public void addImports(List<String> newImports) {
+    public void setImports(List<String> newImports) {
         if (newImports == null) return;
         this.imports.addAll(newImports);
     }
@@ -43,9 +45,18 @@ public class MySymbolTable implements SymbolTable {
         return this.superName;
     }
 
+    public void setFields(List<Symbol> newFields) {
+        if (newFields == null) return;
+        this.classFields.addAll(newFields);
+    }
+
+    /**
+     *
+     * @return a list of Symbols that represent the fields of the class
+     */
     @Override
     public List<Symbol> getFields() {
-        return null;
+        return this.classFields;
     }
 
     @Override

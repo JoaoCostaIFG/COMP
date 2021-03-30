@@ -27,7 +27,7 @@ public class ImportVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             else
                 imports.add(child.get("importPath"));
         }
-        this.symbolTable.addImports(imports);
+        this.symbolTable.setImports(imports);
         return true;
     }
 }

@@ -63,6 +63,8 @@ class SimpleNode implements Node, JmmNode {
      * {@link JmmNode#getAttributes()}
      */
     public String get(String attribute) {
+        if (!this.attributes.containsKey(attribute))
+            return null;
         return this.attributes.get(attribute);
     }
 

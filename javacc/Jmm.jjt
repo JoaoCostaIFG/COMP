@@ -146,7 +146,7 @@ void ClassDeclaration() : { Token className, extendsName; }
 
 void ClassBody() #void : {}
 {
-    (VarDeclaration())* #ClassParameters(>0)
+    (VarDeclaration())* #ClassFields(>0)
     (MethodDeclaration())*
 }
 

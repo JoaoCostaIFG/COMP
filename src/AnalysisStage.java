@@ -10,6 +10,8 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.examples.ExamplePostorderVisitor;
 import pt.up.fe.comp.jmm.ast.examples.ExamplePreorderVisitor;
 import pt.up.fe.comp.jmm.ast.examples.ExamplePrintVariables;
@@ -46,6 +48,14 @@ public class AnalysisStage implements JmmAnalysis {
         ClassVisitor classVisitor = new ClassVisitor(symbolTable);
         classVisitor.visit(node, parserResult.getReports());
         System.out.println("Class: " + symbolTable.getClassName() + " " + symbolTable.getSuper());
+
+        ClassFieldVisitor classFieldVisitor = new ClassFieldVisitor(symbolTable);
+        classFieldVisitor.visit(node, parserResult.getReports());
+        System.out.println("Class fields:");
+        for (Symbol s : symbolTable.getFields()) {
+            Type t = s.getType();
+            System.out.println("\t" + t.getName() + (t.isArray() ? "[]" : "") + " " + s.getName());
+        }
 
 //        System.out.println("Dump tree with Visitor where you control tree traversal");
 //        ExampleVisitor visitor = new ExampleVisitor("Identifier", "id");

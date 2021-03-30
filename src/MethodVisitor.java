@@ -20,6 +20,8 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         addVisit("MethodDeclaration", this::parseMethodDeclaration);
     }
 
+    // IMP local vars can't have the same name has method parameters
+
     // TODO have an explicit main visitor that we can easily separate everything?
     // TODO not that good of an idea, can just have 2 auxiliar methods
     private Boolean parseMethodDeclaration(JmmNode node, List<Report> reports) {

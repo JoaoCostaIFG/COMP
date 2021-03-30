@@ -35,7 +35,7 @@ public class ClassFieldVisitor extends PreorderJmmVisitor<List<Report>, Boolean>
                         "This should be a variable declaration. Only variable declarations are allowed on the class parameters section."));
             } else {
                 Symbol varDeclaration = this.parseVarDeclaration(child);
-                // TODO error checking
+                // TODO error checking (type is valid for declaration?)
                 classFields.add(varDeclaration);
             }
         }

@@ -158,12 +158,16 @@ void VarDeclaration() : { Token varName; }
     } <SEMICOLON>
 }
 
-void MethodDeclaration() : { Token methodName; }
+void MethodDeclaration() : { Token methodName; Token t; }
 {
     <PUBLIC>
     (<STATIC> <VOID> methodName=<MAIN>
     <SPAR>
-        <STRING> <SBRAK> <EBRAK> <IDENTIFIER>
+        <STRING> <SBRAK> <EBRAK> t=<IDENTIFIER>
+            {
+                jjtThis.put("paramName", t.image);
+                jjtThis.put("line", Integer.toString(t.beginLine));
+            } #MainParameter
     <EPAR>
     <SCURL>
         MethodBody()
@@ -171,7 +175,9 @@ void MethodDeclaration() : { Token methodName; }
     |
     Type() methodName=<IDENTIFIER>
     <SPAR>
-        MethodParameters()
+        // the parameters node isn't "optional" (#MethodParameters(>0)) because it is easier
+        // to parse the semantics if it always exists.
+        [MethodParameter()  (<COMMA> MethodParameter())*] #MethodParameters
     <EPAR>
     <SCURL>
         MethodBody()
@@ -181,12 +187,6 @@ void MethodDeclaration() : { Token methodName; }
         jjtThis.put("methodName", methodName.image);
         jjtThis.put("line", Integer.toString(methodName.beginLine));
     }
-}
-
-void MethodParameters() #void : {}
-{
-    // >:(((((((((((((((((((((((((((((((
-    [(MethodParameter()  (<COMMA> MethodParameter())*) #MethodParameters]
 }
 
 void MethodParameter() : { Token paramName; }

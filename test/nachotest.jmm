@@ -5,11 +5,11 @@ import amazing.lambreta;
 import segundo.importa.com.maior.path;
 
 class Nachos extends Cute {
-    int param1;
-    bool param2;
-    int[] param3;
+    int field1;
+    bool field2;
+    int[] field3;
 
-	public static /* a */ void main(String[] args) {
+	public int /* a */ metodo() {
 	    int EOF;
 
 	    EOF = 0xa8192;
@@ -43,5 +43,7 @@ class Nachos extends Cute {
                 true;
             }
 	    }
+
+	    return 2;
 	}
 }

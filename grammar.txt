@@ -11,7 +11,7 @@ ClassBody ->    {VarDeclaration}
                 {MethodDeclaration}
 
 MethodDeclaration ->  "public"
-                      (Type Identifier "(" [Type Identifier] {"," Type Identifier} ] ")"
+                      (Type Identifier "(" [Type Identifier {"," Type Identifier} ] ")"
                       "{"
                         MethodBody
                         "return" Expression ";"

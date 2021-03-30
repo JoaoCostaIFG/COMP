@@ -20,7 +20,7 @@ public class SemanticTests {
         String jmmCode = SpecsIo.read("test/nachotest.jmm");
         JmmParserResult result = TestUtils.parse(jmmCode);
 
-        System.out.println(result.getRootNode().toJson());
+//        System.out.println(result.getRootNode().toJson());
 
         List<Report> reports = result.getReports();
         TestUtils.noErrors(reports);

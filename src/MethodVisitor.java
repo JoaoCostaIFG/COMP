@@ -21,33 +21,52 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     // IMP local vars can't have the same name has method parameters
+    // TODO we can get the Return node here but aren't!!!!!!!!!
+    // TODO main needs to have extra checks
 
-    // TODO have an explicit main visitor that we can easily separate everything?
-    // TODO not that good of an idea, can just have 2 auxiliar methods
     private Boolean parseMethodDeclaration(JmmNode node, List<Report> reports) {
         String methodName = node.get("methodName");
         Type returnType;
         List<Symbol> methodParameters = new ArrayList<>();
+        JmmNode bodyNode;
 
         if (methodName.equals("main")) {  // is main
             returnType = new Type("void", false);
+            // return type
             JmmNode mainParam = node.getChildren().get(0);
-            // TODO check for correct type
+            if (!mainParam.getKind().equals("MainParameter")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
+                        "Main parameter name isn't defined."));
+                return false;
+            }
+            // parameters
             methodParameters.add(new Symbol(new Type("String", true), mainParam.get("paramName")));
+            // body node
+            bodyNode = node.getChildren().get(1);
         } else {
             List<JmmNode> children = node.getChildren();
-            if (children.size() != 3) {
+            if (children.size() != 4) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                         "Method " + methodName + " isn't properly defined."));
                 return false;
             }
-            // TODO check if all 3 children are of the correct type
+
             // return type
             JmmNode returnNode = children.get(0);
+            if (!returnNode.getKind().equals("Type")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(returnNode.get("line")),
+                        "Method " + methodName + " doesn't have a properly formatted return type."));
+                return false;
+            }
             returnType = new Type(returnNode.get("dataType"), returnNode.get("isArray").equals("yes"));
 
             // parameters
             JmmNode parametersNode = children.get(1);
+            if (!parametersNode.getKind().equals("MethodParameters")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(parametersNode.get("line")),
+                        "Method " + methodName + " doesn't have a properly formatted parameters."));
+                return false;
+            }
             for (JmmNode paramNode : parametersNode.getChildren()) {
                 String paramName = paramNode.get("paramName");
                 // parameter type
@@ -63,13 +82,22 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 methodParameters.add(new Symbol(paramType, paramName));
             }
 
-            // body
-            JmmNode bodyNode = children.get(2);
+            // body node
+            bodyNode = children.get(2);
         }
 
-        // TODO call methodBodyVisitor here (body Node)
-        // TODO symbol table should take the 4 args
-        this.symbolTable.addMethod(methodName, returnType, methodParameters, new ArrayList<>());
+        // get local var declarations from body
+        if (!bodyNode.getKind().equals("MethodBody")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(bodyNode.get("line")),
+                    "Method " + methodName + " doesn't have a properly formatted body."));
+            return false;
+        }
+        List<Symbol> localVars = new ArrayList<>();
+        LocalVarsVisitor localVarsVisitor = new LocalVarsVisitor(methodParameters, localVars);
+        // TODO in case of an error, we need to stop
+        localVarsVisitor.visit(bodyNode, reports);
+
+        this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars);
         return true;
     }
 }

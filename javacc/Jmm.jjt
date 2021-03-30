@@ -177,7 +177,7 @@ void MethodDeclaration() : { Token methodName; Token t; }
     <SPAR>
         // the parameters node isn't "optional" (#MethodParameters(>0)) because it is easier
         // to parse the semantics if it always exists.
-        [MethodParameter()  (<COMMA> MethodParameter())*] #MethodParameters
+        [MethodParameter()  (<COMMA> MethodParameter())*] #MethodParameters { jjtThis.put("line", Integer.toString(methodName.beginLine)); }
     <EPAR>
     <SCURL>
         MethodBody()

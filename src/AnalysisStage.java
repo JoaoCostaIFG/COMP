@@ -57,6 +57,24 @@ public class AnalysisStage implements JmmAnalysis {
             System.out.println("\t" + t.getName() + (t.isArray() ? "[]" : "") + " " + s.getName());
         }
 
+        MethodVisitor methodVisitor = new MethodVisitor(symbolTable);
+        methodVisitor.visit(node, parserResult.getReports());
+        System.out.println("Methods:");
+        for (String methodName : symbolTable.getMethods()) {
+            Type returnType = symbolTable.getReturnType(methodName);
+            System.out.println("\t" + returnType.getName() + (returnType.isArray() ? "[]" : "") + " " + methodName);
+            for (Symbol param : symbolTable.getParameters(methodName)) {
+                Type paramType = param.getType();
+                System.out.println("\t\t" + paramType.getName() + (paramType.isArray() ? "[]" : "") + " " + param.getName());
+            }
+            System.out.println("\t\t-------------------------------");
+            for (Symbol localVar : symbolTable.getLocalVariables(methodName)) {
+                Type varType = localVar.getType();
+                System.out.println("\t\t" + varType.getName() + (varType.isArray() ? "[]" : "") + " " + localVar.getName());
+            }
+        }
+
+        System.out.println("Reports: " + parserResult.getReports());
 //        System.out.println("Dump tree with Visitor where you control tree traversal");
 //        ExampleVisitor visitor = new ExampleVisitor("Identifier", "id");
 //        System.out.println(visitor.visit(node, ""));

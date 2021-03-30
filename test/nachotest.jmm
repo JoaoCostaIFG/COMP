@@ -2,8 +2,13 @@
         apdkaspokdopask
         asdioajdoiaj*/
 import amazing.lambreta;
+import segundo.importa.com.maior.path;
 
 class Nachos extends Cute {
+    int param1;
+    bool param2;
+    int[] param3;
+
 	public static /* a */ void main(String[] args) {
 	    int EOF;
 

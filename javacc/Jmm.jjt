@@ -117,12 +117,8 @@ TOKEN : {
 
 SimpleNode Program() : {}
 {
-    ImportDeclarations() ClassDeclaration() <EOF>  { return jjtThis; }
-}
-
-void ImportDeclarations() : {}
-{
-    (ImportDeclaration())*
+    (ImportDeclaration())* #ImportDeclarations(>0)
+    ClassDeclaration() <EOF>  { return jjtThis; }
 }
 
 void ImportDeclaration() : { StringBuilder importPath = new StringBuilder(); Token packageName; }
@@ -148,15 +144,14 @@ void ClassDeclaration() : { Token className, extendsName; }
     <ECURL>
 }
 
-void ClassBody() : {}
+void ClassBody() #void : {}
 {
-    (VarDeclaration())*
+    (VarDeclaration())* #ClassParameters(>0)
     (MethodDeclaration())*
 }
 
 void VarDeclaration() : { Token varName; }
 {
-    // TODO create method to merge with another node
     Type() varName=<IDENTIFIER> {
         jjtThis.put("varName", varName.image);
         jjtThis.put("line", Integer.toString(varName.beginLine));
@@ -227,22 +222,22 @@ void Type() : { Token t; boolean isArray=false; }
     }
 }
 
-void Statement() #void : { int children_cnt=1; }
+void Statement() #void : {}
 {
     <SCURL> (Statement())* <ECURL> // block statment
     |   IfStatement() // if then else
     |   WhileLoop() // while loop
-    |   [LOOKAHEAD(2) Assignment() { children_cnt = 2; }] Expression() {} #AssignOrExpression(children_cnt) <SEMICOLON>
+    |   [LOOKAHEAD(2) Assignment()] Expression() #Assign(>1)  <SEMICOLON>
     // using semantic LOOKAHEAD instead of syntactic. This forbids contructs like: a[0];.
     // This restricts the grammar, but helps with performance (avoids infinite LOOKAHEAD).
 }
 
 void IfStatement() #If : {}
 {
-    <IF> <SPAR> Expression() #Cond <EPAR>
-        Statement() #SuccessStatement
+    <IF> <SPAR> Expression() <EPAR>
+        Statement()
     <ELSE>
-        Statement() #ElseStatement
+        Statement()
 }
 
 void WhileLoop() : {}

@@ -16,7 +16,7 @@ public class Method {
         this.returnType = returnType;
     }
 
-    public String getUuid() {
+    public String getId() {
         return uuid;
     }
 

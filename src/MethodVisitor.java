@@ -27,85 +27,138 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private Boolean parseMethodDeclaration(JmmNode node, List<Report> reports) {
         String methodName = node.get("methodName");
-        Type returnType;
-        List<Symbol> methodParameters = new ArrayList<>();
-        JmmNode bodyNode;
 
-        if (methodName.equals("main")) {  // is main
-            if (mainCount >= 1) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                        "Redeclaration of main function."));
-                return false;
-            }
-            ++mainCount;
-            returnType = new Type("void", false);
-            // return type
-            JmmNode mainParam = node.getChildren().get(0);
-            if (!mainParam.getKind().equals("MainParameter")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
-                        "Main parameter name isn't defined."));
-                return false;
-            }
-            // parameters
-            methodParameters.add(new Symbol(new Type("String", true), mainParam.get("paramName")));
-            // body node
-            bodyNode = node.getChildren().get(1);
-        } else {
-            List<JmmNode> children = node.getChildren();
-            if (children.size() != 4) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                        "Method " + methodName + " isn't properly defined."));
-                return false;
-            }
+        if (methodName.equals("main"))  // is main
+            return this.visitMainFunction(node, methodName, reports);
+        else
+            return this.visitClassMethod(node, methodName, reports);
+    }
 
-            // return type
-            JmmNode methodTypeNode = children.get(0);
-            if (!methodTypeNode.getKind().equals("Type")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(methodTypeNode.get("line")),
-                        "Method " + methodName + " doesn't have a properly formatted return type."));
-                return false;
-            }
-            returnType = new Type(methodTypeNode.get("dataType"), methodTypeNode.get("isArray").equals("yes"));
+    private List<Symbol> visitLocalVrs(JmmNode bodyNode, List<Symbol> methodParameters, List<Report> reports) {
+        List<Symbol> localVars = new ArrayList<>();
+        LocalVarsVisitor localVarsVisitor = new LocalVarsVisitor(methodParameters, localVars);
+        // IMP this check is a hack (we should work with the returns of the visitors)
+        int reportNo = reports.size();
+        localVarsVisitor.visit(bodyNode, reports);
 
-            // parameters
-            JmmNode parametersNode = children.get(1);
-            if (!parametersNode.getKind().equals("MethodParameters")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(parametersNode.get("line")),
-                        "Method " + methodName + " doesn't have a properly formatted parameters."));
-                return false;
-            }
-            for (JmmNode paramNode : parametersNode.getChildren()) {
-                String paramName = paramNode.get("paramName");
-                // parameter type
-                JmmNode typeNode = paramNode.getChildren().get(0);
-                boolean isArray = typeNode.get("isArray").equals("yes");
-                if (isArray) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(typeNode.get("line")),
-                            "Method " + methodName + " has an array parameter," + paramName + "."));
-                    return false;
-                }
-                // we know parameters can't be arrays
-                Type paramType = new Type(typeNode.get("dataType"), false);
-                methodParameters.add(new Symbol(paramType, paramName));
-            }
+        return (reportNo != reports.size()) ? null : localVars;
+    }
 
-            // body node
-            bodyNode = children.get(2);
-
-            // TODO verify return variable type to match method's type
-            JmmNode returnNode = children.get(3);
+    private boolean visitMainFunction(JmmNode node, String methodName, List<Report> reports) {
+        // only allow a single main definition
+        if (mainCount >= 1) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                    "Redeclaration of main function."));
+            return false;
         }
+        ++mainCount;
+        // return type
+        Type returnType = new Type("void", false);
+        // parameter
+        JmmNode mainParam = node.getChildren().get(0);
+        if (!mainParam.getKind().equals("MainParameter")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
+                    "Main parameter name isn't defined."));
+            return false;
+        }
+        // parameters
+        List<Symbol> methodParameters = new ArrayList<>();
+        methodParameters.add(new Symbol(new Type("String", true), mainParam.get("paramName")));
 
+        // body node
+        JmmNode bodyNode = node.getChildren().get(1);
         // get local var declarations from body
         if (!bodyNode.getKind().equals("MethodBody")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(bodyNode.get("line")),
                     "Method " + methodName + " doesn't have a properly formatted body."));
             return false;
         }
-        List<Symbol> localVars = new ArrayList<>();
-        LocalVarsVisitor localVarsVisitor = new LocalVarsVisitor(methodParameters, localVars);
-        // TODO in case of an error, we need to stop
-        localVarsVisitor.visit(bodyNode, reports);
+        List<Symbol> localVars = this.visitLocalVrs(bodyNode, methodParameters, reports);
+        if (localVars == null) return false;
+
+        this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars);
+        return true;
+    }
+
+    private boolean visitClassMethod(JmmNode node, String methodName, List<Report> reports) {
+        List<JmmNode> children = node.getChildren();
+        if (children.size() != 4) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                    "Method " + methodName + " isn't properly defined."));
+            return false;
+        }
+
+        // return type
+        JmmNode methodTypeNode = children.get(0);
+        if (!methodTypeNode.getKind().equals("Type")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(methodTypeNode.get("line")),
+                    "Method " + methodName + " doesn't have a properly formatted return type."));
+            return false;
+        }
+        Type returnType = new Type(methodTypeNode.get("dataType"), methodTypeNode.get("isArray").equals("yes"));
+
+        // parameters
+        JmmNode parametersNode = children.get(1);
+        if (!parametersNode.getKind().equals("MethodParameters")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(parametersNode.get("line")),
+                    "Method " + methodName + " doesn't have a properly formatted parameters."));
+            return false;
+        }
+        List<Symbol> methodParameters = new ArrayList<>();
+        for (JmmNode paramNode : parametersNode.getChildren()) {
+            String paramName = paramNode.get("paramName");
+            // parameter type
+            JmmNode typeNode = paramNode.getChildren().get(0);
+            boolean isArray = typeNode.get("isArray").equals("yes");
+            if (isArray) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(typeNode.get("line")),
+                        "Method " + methodName + " has an array parameter," + paramName + "."));
+                return false;
+            }
+            // we know parameters can't be arrays
+            Type paramType = new Type(typeNode.get("dataType"), false);
+            methodParameters.add(new Symbol(paramType, paramName));
+        }
+        // check if is overload/overloaded correctly
+        boolean conflicts = false;
+        for (Method m : this.symbolTable.getOverloads(methodName)) {
+            List<Symbol> mParams = m.getParameters();
+            if (methodParameters.size() != mParams.size()) continue;
+
+            boolean areTheSame = true;
+            for (int i = 0; i < mParams.size(); i++) {
+                Type t1 = mParams.get(i).getType();
+                Type t2 = methodParameters.get(i).getType();
+                if (!t1.getName().equals(t2.getName()) || t1.isArray() != t2.isArray()) {
+                    areTheSame = false;
+                    break;
+                }
+            }
+
+            if (areTheSame) {
+                conflicts = true;
+                break;
+            }
+        }
+        if (conflicts) {  // in case it conflicts with something
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                    "Method " + methodName + " is already defined."));
+            return false;
+        }
+
+        // body node
+        JmmNode bodyNode = children.get(2);
+        // get local var declarations from body
+        if (!bodyNode.getKind().equals("MethodBody")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(bodyNode.get("line")),
+                    "Method " + methodName + " doesn't have a properly formatted body."));
+            return false;
+        }
+        List<Symbol> localVars = this.visitLocalVrs(bodyNode, methodParameters, reports);
+        if (localVars == null) return false;
+
+        // TODO verify return variable type to match method's type
+        JmmNode returnNode = children.get(3);
 
         this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars);
         return true;

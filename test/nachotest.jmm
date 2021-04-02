@@ -13,7 +13,13 @@ class Nachos extends Cute {
 
     }
 
-	public int /* a */ metodo(int param1, ABC param2) {
+    /*
+	public int metodo(int param1, ABC param2) {
+	    return 0;
+	}
+	*/
+
+	public int metodo(int param1, ABC param2) {
 	    int EOF;
 	    int KKKKKK;
 

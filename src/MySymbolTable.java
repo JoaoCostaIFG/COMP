@@ -66,6 +66,17 @@ public class MySymbolTable implements SymbolTable {
         this.methods.put(methodUUID, new Method(methodUUID, returnType, parameters, localVars));
     }
 
+    public List<Method> getOverloads(String name) {
+        List<Method> overloads = new ArrayList<>();
+        for (Map.Entry<String, Method> e : this.methods.entrySet()) {
+            Method m = e.getValue();
+            if (m.getName().equals(name))
+                overloads.add(m);
+        }
+
+        return overloads;
+    }
+
     @Override
     public List<String> getMethods() {
         return new ArrayList<>(this.methods.keySet());

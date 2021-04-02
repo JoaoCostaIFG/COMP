@@ -59,11 +59,12 @@ public class MySymbolTable implements SymbolTable {
         return this.classFields;
     }
 
-    public void addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> localVars) {
+    public String addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> localVars) {
         // 2 methods can have the same => append UUID to method name
         // ":" can't be part of a method's name
         String methodUUID = methodName + ":" + UUID.randomUUID().toString();
         this.methods.put(methodUUID, new Method(methodUUID, returnType, parameters, localVars));
+        return methodUUID;
     }
 
     public List<Method> getOverloads(String name) {

@@ -22,8 +22,6 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     // IMP local vars can't have the same name has method parameters
-    // TODO we can get the Return node here but aren't!!!!!!!!!
-    // TODO main needs to have extra checks
 
     private Boolean parseMethodDeclaration(JmmNode node, List<Report> reports) {
         String methodName = node.get("methodName");
@@ -42,6 +40,22 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         localVarsVisitor.visit(bodyNode, reports);
 
         return (reportNo != reports.size()) ? null : localVars;
+    }
+
+    private List<Symbol> visitBody(JmmNode bodyNode, String methodName, List<Symbol> methodParameters, List<Report> reports) {
+        // get local var declarations from body
+        if (!bodyNode.getKind().equals("MethodBody")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(bodyNode.get("line")),
+                    "Method " + methodName + " doesn't have a properly formatted body."));
+            return null;
+        }
+
+        List<Symbol> localVars = this.visitLocalVrs(bodyNode, methodParameters, reports);
+
+        BodyVisitor bodyVisitor = new BodyVisitor(this.symbolTable);
+        bodyVisitor.visit(bodyNode, reports);
+
+        return localVars;
     }
 
     private boolean visitMainFunction(JmmNode node, String methodName, List<Report> reports) {
@@ -67,13 +81,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
         // body node
         JmmNode bodyNode = node.getChildren().get(1);
-        // get local var declarations from body
-        if (!bodyNode.getKind().equals("MethodBody")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(bodyNode.get("line")),
-                    "Method " + methodName + " doesn't have a properly formatted body."));
-            return false;
-        }
-        List<Symbol> localVars = this.visitLocalVrs(bodyNode, methodParameters, reports);
+        List<Symbol> localVars = this.visitBody(bodyNode, methodName, methodParameters, reports);
         if (localVars == null) return false;
 
         this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars);
@@ -148,13 +156,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
         // body node
         JmmNode bodyNode = children.get(2);
-        // get local var declarations from body
-        if (!bodyNode.getKind().equals("MethodBody")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(bodyNode.get("line")),
-                    "Method " + methodName + " doesn't have a properly formatted body."));
-            return false;
-        }
-        List<Symbol> localVars = this.visitLocalVrs(bodyNode, methodParameters, reports);
+        List<Symbol> localVars = this.visitBody(bodyNode, methodName, methodParameters, reports);
         if (localVars == null) return false;
 
         // TODO verify return variable type to match method's type

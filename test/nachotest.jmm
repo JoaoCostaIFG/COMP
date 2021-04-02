@@ -9,6 +9,10 @@ class Nachos extends Cute {
     bool field2;
     int[] field3;
 
+    public static void main(String[] a) {
+
+    }
+
 	public int /* a */ metodo(int param1, ABC param2) {
 	    int EOF;
 	    int KKKKKK;

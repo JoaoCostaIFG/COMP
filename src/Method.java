@@ -28,6 +28,10 @@ public class Method {
         return this.uuid.split(":")[1];
     }
 
+    public boolean isMain() {
+        return "main".equals(this.getName());
+    }
+
     public List<Symbol> getParameters() {
         return parameters;
     }

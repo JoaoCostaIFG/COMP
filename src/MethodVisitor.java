@@ -12,6 +12,7 @@ import java.util.List;
 import static java.lang.Integer.parseInt;
 
 public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
+    private static int mainCount = 0;
     private final MySymbolTable symbolTable;
 
     public MethodVisitor(MySymbolTable symbolTable) {
@@ -31,6 +32,12 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         JmmNode bodyNode;
 
         if (methodName.equals("main")) {  // is main
+            if (mainCount >= 1) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                        "Redeclaration of main function."));
+                return false;
+            }
+            ++mainCount;
             returnType = new Type("void", false);
             // return type
             JmmNode mainParam = node.getChildren().get(0);

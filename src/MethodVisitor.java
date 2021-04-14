@@ -79,7 +79,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         List<Symbol> localVars = this.visitBody(bodyNode, methodName, methodParameters, reports);
         if (localVars == null) return false;
 
-        this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars);
+        this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars, node);
         return true;
     }
 
@@ -149,7 +149,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             return false;
         }
 
-        // body node
+        // get local vars of the body node
         JmmNode bodyNode = children.get(2);
         List<Symbol> localVars = this.visitBody(bodyNode, methodName, methodParameters, reports);
         if (localVars == null) return false;
@@ -157,7 +157,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // TODO verify return variable type to match method's type
         JmmNode returnNode = children.get(3);
 
-        this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars);
+        this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars, node);
         return true;
     }
 }

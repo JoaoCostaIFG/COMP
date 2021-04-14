@@ -178,8 +178,21 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private boolean validateIndex(JmmNode ltNode, List<Report> reports) {
         if (ltNode.getNumChildren() != 2) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(ltNode.get("line")), "Less than operator needs 2 operands."));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(ltNode.get("line")), "Index operator needs 2 operands."));
             return false;
+        }
+
+        JmmNode childLeft = ltNode.getChildren().get(0);
+        switch (childLeft.getKind()) {
+            case "Literal":
+                if (!childLeft.get("type").equals("identifier")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(ltNode.get("line")), "Index operator can only be used in arrays."));
+                    return false;
+                }
+                break;
+            default:
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(ltNode.get("line")), "Less than operator left operand is not a boolean."));
+                return false;
         }
 
         return true;

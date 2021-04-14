@@ -155,55 +155,34 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             return false;
         }
 
-        JmmNode childLeft = node.getChildren().get(0);
-        switch (childLeft.getKind()) {
-            case "Literal":
-                if (nodeIsOfType(childLeft, "boolean")) {
+        String[] left_right = new String[]{"left, right"};
+        for (int i=0; i<node.getChildren().size(); ++i) {
+            JmmNode child = node.getChildren().get(i);
+            switch (child.getKind()) {
+                case "Literal":
+                    if (!nodeIsOfType(child, "boolean")) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                                node.getKind() + "  operator " + left_right[i] + " operand is not a boolean."));
+                        return false;
+                    }
+                    break;
+                case "Unary":
+                    // is unary => is of the NOT kind => boolean (validated by visit unary)
+                    break;
+                case "Binary":
+                    if (!child.get("op").equals("AND") && !child.get("op").equals("LESSTHAN")) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                                node.getKind() + "  operator " + left_right[i] + " operand is not a boolean."));
+                        return false;
+                    }
+                    break;
+                default:
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator left operand is not a boolean."));
+                            node.getKind() + "  operator " + left_right[i] + " operand is not a boolean."));
                     return false;
-                }
-                break;
-            case "Unary":
-                // is unary => is of the NOT kind => boolean (validated by visit unary)
-                break;
-            case "Binary":
-                if (!childLeft.get("op").equals("AND") && !childLeft.get("op").equals("LESSTHAN")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator left operand is not a boolean."));
-                    return false;
-                }
-                break;
-            default:
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                        node.getKind() + "  operator left operand is not a boolean."));
-                return false;
+            }
         }
 
-        JmmNode childRight = node.getChildren().get(1);
-        switch (childRight.getKind()) {
-            case "Literal":
-                if (nodeIsOfType(childRight, "boolean")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator right operand is not a boolean."));
-                    return false;
-                }
-                break;
-            case "Unary":
-                // is unary => is of the NOT kind => boolean (validated by visit unary)
-                break;
-            case "Binary":
-                if (!childRight.get("op").equals("AND") && !childRight.get("op").equals("LESSTHAN")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator right operand is not a boolean."));
-                    return false;
-                }
-                break;
-            default:
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                        node.getKind() + "  operator right operand is not a boolean."));
-                return false;
-        }
         return true;
     }
 
@@ -214,69 +193,39 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             return false;
         }
 
-        JmmNode childLeft = node.getChildren().get(0);
-        switch (childLeft.getKind()) {
-            case "Literal":
-                if (nodeIsOfType(childLeft, "int")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator left operand is not a integer."));
-                    return false;
-                }
-                break;
-            case "Binary":
-                if (childLeft.get("op").equals("DOT") && !nodeIsOfType(childLeft, "int")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator left operand is not a integer."));
-                    return false;
-                }
+        String[] left_right = new String[]{"left", "right"};
+        for (int i=0; i<node.getChildren().size(); ++i) {
+            JmmNode child = node.getChildren().get(i);
+            String op= child.get("op");
 
-                if (!childLeft.get("op").equals("ADD") &&
-                        !childLeft.get("op").equals("SUB") &&
-                        !childLeft.get("op").equals("MULT") &&
-                        !childLeft.get("op").equals("DIV")
-                ) {
+            switch (child.getKind()) {
+                case "Literal":
+                    if (!nodeIsOfType(child, "int")) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                                node.getKind() + "  operator " + left_right[i] + " operand is not a integer."));
+                        return false;
+                    }
+                    break;
+                case "Binary":
+                    if (op.equals("DOT") && !nodeIsOfType(child, "int")) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                                node.getKind() + "  operator " + left_right[i] + " operand is not a integer."));
+                        return false;
+                    }
+
+                    if (!op.equals("ADD") && !op.equals("SUB") && !op.equals("MULT") && !op.equals("DIV")) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                                node.getKind() + "  operator " + left_right[i] + " operand is not a integer."));
+                        return false;
+                    }
+                    break;
+                default:
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator left operand is not a integer."));
+                            node.getKind() + "  operator " + left_right[i] + " operand is not a integer."));
                     return false;
-                }
-                break;
-            default:
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                        node.getKind() + "  operator left operand is not a integer."));
-                return false;
+            }
         }
 
-        JmmNode childRight = node.getChildren().get(1);
-        switch (childRight.getKind()) {
-            case "Literal":
-                if (nodeIsOfType(childRight, "int")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator right operand is not a integer."));
-                    return false;
-                }
-                break;
-            case "Binary":
-                if (childRight.get("op").equals("DOT") && !nodeIsOfType(childRight, "int")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator right operand is not a integer."));
-                    return false;
-                }
-
-                if (!childRight.get("op").equals("ADD") &&
-                        !childRight.get("op").equals("SUB") &&
-                        !childRight.get("op").equals("MULT") &&
-                        !childRight.get("op").equals("DIV")
-                ) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            node.getKind() + "  operator right operand is not a integer."));
-                    return false;
-                }
-                break;
-            default:
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                        node.getKind() + "  operator right operand is not a integer."));
-                return false;
-        }
         return true;
     }
 

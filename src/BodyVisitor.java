@@ -1,12 +1,12 @@
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
@@ -85,19 +85,67 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return nodeIsOfType(node, type, false);
     }
 
-    public boolean methodCallIsOfType(JmmNode node, String type, boolean isArray) {
+    public boolean methodCallIsOfType(JmmNode node, String type) {
         JmmNode container = node.getChildren().get(0);
-        if (!container.get("type").equals("identifier")) {
-            return false;
+        // 'outside' methods, are assumed to have the correct type
+        if (container.get("type").equals("this")) {
+            return true;
         }
 
-        String containerName = container.get("name");
-        if (!containerName.equals("this")) // 'outside' methods, are assumed to have the correct type
-            return true;
+        JmmNode methodNode = node.getChildren().get(1);
+        List<JmmNode> children = methodNode.getChildren();
+        List<Type> methodParams = new ArrayList<>();
+        for (int i = 1; i < methodNode.getNumChildren(); ++i) {
+            JmmNode paramNode = children.get(i);
+            switch (paramNode.getKind()) {
+                case "Binary":
+                    switch (paramNode.get("op")) {
+                        case "AND":
+                        case "LESSTHAN":
+                            methodParams.add(new Type("boolean", false));
+                            break;
+                        case "ADD":
+                        case "SUB":
+                        case "MULT":
+                        case "DIV":
+                        case "INDEX":
+                            methodParams.add(new Type("int", false));
+                            break;
+                        case "DOT":
+                            // TODO ?????????????
+                            break;
+                    }
+                    break;
+                case "Unary":
+                    methodParams.add(new Type("boolean", false));
+                    break;
+                case "Literal":
+                    switch (paramNode.get("type")) {
+                        case "boolean":
+                            methodParams.add(new Type("boolean", false));
+                            break;
+                        case "int":
+                            methodParams.add(new Type("int", false));
+                            break;
+                        case "identifier":
+                            Symbol var = this.method.getVar(paramNode.get("name"));
+                            if (var == null)
+                                return false;
+                            methodParams.add(var.getType());
+                            break;
+                        default:
+                            return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+        }
 
-        // TODO sacar da symbol table os metodos
-
-        return true;
+        Method foundMethod = this.symbolTable.getMethodByCall(methodNode.get("methodName"), methodParams);
+        if (foundMethod == null)
+            return false;
+        return foundMethod.getReturnType().getName().equals(type);
     }
 
     private boolean validateBoolean(JmmNode node, List<Report> reports) {
@@ -262,7 +310,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                         binOp.equals("DIV") || binOp.equals("INDEX"))) {
                     // if it is a method call, check return type
                     if (binOp.equals("DOT")) {
-                        // TODO
+                        if (this.methodCallIsOfType(childRight, "int"))
+                            break;
                     }
 
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(indNode.get("line")),

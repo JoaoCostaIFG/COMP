@@ -176,6 +176,12 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 }
                 break;
             case "Binary":
+                if (childLeft.get("op").equals("DOT") && !nodeIsOfType(childLeft, "int")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                            node.getKind() + "  operator left operand is not a integer."));
+                    return false;
+                }
+
                 if (!childLeft.get("op").equals("ADD") &&
                         !childLeft.get("op").equals("SUB") &&
                         !childLeft.get("op").equals("MULT") &&
@@ -202,6 +208,12 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 }
                 break;
             case "Binary":
+                if (childRight.get("op").equals("DOT") && !nodeIsOfType(childRight, "int")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                            node.getKind() + "  operator right operand is not a integer."));
+                    return false;
+                }
+
                 if (!childRight.get("op").equals("ADD") &&
                         !childRight.get("op").equals("SUB") &&
                         !childRight.get("op").equals("MULT") &&

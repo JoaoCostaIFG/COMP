@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.report.Stage;
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
+import static java.lang.Integer.remainderUnsigned;
 
 public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final MySymbolTable symbolTable;
@@ -45,11 +46,25 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return false;
     }
 
+    public boolean nodeIsOfType(JmmNode node, String type, boolean isArray) {
+        if (node.get("type").equals("identifier")) {
+            Symbol s = method.getVar(node.get("name"));
+            return s != null && s.getType().getName().equals(type) &&
+                    s.getType().isArray() == isArray;
+        } else {
+            return node.get("type").equals(type);
+        }
+    }
+
+    public boolean nodeIsOfType(JmmNode node, String type) {
+        return nodeIsOfType(node, type, false);
+    }
+
     private Boolean visitUnary(JmmNode node, List<Report> reports) {
         JmmNode child = node.getChildren().get(0);
         switch (child.getKind()) {
             case "Literal":
-                if (!child.get("type").equals("bool")) {
+                if (nodeIsOfType(child, "boolean")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")), "Not operator operand is not a boolean."));
                     return false;
                 }
@@ -79,9 +94,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         JmmNode childLeft = node.getChildren().get(0);
         switch (childLeft.getKind()) {
             case "Literal":
-                Symbol childLeftVar = method.getVar(childLeft.get("name"));
-                if ((childLeftVar == null && !childLeft.get("type").equals("bool")) ||
-                        (childLeftVar != null && !childLeftVar.getType().getName().equals("boolean"))) {
+                if (nodeIsOfType(childLeft, "boolean")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")), node.getKind() + "  operator left operand is not a boolean."));
                     return false;
                 }
@@ -103,9 +116,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         JmmNode childRight = node.getChildren().get(1);
         switch (childRight.getKind()) {
             case "Literal":
-                Symbol childRightVar = method.getVar(childRight.get("name"));
-                if ((childRightVar == null && !childLeft.get("type").equals("bool")) ||
-                        (childRightVar != null && !childRightVar.getType().getName().equals("boolean"))) {
+                if (nodeIsOfType(childRight, "boolean")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")), node.getKind() + "  operator right operand is not a boolean."));
                     return false;
                 }

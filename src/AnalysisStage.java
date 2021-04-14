@@ -40,7 +40,7 @@ public class AnalysisStage implements JmmAnalysis {
 
         MySymbolTable symbolTable = new MySymbolTable();
         JmmNode node = parserResult.getRootNode();
-        List<Reports> reports = parserResult.getReports();
+        List<Report> reports = parserResult.getReports();
 
         ImportVisitor importVisitor = new ImportVisitor(symbolTable);
         importVisitor.visit(node, reports);

@@ -79,6 +79,26 @@ public class MySymbolTable implements SymbolTable {
         return overloads;
     }
 
+    public Method getMethodByCall(String methodName, List<Type> paramsTypes) {
+        for (Method method : this.methods.values()) {
+            if (!method.getName().equals(methodName))
+                continue;
+
+            List<Symbol> params = method.getParameters();
+            if (params.size() != paramsTypes.size()) continue;
+
+            for (int i = 0; i < params.size(); ++i) {
+                Type paramType = params.get(i).getType();
+                Type paramToTest = paramsTypes.get(i);
+                if (paramType.getName().equals(paramToTest.getName()) &&
+                        paramType.isArray() == paramToTest.isArray())
+                    return method;
+            }
+        }
+
+        return null;
+    }
+
     public Method getMethod(String methodName) {
         return this.methods.get(methodName);
     }

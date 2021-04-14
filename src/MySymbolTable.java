@@ -1,3 +1,4 @@
+import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -59,11 +60,11 @@ public class MySymbolTable implements SymbolTable {
         return this.classFields;
     }
 
-    public String addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> localVars) {
+    public String addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> localVars, JmmNode node) {
         // 2 methods can have the same => append UUID to method name
         // ":" can't be part of a method's name
         String methodUUID = methodName + ":" + UUID.randomUUID().toString();
-        this.methods.put(methodUUID, new Method(methodUUID, returnType, parameters, localVars));
+        this.methods.put(methodUUID, new Method(methodUUID, returnType, parameters, localVars, node));
         return methodUUID;
     }
 
@@ -76,6 +77,10 @@ public class MySymbolTable implements SymbolTable {
         }
 
         return overloads;
+    }
+
+    public Method getMethod(String methodName) {
+        return this.methods.get(methodName);
     }
 
     @Override

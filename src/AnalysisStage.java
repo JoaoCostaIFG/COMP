@@ -39,19 +39,20 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         MySymbolTable symbolTable = new MySymbolTable();
-        JmmNode node = parserResult.getRootNode();
+        JmmNode rootNode = parserResult.getRootNode();
         List<Report> reports = parserResult.getReports();
 
+        // FILL SYMBOL TABLE
         ImportVisitor importVisitor = new ImportVisitor(symbolTable);
-        importVisitor.visit(node, reports);
+        importVisitor.visit(rootNode, reports);
         System.out.println("Imports: " + symbolTable.getImports());
 
         ClassVisitor classVisitor = new ClassVisitor(symbolTable);
-        classVisitor.visit(node, reports);
+        classVisitor.visit(rootNode, reports);
         System.out.println("Class: " + symbolTable.getClassName() + " " + symbolTable.getSuper());
 
         ClassFieldVisitor classFieldVisitor = new ClassFieldVisitor(symbolTable);
-        classFieldVisitor.visit(node, reports);
+        classFieldVisitor.visit(rootNode, reports);
         System.out.println("Class fields:");
         for (Symbol s : symbolTable.getFields()) {
             Type t = s.getType();
@@ -59,7 +60,7 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         MethodVisitor methodVisitor = new MethodVisitor(symbolTable);
-        methodVisitor.visit(node, reports);
+        methodVisitor.visit(rootNode, reports);
         System.out.println("Methods:");
         for (String methodName : symbolTable.getMethods()) {
             Type returnType = symbolTable.getReturnType(methodName);
@@ -75,8 +76,14 @@ public class AnalysisStage implements JmmAnalysis {
             }
         }
 
-        System.out.println("Reports: " + reports);
+        // visit method bodies and do semantic analysis
+        for (String methodName : symbolTable.getMethods()) {
+            Method method = symbolTable.getMethod(methodName);
+            BodyVisitor bodyVisitor = new BodyVisitor(symbolTable, method);
+            bodyVisitor.visit(method.getNode(), reports);
+        }
 
+        System.out.println("Reports: " + reports);
         return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }

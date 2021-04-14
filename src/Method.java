@@ -1,3 +1,4 @@
+import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
@@ -8,12 +9,14 @@ public class Method {
     private final List<Symbol> parameters;
     private final List<Symbol> localVars;
     private final Type returnType;
+    private final JmmNode node;
 
-    public Method(String uuid, Type returnType, List<Symbol> parameters, List<Symbol> localVars) {
+    public Method(String uuid, Type returnType, List<Symbol> parameters, List<Symbol> localVars, JmmNode node) {
         this.uuid = uuid;
         this.parameters = parameters;
         this.localVars = localVars;
         this.returnType = returnType;
+        this.node = node;
     }
 
     public String getId() {
@@ -42,5 +45,9 @@ public class Method {
 
     public Type getReturnType() {
         return returnType;
+    }
+
+    public JmmNode getNode() {
+        return this.node;
     }
 }

@@ -1,5 +1,4 @@
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -11,13 +10,12 @@ import static java.lang.Integer.parseInt;
 
 public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final MySymbolTable symbolTable;
-    private final List<Symbol> methodParams, methodVars;
+    private final Method method;
 
-    public BodyVisitor(MySymbolTable symbolTable, List<Symbol> methodParams, List<Symbol> methodVars) {
+    public BodyVisitor(MySymbolTable symbolTable, Method method) {
         super();
         this.symbolTable = symbolTable;
-        this.methodParams = methodParams;
-        this.methodVars = methodVars;
+        this.method = method;
         addVisit("Binary", this::visitBinary);
         addVisit("Unary", this::visitUnary);
     }
@@ -179,6 +177,11 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private boolean validateIndex(JmmNode ltNode, List<Report> reports) {
+        if (ltNode.getNumChildren() != 2) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(ltNode.get("line")), "Less than operator needs 2 operands."));
+            return false;
+        }
+
         return true;
     }
 }

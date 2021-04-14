@@ -50,12 +50,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             return null;
         }
 
-        List<Symbol> localVars = this.visitLocalVrs(bodyNode, methodParameters, reports);
-
-        BodyVisitor bodyVisitor = new BodyVisitor(this.symbolTable, methodParameters, localVars);
-        bodyVisitor.visit(bodyNode, reports);
-
-        return localVars;
+        return this.visitLocalVrs(bodyNode, methodParameters, reports);
     }
 
     private boolean visitMainFunction(JmmNode node, String methodName, List<Report> reports) {

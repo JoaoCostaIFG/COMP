@@ -40,17 +40,18 @@ public class AnalysisStage implements JmmAnalysis {
 
         MySymbolTable symbolTable = new MySymbolTable();
         JmmNode node = parserResult.getRootNode();
+        List<Reports> reports = parserResult.getReports();
 
         ImportVisitor importVisitor = new ImportVisitor(symbolTable);
-        importVisitor.visit(node, parserResult.getReports());
+        importVisitor.visit(node, reports);
         System.out.println("Imports: " + symbolTable.getImports());
 
         ClassVisitor classVisitor = new ClassVisitor(symbolTable);
-        classVisitor.visit(node, parserResult.getReports());
+        classVisitor.visit(node, reports);
         System.out.println("Class: " + symbolTable.getClassName() + " " + symbolTable.getSuper());
 
         ClassFieldVisitor classFieldVisitor = new ClassFieldVisitor(symbolTable);
-        classFieldVisitor.visit(node, parserResult.getReports());
+        classFieldVisitor.visit(node, reports);
         System.out.println("Class fields:");
         for (Symbol s : symbolTable.getFields()) {
             Type t = s.getType();
@@ -58,7 +59,7 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         MethodVisitor methodVisitor = new MethodVisitor(symbolTable);
-        methodVisitor.visit(node, parserResult.getReports());
+        methodVisitor.visit(node, reports);
         System.out.println("Methods:");
         for (String methodName : symbolTable.getMethods()) {
             Type returnType = symbolTable.getReturnType(methodName);
@@ -74,8 +75,8 @@ public class AnalysisStage implements JmmAnalysis {
             }
         }
 
-        System.out.println("Reports: " + parserResult.getReports());
+        System.out.println("Reports: " + reports);
 
-        return new JmmSemanticsResult(parserResult, symbolTable, new ArrayList<>());
+        return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }

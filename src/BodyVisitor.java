@@ -1,4 +1,5 @@
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -10,10 +11,13 @@ import static java.lang.Integer.parseInt;
 
 public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final MySymbolTable symbolTable;
+    private final List<Symbol> methodParams, methodVars;
 
-    public BodyVisitor(MySymbolTable symbolTable) {
+    public BodyVisitor(MySymbolTable symbolTable, List<Symbol> methodParams, List<Symbol> methodVars) {
         super();
         this.symbolTable = symbolTable;
+        this.methodParams = methodParams;
+        this.methodVars = methodVars;
         addVisit("Binary", this::visitBinary);
         addVisit("Unary", this::visitUnary);
     }
@@ -171,6 +175,10 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 return false;
         }
 
+        return true;
+    }
+
+    private boolean validateIndex(JmmNode ltNode, List<Report> reports) {
         return true;
     }
 }

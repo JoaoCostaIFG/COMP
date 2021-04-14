@@ -52,7 +52,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
         List<Symbol> localVars = this.visitLocalVrs(bodyNode, methodParameters, reports);
 
-        BodyVisitor bodyVisitor = new BodyVisitor(this.symbolTable);
+        BodyVisitor bodyVisitor = new BodyVisitor(this.symbolTable, methodParameters, localVars);
         bodyVisitor.visit(bodyNode, reports);
 
         return localVars;

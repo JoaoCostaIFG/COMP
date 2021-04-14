@@ -43,6 +43,16 @@ public class Method {
         return localVars;
     }
 
+    public Symbol getVar(String name) {
+        for (Symbol s : parameters)
+            if (s.getName().equals(name))
+                return s;
+        for (Symbol s : localVars)
+            if (s.getName().equals(name))
+                return s;
+        return null;
+    }
+
     public Type getReturnType() {
         return returnType;
     }

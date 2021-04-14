@@ -45,6 +45,27 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private Boolean visitUnary(JmmNode node, List<Report> reports) {
+        JmmNode child = node.getChildren().get(0);
+        switch (child.getKind()) {
+            case "Literal":
+                if (!child.get("type").equals("bool")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")), "Not operator operand is not a boolean."));
+                    return false;
+                }
+                break;
+            case "Unary":
+                // is unary => is of the NOT kind => boolean (validated by visit unary)
+                break;
+            case "Binary":
+                if (!child.get("op").equals("AND") && !child.get("op").equals("LESSTHAN")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")), "Not operator operand is not a boolean."));
+                    return false;
+                }
+                break;
+            default:
+                break;
+        }
+
         return true;
     }
 

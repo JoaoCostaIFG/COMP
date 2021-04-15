@@ -263,7 +263,7 @@ void Assignment() #Var : { Token varName; }
 {
     varName=<IDENTIFIER> [<SBRAK> Expression() <EBRAK> { jjtThis.put("isArrayAccess", "yes"); }] <ASSIGN>
     {
-        jjtThis.put("varName", varName.image);
+        jjtThis.put("name", varName.image);
         jjtThis.put("line", Integer.toString(varName.beginLine));
     }
 }

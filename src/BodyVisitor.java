@@ -177,7 +177,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private Boolean visitAssign(JmmNode node, List<Report> reports) {
         JmmNode varNode = node.getChildren().get(0);
-        String varName = varNode.get("varName");
+        String varName = varNode.get("name");
         Symbol var = this.getVar(varName);
         if (var == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),

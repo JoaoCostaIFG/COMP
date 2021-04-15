@@ -149,11 +149,26 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         }
 
         Type t = getMethodCallType(node);
+        // TODO check for super when t == null
         return t != null && t.getName().equals(type);
     }
 
-    private boolean binaryNodeIsOfType(JmmNode node, String type) {
-        return getBinaryNodeType(node).getName().equals(type);
+    private Type getDotNodeType(JmmNode node) {
+        JmmNode childLeft = node.getChildren().get(0),
+                childRight = node.getChildren().get(1);
+        if (childRight.getKind().equals("Len")) {
+            // Left child -> int[]
+            // Right child -> Len
+            // length can only be called on arrays
+            if (!this.nodeIsOfType(childLeft, "int", true))
+                return null;
+            return new Type("int", true);
+        } else if (childRight.getKind().equals("FuncCall")) {
+            // Right Child -> FuncCall
+            return getMethodCallType(node);
+        } else {
+            return null;
+        }
     }
 
     private Type getBinaryNodeType(JmmNode node) {
@@ -161,32 +176,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return switch (op) {
             case "AND", "LESSTHAN" -> new Type("boolean", false);
             case "ADD", "SUB", "MULT", "DIV" -> new Type("int", false);
-            // TODO IMP DOT PODE SER VAR OU LEN
             case "DOT" -> getDotNodeType(node);
             default -> null;
         };
-    }
-
-    private boolean dotNodeIsOfType(JmmNode node, String type) {
-        Type t = getNodeType(node);
-        return t != null && t.getName().equals(type);
-    }
-
-    private Type getDotNodeType(JmmNode node) {
-        JmmNode childLeft = node.getChildren().get(0), childRight = node.getChildren().get(1);
-        if (childRight.getKind().equals("Len")) { // Right child -> Len
-            // Left child -> int[]
-            return new Type("int", true);
-        } else if (childRight.getKind().equals("FuncCall")) { // Right Child -> FuncCall
-            return getMethodCallType(node);
-        } else {
-            return null;
-        }
-    }
-
-    private boolean literalNodeIsOfType(JmmNode node, String type, boolean isArray) {
-        Type t = getLiteralNodeType(node);
-        return t != null && t.getName().equals(type) && isArray == t.isArray();
     }
 
     private Type getLiteralNodeType(JmmNode node) {

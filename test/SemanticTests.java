@@ -55,52 +55,52 @@ public class SemanticTests {
     }
 
     @Test
-    public void arrIndexNotInt(){
+    public void ArrIndexNotIntTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_index_not_int.jmm"), 1);
     }
 
     @Test
-    public void arrSizeNotInt(){
+    public void ArrSizeNotIntTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_size_not_int.jmm"), 1);
     }
 
     @Test
-    public void badArguments(){
+    public void BadArgumentsTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/badArguments.jmm"), 2);
     }
 
     @Test
-    public void binopIncomp(){
+    public void BinopIncompTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/binop_incomp.jmm"), 1);
     }
 
     @Test
-    public void funcNotFound(){
+    public void FuncNotFoundTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/funcNotFound.jmm"), 1);
     }
 
     @Test
-    public void simpleLength(){
+    public void SimpleLengthTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/simple_length.jmm"), 1);
     }
 
     @Test
-    public void varExpIncomp(){
+    public void VarExpIncompTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/var_exp_incomp.jmm"), 1);
     }
 
     @Test
-    public void varLitIncomp(){
+    public void VarLitIncompTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/var_lit_incomp.jmm"), 1);
     }
 
     @Test
-    public void varUndef(){
+    public void VarUndefTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/var_undef.jmm"), 1);
     }
 
     @Test
-    public void varNotInit(){
+    public void VarNotInitTest(){
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/varNotInit.jmm"), 1);
     }
 }

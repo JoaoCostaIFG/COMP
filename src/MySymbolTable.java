@@ -24,6 +24,10 @@ public class MySymbolTable implements SymbolTable {
         this.imports.addAll(newImports);
     }
 
+    public boolean hasImport(String methodName) {
+        return this.imports.contains(methodName);
+    }
+
     @Override
     public List<String> getImports() {
         return imports;

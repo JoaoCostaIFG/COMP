@@ -80,8 +80,6 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private Boolean visitAssign(JmmNode node, List<Report> reports) {
-
-
         return true;
     }
 

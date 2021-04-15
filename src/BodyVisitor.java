@@ -19,10 +19,10 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         super();
         this.symbolTable = symbolTable;
         this.method = method;
-        addVisit("Binary", this::visitBinary);
-        addVisit("Unary", this::visitUnary);
         addVisit("New", this::visitNew);
         addVisit("Assign", this::visitAssign);
+        addVisit("Unary", this::visitUnary);
+        addVisit("Binary", this::visitBinary);
     }
 
     private Boolean visitBinary(JmmNode node, List<Report> reports) {
@@ -80,7 +80,35 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private Boolean visitAssign(JmmNode node, List<Report> reports) {
+        JmmNode varNode = node.getChildren().get(0);
+        String varName = varNode.get("varName");
+        Symbol var = this.getVar(varName);
+        if (var == null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                    "Assignment to undeclared variable: " + varName + "."));
+            return false;
+        }
+        Type varType = var.getType();
+
+        JmmNode contentNode = node.getChildren().get(1);
+        Type contentType = this.getNodeType(contentNode);
+
+        if (!varType.getName().equals(contentType.getName()) ||
+            varType.isArray() != contentType.isArray()) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                    "Assignment variable and content have different types: " + varName + "."));
+            return false;
+        }
+
         return true;
+    }
+
+    private Symbol getVar(String varName) {
+        // check for method
+        Symbol s = method.getVar(varName);
+        if (s == null)  // check class scope
+            s = this.symbolTable.getField(varName);
+        return s;
     }
 
     public Type getMethodCallType(JmmNode node) {
@@ -146,11 +174,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private Type getLiteralNodeType(JmmNode node) {
         if (node.get("type").equals("identifier")) {
             String nodeName = node.get("name");
-            Symbol s;
-            // check for method
-            s = method.getVar(nodeName);
-            if (s == null)  // check class scope
-                s = this.symbolTable.getField(nodeName);
+            Symbol s = this.getVar(nodeName);
             if(s == null)
                 return null;
             return s.getType();

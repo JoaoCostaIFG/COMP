@@ -27,6 +27,7 @@ public class SemanticTests {
 
     private JmmParserResult badTest(String jmmCode, int numErrors) {
         JmmParserResult result = TestUtils.parse(jmmCode);
+        // System.err.println(result.getRootNode().toJson());
         AnalysisStage analysisStage = new AnalysisStage();
         JmmSemanticsResult jmmSemanticsResult = analysisStage.semanticAnalysis(result);
         List<Report> reports = jmmSemanticsResult.getReports();

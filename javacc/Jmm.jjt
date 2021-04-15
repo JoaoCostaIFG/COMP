@@ -229,14 +229,14 @@ void Statement() #void : {}
     <SCURL> (Statement())* <ECURL> // block statment
     |   IfStatement() // if then else
     |   WhileLoop() // while loop
-    |   [LOOKAHEAD(2) Assignment()] Expression() #Assign(>1)  <SEMICOLON>
+    |   ([LOOKAHEAD(2) Assignment()] Expression()) #Assign(>1)  <SEMICOLON>
     // using semantic LOOKAHEAD instead of syntactic. This forbids contructs like: a[0];.
     // This restricts the grammar, but helps with performance (avoids infinite LOOKAHEAD).
 }
 
 void IfStatement() #If : {}
 {
-    <IF> <SPAR> Expression() <EPAR>
+    <IF> <SPAR> Expression() #Cond <EPAR>
         Statement()
     <ELSE>
         Statement()

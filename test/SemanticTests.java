@@ -5,8 +5,6 @@ import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.SpecsIo;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -56,52 +54,53 @@ public class SemanticTests {
     }
 
     @Test
-    public void ArrIndexNotIntTest(){
+    public void ArrIndexNotIntTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_index_not_int.jmm"), 1);
     }
 
     @Test
-    public void ArrSizeNotIntTest(){
+    public void ArrSizeNotIntTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_size_not_int.jmm"), 1);
     }
 
     @Test
-    public void BadArgumentsTest(){
-        badTest(SpecsIo.getResource("fixtures/public/fail/semantic/badArguments.jmm"), 2);
+    public void BadArgumentsTest() {
+        badTest(SpecsIo.getResource("fixtures/public/fail/semantic/badArguments.jmm"), 3);
     }
 
     @Test
-    public void BinopIncompTest(){
+    public void BinopIncompTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/binop_incomp.jmm"), 1);
     }
 
     @Test
-    public void FuncNotFoundTest(){
-        badTest(SpecsIo.getResource("fixtures/public/fail/semantic/funcNotFound.jmm"), 1);
+    public void FuncNotFoundTest() {
+        badTest(SpecsIo.getResource("fixtures/public/fail/semantic/funcNotFound.jmm"), 2);
     }
 
     @Test
-    public void SimpleLengthTest(){
+    public void SimpleLengthTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/simple_length.jmm"), 1);
     }
 
     @Test
-    public void VarExpIncompTest(){
+    public void VarExpIncompTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/var_exp_incomp.jmm"), 1);
     }
 
     @Test
-    public void VarLitIncompTest(){
+    public void VarLitIncompTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/var_lit_incomp.jmm"), 1);
     }
 
     @Test
-    public void VarUndefTest(){
+    public void VarUndefTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/var_undef.jmm"), 1);
     }
 
     @Test
-    public void VarNotInitTest(){
+    public void VarNotInitTest() {
+        // TODO
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/varNotInit.jmm"), 1);
     }
 }

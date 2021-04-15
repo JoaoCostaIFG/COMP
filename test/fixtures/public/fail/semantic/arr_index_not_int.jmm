@@ -9,6 +9,5 @@ class T {
         // This is valid in Java
         a = new int[0];
         c = a[true];
-        
     }
 }

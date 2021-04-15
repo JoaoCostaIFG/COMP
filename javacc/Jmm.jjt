@@ -268,59 +268,90 @@ void Assignment() #Var : { Token varName; }
     }
 }
 
-void Expression() #void : {}
+void Expression() #void : { Token t; }
 {
     LessThanTerm()
-    (<AND> LessThanTerm() { jjtThis.put("op", "AND"); } #Binary(2))*
+    (t=<AND> LessThanTerm() {
+        jjtThis.put("op", "AND");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Binary(2))*
 
     // this (and the other similar constructs) could also be written as (recursive form):
     // LessThanTerm()
     // [<AND> Expression()]
 }
 
-void LessThanTerm() #void : {}
+void LessThanTerm() #void : { Token t; }
 {
     AdditiveTerm()
-    (<LESSTHAN> AdditiveTerm() { jjtThis.put("op", "LESSTHAN"); } #Binary(2))*
+    (t=<LESSTHAN> AdditiveTerm() {
+        jjtThis.put("op", "LESSTHAN");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Binary(2))*
 }
 
-void AdditiveTerm() #void : {}
+void AdditiveTerm() #void : { Token t; }
 {
     MultiplicativeTerm()
-    (<ADD> MultiplicativeTerm() { jjtThis.put("op", "ADD"); } #Binary(2)
-    |   <SUB> MultiplicativeTerm() { jjtThis.put("op", "SUB"); } #Binary(2))*
+    (t=<ADD> MultiplicativeTerm() {
+        jjtThis.put("op", "ADD");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Binary(2)
+    |   t=<SUB> MultiplicativeTerm() {
+        jjtThis.put("op", "SUB");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Binary(2))*
 }
 
-void MultiplicativeTerm() #void : {}
+void MultiplicativeTerm() #void : { Token t; }
 {
     UnaryTerm()
-    (<MUL>  UnaryTerm() { jjtThis.put("op", "MULT"); } #Binary(2)
-    |   <DIV> UnaryTerm() { jjtThis.put("op", "DIV"); } #Binary(2))*
+    (t=<MUL> UnaryTerm() {
+        jjtThis.put("op", "MULT");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Binary(2)
+    |   t=<DIV> UnaryTerm() {
+        jjtThis.put("op", "DIV");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Binary(2))*
 }
 
-void UnaryTerm() #void : {}
+void UnaryTerm() #void : { Token t; }
 {
-    <NOT> UnaryTerm() { jjtThis.put("op", "NOT"); } #Unary
+    t=<NOT> UnaryTerm() {
+        jjtThis.put("op", "NOT");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Unary
     |   PostfixTerm()
 }
 
-void PostfixTerm() #void : {}
+void PostfixTerm() #void : { Token t; int ret; }
 {
     PrimaryTerm()
-    (<SBRAK> Expression() { jjtThis.put("op", "INDEX"); } #Binary(2) <EBRAK>
-    |   DotTerm() { jjtThis.put("op", "DOT"); } #Binary(2))*
+    (t=<SBRAK> Expression() {
+        jjtThis.put("op", "INDEX");
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Binary(2) <EBRAK>
+    |   ret=DotTerm() {
+        jjtThis.put("op", "DOT");
+        jjtThis.put("line", Integer.toString(ret));
+    } #Binary(2))*
 }
 
-void DotTerm() #void : {}
+int DotTerm() #void : { Token t; int ret; }
 {
     // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
     // and match like so:
     // <LEN> | <DOT> DotExpansion()
 
-    <DOT> (<LEN> #Len | DotExpansion())
+    <DOT> (t=<LEN> {
+        ret = t.beginLine;
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Len | ret=DotExpansion())
+    { return ret; }
 }
 
-void DotExpansion() #FuncCall : { Token t; }
+int DotExpansion() #FuncCall : { Token t; }
 {
     t=<IDENTIFIER> {
         jjtThis.put("methodName", t.image);
@@ -329,6 +360,8 @@ void DotExpansion() #FuncCall : { Token t; }
     <SPAR>
         [(Expression() (<COMMA> Expression())*) #Args]
     <EPAR>
+
+    { return t.beginLine; }
 }
 
 void PrimaryTerm() #void : { Token t; }

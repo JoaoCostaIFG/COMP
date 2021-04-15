@@ -1,15 +1,10 @@
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
-import java.io.StringReader;
 
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmParserResult;

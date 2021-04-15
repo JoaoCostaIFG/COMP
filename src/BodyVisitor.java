@@ -144,8 +144,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         JmmNode container = node.getChildren().get(0);
         // 'outside' methods, are assumed to have the correct type
         if (!container.get("type").equals("this")) {
-            // TODO verificar se esta nos imports
-            return true;
+            String methodName = node.getChildren().get(1).get("methodName");
+            return symbolTable.hasImport(methodName);
         }
 
         Type t = getMethodCallType(node);

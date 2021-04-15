@@ -25,10 +25,7 @@ public class MySymbolTable implements SymbolTable {
     }
 
     public boolean hasImport(String methodName) {
-        for (String method: this.imports)
-            if (method.equals(methodName))
-                return true;
-        return false;
+        return this.imports.contains(methodName);
     }
 
     @Override

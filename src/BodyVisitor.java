@@ -149,8 +149,13 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         }
 
         Type t = getMethodCallType(node);
-        // TODO check for super when t == null
-        return t != null && t.getName().equals(type);
+        if (t == null) {
+            String superClass = symbolTable.getSuper();
+            // This class doesn't extend anything if null
+            return superClass != null;
+        } else {
+            return t.getName().equals(type);
+        }
     }
 
     private Type getDotNodeType(JmmNode node) {

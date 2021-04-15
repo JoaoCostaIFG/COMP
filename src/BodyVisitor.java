@@ -22,6 +22,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         addVisit("Binary", this::visitBinary);
         addVisit("Unary", this::visitUnary);
         addVisit("New", this::visitNew);
+        addVisit("Assign", this::visitAssign);
     }
 
     private Boolean visitBinary(JmmNode node, List<Report> reports) {
@@ -78,10 +79,17 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return true;
     }
 
+    private Boolean visitAssign(JmmNode node, List<Report> reports) {
+
+
+        return true;
+    }
+
     public boolean methodCallIsOfType(JmmNode node, String type) {
         JmmNode container = node.getChildren().get(0);
         // 'outside' methods, are assumed to have the correct type
-        if (container.get("type").equals("this")) {
+        if (!container.get("type").equals("this")) {
+            // TODO verificar se esta nos imports
             return true;
         }
 

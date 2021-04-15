@@ -34,12 +34,9 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private List<Symbol> visitLocalVrs(JmmNode bodyNode, List<Symbol> methodParameters, List<Report> reports) {
         List<Symbol> localVars = new ArrayList<>();
-        LocalVarsVisitor localVarsVisitor = new LocalVarsVisitor(methodParameters, localVars);
-        // IMP this check is a hack (we should work with the returns of the visitors)
-        int reportNo = reports.size();
+        LocalVarsVisitor localVarsVisitor = new LocalVarsVisitor(symbolTable, methodParameters, localVars);
         localVarsVisitor.visit(bodyNode, reports);
-
-        return (reportNo != reports.size()) ? null : localVars;
+        return localVarsVisitor.isSuccess() ? localVars : null;
     }
 
     private List<Symbol> visitBody(JmmNode bodyNode, String methodName, List<Symbol> methodParameters, List<Report> reports) {
@@ -70,9 +67,14 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                     "Main parameter name isn't defined."));
             return false;
         }
-        // parameters
+        String paramName = mainParam.get("paramName");
+        if (this.symbolTable.getField(paramName) != null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
+                    "Main parameter name conflicts with class field name: " + paramName + "."));
+            return false;
+        }
         List<Symbol> methodParameters = new ArrayList<>();
-        methodParameters.add(new Symbol(new Type("String", true), mainParam.get("paramName")));
+        methodParameters.add(new Symbol(new Type("String", true), paramName));
 
         // body node
         JmmNode bodyNode = node.getChildren().get(1);
@@ -110,16 +112,14 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         List<Symbol> methodParameters = new ArrayList<>();
         for (JmmNode paramNode : parametersNode.getChildren()) {
             String paramName = paramNode.get("paramName");
-            // parameter type
-            JmmNode typeNode = paramNode.getChildren().get(0);
-            boolean isArray = typeNode.get("isArray").equals("yes");
-            if (isArray) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(typeNode.get("line")),
-                        "Method " + methodName + " has an array parameter," + paramName + "."));
+            if (this.symbolTable.getField(paramName) != null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(paramNode.get("line")),
+                        "Method parameter name conflicts with class field name: " + paramName + "."));
                 return false;
             }
-            // we know parameters can't be arrays
-            Type paramType = new Type(typeNode.get("dataType"), false);
+            // parameter type
+            JmmNode typeNode = paramNode.getChildren().get(0);
+            Type paramType = new Type(typeNode.get("dataType"), typeNode.get("isArray").equals("yes"));
             methodParameters.add(new Symbol(paramType, paramName));
         }
         // check if is overload/overloaded correctly

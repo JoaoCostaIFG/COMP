@@ -170,7 +170,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                         "The size of an array has to be an integer."));
                 return false;
             }
-        } else {
+        }
+        // else {
             // TODO can we only instantiate our own class?
             // String instName = node.get("name");
             // if (!this.symbolTable.getClassName().equals(instName)) {
@@ -178,7 +179,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             //             "Unknown class to instantiate."));
             //     return false;
             // }
-        }
+        // }
 
         return true;
     }

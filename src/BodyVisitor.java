@@ -93,10 +93,15 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             switch (paramNode.getKind()) {
                 case "Binary":
                     switch (paramNode.get("op")) {
-                        case "AND", "LESSTHAN":
+                        case "LESSTHAN":
+                        case "AND":
                             methodParams.add(new Type("boolean", false));
                             break;
-                        case "ADD", "SUB", "MULT", "DIV", "INDEX":
+                        case "SUB":
+                        case "INDEX":
+                        case "DIV":
+                        case "MULT":
+                        case "ADD":
                             methodParams.add(new Type("int", false));
                             break;
                         case "DOT":
@@ -159,9 +164,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     public boolean nodeIsOfType(JmmNode node, String type, boolean isArray) {
         return switch (node.getKind()) {
-            case "Binary" -> binaryNodeIsOfType(node, type);
+            case "Binary" -> binaryNodeIsOfType(node, type) && !isArray;
             case "Literal" -> literalNodeIsOfType(node, type, isArray);
-            case "Unary" -> type.equals("boolean");
+            case "Unary" -> type.equals("boolean") && !isArray;
             default -> false;
         };
     }
@@ -226,7 +231,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         }
 
         JmmNode childLeft = indNode.getChildren().get(0);
-        if (!(childLeft.getKind().equals("Literal") && this.nodeIsOfType(childLeft, "int", true))) {
+        if (this.nodeIsOfType(childLeft, "int", true)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childLeft.get("line")),
                     "Index operator can only be used in arrays."));
             return false;

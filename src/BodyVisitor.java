@@ -89,49 +89,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         List<Type> methodParams = new ArrayList<>();
         for (int i = 1; i < methodNode.getNumChildren(); ++i) {
             JmmNode paramNode = children.get(i);
-            switch (paramNode.getKind()) {
-                case "Binary":
-                    switch (paramNode.get("op")) {
-                        case "LESSTHAN":
-                        case "AND":
-                            methodParams.add(new Type("boolean", false));
-                            break;
-                        case "SUB":
-                        case "INDEX":
-                        case "DIV":
-                        case "MULT":
-                        case "ADD":
-                            methodParams.add(new Type("int", false));
-                            break;
-                        case "DOT":
-                            methodParams.add(getDotNodeType(paramNode));
-                            break;
-                    } // VOU DAR PUSH DECLARO AQUI QUE VOU DAR PUSH
-                    break;
-                case "Unary":
-                    methodParams.add(new Type("boolean", false));
-                    break;
-                case "Literal":
-                    switch (paramNode.get("type")) {
-                        case "boolean":
-                            methodParams.add(new Type("boolean", false));
-                            break;
-                        case "int":
-                            methodParams.add(new Type("int", false));
-                            break;
-                        case "identifier":
-                            Symbol var = this.method.getVar(paramNode.get("name"));
-                            if (var == null)
-                                return null;
-                            methodParams.add(var.getType());
-                            break;
-                        default:
-                            return null;
-                    }
-                    break;
-                default:
-                    return null;
-            }
+            methodParams.add(this.getNodeType(paramNode));
         }
 
         Method foundMethod = this.symbolTable.getMethodByCall(methodNode.get("methodName"), methodParams);

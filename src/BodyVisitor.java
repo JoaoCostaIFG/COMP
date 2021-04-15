@@ -22,6 +22,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         addVisit("Binary", this::visitBinary);
         addVisit("Unary", this::visitUnary);
         addVisit("New", this::visitNew);
+        addVisit("Assign", this::visitAssign);
     }
 
     private Boolean visitBinary(JmmNode node, List<Report> reports) {
@@ -75,6 +76,10 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
         }
 
+        return true;
+    }
+
+    private Boolean visitAssign(JmmNode node, List<Report> reports) {
         return true;
     }
 
@@ -139,6 +144,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         JmmNode container = node.getChildren().get(0);
         // 'outside' methods, are assumed to have the correct type
         if (!container.get("type").equals("this")) {
+            // TODO verificar se esta nos imports
             return true;
         }
 
@@ -185,12 +191,15 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private Type getLiteralNodeType(JmmNode node) {
         if (node.get("type").equals("identifier")) {
-            Symbol s = method.getVar(node.get("name"));
-            if (s != null) {
-                return s.getType();
-            } else {
+            String nodeName = node.get("name");
+            Symbol s;
+            // check for method
+            s = method.getVar(nodeName);
+            if (s == null)  // check class scope
+                s = this.symbolTable.getField(nodeName);
+            if(s == null)
                 return null;
-            }
+            return s.getType();
         } else { // Is type - boolean, int or array
             return new Type(node.get("type"), false);
         }

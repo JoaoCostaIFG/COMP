@@ -9,7 +9,7 @@ public class MySymbolTable implements SymbolTable {
     private final List<String> imports;
     private String className, superName;
     private final List<Symbol> classFields;
-    private Map<String, Method> methods;
+    private final Map<String, Method> methods;
 
     public MySymbolTable() {
         this.imports = new ArrayList<>();
@@ -50,6 +50,14 @@ public class MySymbolTable implements SymbolTable {
     public void setFields(List<Symbol> newFields) {
         if (newFields == null) return;
         this.classFields.addAll(newFields);
+    }
+
+    public Symbol getField(String name) {
+        for (Symbol s : this.classFields) {
+            if (s.getName().equals(name))
+                return s;
+        }
+        return null;
     }
 
     /**

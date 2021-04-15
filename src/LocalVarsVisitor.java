@@ -32,12 +32,12 @@ public class LocalVarsVisitor extends PreorderJmmVisitor<List<Report>, Boolean> 
     private Boolean parseLocalVars(JmmNode node, List<Report> reports) {
         String varName = node.get("varName");
         // conflicts with class field
-        if (this.symbolTable.getField(varName) != null) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                    "Variable declaration " + varName + " conflicts with the class field with the same name."));
-            this.success = false;
-            return false;
-        }
+        // if (this.symbolTable.getField(varName) != null) {
+        //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+        //             "Variable declaration " + varName + " conflicts with the class field with the same name."));
+        //     this.success = false;
+        //     return false;
+        // }
 
         // conflicts with parameter
         if (this.methodParameters.stream().anyMatch(s -> s.getName().equals(varName))) {

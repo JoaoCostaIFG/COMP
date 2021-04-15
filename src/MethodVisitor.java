@@ -68,11 +68,12 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             return false;
         }
         String paramName = mainParam.get("paramName");
-        if (this.symbolTable.getField(paramName) != null) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
-                    "Main parameter name conflicts with class field name: " + paramName + "."));
-            return false;
-        }
+        // // conflicts with class field
+        // if (this.symbolTable.getField(paramName) != null) {
+        //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
+        //             "Main parameter name conflicts with class field name: " + paramName + "."));
+        //     return false;
+        // }
         List<Symbol> methodParameters = new ArrayList<>();
         methodParameters.add(new Symbol(new Type("String", true), paramName));
 
@@ -112,11 +113,12 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         List<Symbol> methodParameters = new ArrayList<>();
         for (JmmNode paramNode : parametersNode.getChildren()) {
             String paramName = paramNode.get("paramName");
-            if (this.symbolTable.getField(paramName) != null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(paramNode.get("line")),
-                        "Method parameter name conflicts with class field name: " + paramName + "."));
-                return false;
-            }
+            // // conflicts with class field
+            // if (this.symbolTable.getField(paramName) != null) {
+            //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(paramNode.get("line")),
+            //             "Method parameter name conflicts with class field name: " + paramName + "."));
+            //     return false;
+            // }
             // parameter type
             JmmNode typeNode = paramNode.getChildren().get(0);
             Type paramType = new Type(typeNode.get("dataType"), typeNode.get("isArray").equals("yes"));

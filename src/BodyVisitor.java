@@ -162,8 +162,14 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private boolean literalNodeIsOfType(JmmNode node, String type, boolean isArray) {
         if (node.get("type").equals("identifier")) {
-            Symbol s = method.getVar(node.get("name"));
-            return s != null && s.getType().getName().equals(type) &&
+            String nodeName = node.get("name");
+            Symbol s;
+            // check for method
+            s = method.getVar(nodeName);
+            if (s == null)  // check class scope
+                s = this.symbolTable.getField(nodeName);
+            return s != null &&
+                    s.getType().getName().equals(type) &&
                     s.getType().isArray() == isArray;
         } else { // Is type - boolean, int or array
             return node.get("type").equals(type);

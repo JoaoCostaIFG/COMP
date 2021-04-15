@@ -366,7 +366,7 @@ void NewTerm() #void : { Token t; }  // 04:14
     |   t=<IDENTIFIER> <SPAR> <EPAR> {
         jjtThis.put("type", "class"); jjtThis.put("name", t.image);
         jjtThis.put("line", Integer.toString(t.beginLine));
-    } #New // class constructor
+    } #New  // class constructor
 }
 
 // This will print the error on the terminal and save the report

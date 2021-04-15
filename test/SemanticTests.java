@@ -56,7 +56,7 @@ public class SemanticTests {
 
     @Test
     public void arrIndexNotInt(){
-        badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_index_not_int.jmm"), 2);
+        badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_index_not_int.jmm"), 1);
     }
 
     @Test

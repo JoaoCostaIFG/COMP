@@ -1,4 +1,5 @@
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 
@@ -33,7 +34,7 @@ public class AnalysisStage implements JmmAnalysis {
 
         MySymbolTable symbolTable = new MySymbolTable();
         JmmNode rootNode = parserResult.getRootNode();
-        List<Report> reports = parserResult.getReports();
+        List<Report> reports = new ArrayList<>();
 
         // FILL SYMBOL TABLE
         ImportVisitor importVisitor = new ImportVisitor(symbolTable);

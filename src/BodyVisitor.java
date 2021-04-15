@@ -21,6 +21,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         this.method = method;
         addVisit("Binary", this::visitBinary);
         addVisit("Unary", this::visitUnary);
+        addVisit("New", this::visitNew);
     }
 
     private Boolean visitBinary(JmmNode node, List<Report> reports) {
@@ -28,92 +29,53 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         switch (op) {
             case "AND":
             case "LESSTHAN":
-                return this.validateBoolean(node, reports);
+                return this.validateBooleanOp(node, reports);
             case "ADD":
             case "SUB":
             case "MULT":
             case "DIV":
-                return this.validateArithmetic(node, reports);
+                return this.validateArithmeticOp(node, reports);
             case "INDEX":
-                return this.validateIndex(node, reports);
+                return this.validateIndexOp(node, reports);
             case "DOT":
                 break;
         }
 
-        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")), "Unknown operation."));
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                "Unknown operation."));
         return false;
     }
 
     private Boolean visitUnary(JmmNode node, List<Report> reports) {
+        // This is always the NOT operator
         JmmNode child = node.getChildren().get(0);
-        switch (child.getKind()) {
-            case "Literal":
-                if (nodeIsOfType(child, "boolean")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            "Not operator operand is not a boolean."));
-                    return false;
-                }
-                break;
-            case "Unary":
-                // is unary => is of the NOT kind => boolean (validated by visit unary)
-                break;
-            case "Binary":
-                if (!child.get("op").equals("AND") && !child.get("op").equals("LESSTHAN")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                            "Not operator operand is not a boolean."));
-                    return false;
-                }
-                break;
-            default:
-                break;
+        if (!this.nodeIsOfType(child, "boolean")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")),
+                    "The NOT operator can only be applied to boolean values."));
+            return false;
         }
-
         return true;
     }
 
-    private boolean binaryNodeIsOfType(JmmNode node, String type) {
-        String op = node.get("op");
-        switch (op) {
-            case "DOT":
-                return methodCallIsOfType(node, type);
-            case "AND":
-            case "LESSTHAN":
-                return type.equals("boolean");
-            case "ADD":
-            case "SUB":
-            case "MULT":
-            case "DIV":
-                return type.equals("int");
-            default:
+    private Boolean visitNew(JmmNode node, List<Report> reports) {
+        if (node.get("type").equals("array")) {
+            JmmNode arrIndexNode = node.getChildren().get(0);
+            if (!this.nodeIsOfType(arrIndexNode, "int")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(arrIndexNode.get("line")),
+                        "The size of an array has to be an integer."));
                 return false;
-        }
-    }
-
-    private boolean literalNodeIsOfType(JmmNode node, String type, boolean isArray) {
-        if (node.get("type").equals("identifier")) {
-            Symbol s = method.getVar(node.get("name"));
-            return s != null && s.getType().getName().equals(type) &&
-                    s.getType().isArray() == isArray;
-        } else { // Is type - boolean, int or array
-            return node.get("type").equals(type);
-        }
-    }
-
-    public boolean nodeIsOfType(JmmNode node, String type, boolean isArray) {
-        switch (node.getKind()) {
-            case "Binary":  // Move this if maybe
-                return binaryNodeIsOfType(node, type);
-            case "Literal":
-                return literalNodeIsOfType(node, type, isArray);
-            case "Unary":
-                return type.equals("boolean");
-            default:
+            }
+        } else {
+            // TODO ??????
+            String instName = node.get("name");
+            if (!this.symbolTable.getClassName().equals(instName)) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                        "Unknown class to instantiate."));
                 return false;
+            }
         }
-    }
 
-    public boolean nodeIsOfType(JmmNode node, String type) {
-        return nodeIsOfType(node, type, false);
+        return true;
     }
 
     public boolean methodCallIsOfType(JmmNode node, String type) {
@@ -131,15 +93,10 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             switch (paramNode.getKind()) {
                 case "Binary":
                     switch (paramNode.get("op")) {
-                        case "AND":
-                        case "LESSTHAN":
+                        case "AND", "LESSTHAN":
                             methodParams.add(new Type("boolean", false));
                             break;
-                        case "ADD":
-                        case "SUB":
-                        case "MULT":
-                        case "DIV":
-                        case "INDEX":
+                        case "ADD", "SUB", "MULT", "DIV", "INDEX":
                             methodParams.add(new Type("int", false));
                             break;
                         case "DOT":
@@ -179,7 +136,41 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return foundMethod.getReturnType().getName().equals(type);
     }
 
-    private boolean validateBoolean(JmmNode node, List<Report> reports) {
+    private boolean binaryNodeIsOfType(JmmNode node, String type) {
+        String op = node.get("op");
+        return switch (op) {
+            case "AND", "LESSTHAN" -> type.equals("boolean");
+            case "ADD", "SUB", "MULT", "DIV" -> type.equals("int");
+            // TODO IMP DOT PODE SER VAR OU LEN
+            case "DOT" -> methodCallIsOfType(node, type);
+            default -> false;
+        };
+    }
+
+    private boolean literalNodeIsOfType(JmmNode node, String type, boolean isArray) {
+        if (node.get("type").equals("identifier")) {
+            Symbol s = method.getVar(node.get("name"));
+            return s != null && s.getType().getName().equals(type) &&
+                    s.getType().isArray() == isArray;
+        } else { // Is type - boolean, int or array
+            return node.get("type").equals(type);
+        }
+    }
+
+    public boolean nodeIsOfType(JmmNode node, String type, boolean isArray) {
+        return switch (node.getKind()) {
+            case "Binary" -> binaryNodeIsOfType(node, type);
+            case "Literal" -> literalNodeIsOfType(node, type, isArray);
+            case "Unary" -> type.equals("boolean");
+            default -> false;
+        };
+    }
+
+    public boolean nodeIsOfType(JmmNode node, String type) {
+        return nodeIsOfType(node, type, false);
+    }
+
+    private boolean validateBooleanOp(JmmNode node, List<Report> reports) {
         if (node.getNumChildren() != 2) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + " operator needs 2 operands."));
@@ -187,14 +178,14 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         }
 
         JmmNode childLeft = node.getChildren().get(0);
-        if (nodeIsOfType(childLeft, "boolean")) {
+        if (!nodeIsOfType(childLeft, "boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + "  operator left operand is not a boolean."));
             return false;
         }
 
-        JmmNode childRight = node.getChildren().get(0);
-        if (nodeIsOfType(childRight, "boolean")) {
+        JmmNode childRight = node.getChildren().get(1);
+        if (!nodeIsOfType(childRight, "boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + "  operator right operand is not a boolean."));
             return false;
@@ -203,7 +194,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return true;
     }
 
-    private boolean validateArithmetic(JmmNode node, List<Report> reports) {
+    private boolean validateArithmeticOp(JmmNode node, List<Report> reports) {
         if (node.getNumChildren() != 2) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + " operator needs 2 operands."));
@@ -211,23 +202,23 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         }
 
         JmmNode childLeft = node.getChildren().get(0);
-        if (nodeIsOfType(childLeft, "int")) {
+        if (!nodeIsOfType(childLeft, "int")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                node.getKind() + "  operator left operand is not a integer."));
+                    node.getKind() + "  operator left operand is not a integer."));
             return false;
         }
 
-        JmmNode childRight = node.getChildren().get(0);
-        if (nodeIsOfType(childRight, "int")) {
+        JmmNode childRight = node.getChildren().get(1);
+        if (!nodeIsOfType(childRight, "int")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-                node.getKind() + "  operator right operand is not a integer."));
+                    node.getKind() + "  operator right operand is not a integer."));
             return false;
         }
 
         return true;
     }
 
-    private boolean validateIndex(JmmNode indNode, List<Report> reports) {
+    private boolean validateIndexOp(JmmNode indNode, List<Report> reports) {
         if (indNode.getNumChildren() != 2) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(indNode.get("line")),
                     "Index operator needs 2 operands."));
@@ -236,38 +227,16 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
         JmmNode childLeft = indNode.getChildren().get(0);
         if (!(childLeft.getKind().equals("Literal") && this.nodeIsOfType(childLeft, "int", true))) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(indNode.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childLeft.get("line")),
                     "Index operator can only be used in arrays."));
             return false;
         }
 
         JmmNode childRight = indNode.getChildren().get(1);
-        switch (childRight.getKind()) {
-            case "Literal":
-                if (nodeIsOfType(childRight, "int")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(indNode.get("line")),
-                            indNode.getKind() + "  operator's index is not an integer."));
-                    return false;
-                }
-                break;
-            case "Binary":
-                String binOp = childRight.get("op");
-                // these all evaluate to an integer (int)
-                if (!(binOp.equals("ADD") || binOp.equals("SUB") || binOp.equals("MULT") ||
-                        binOp.equals("DIV") || binOp.equals("INDEX"))) {
-                    // if it is a method call, check return type
-                    if (binOp.equals("DOT")) {
-                        if (this.methodCallIsOfType(childRight, "int"))
-                            break;
-                    }
-
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(indNode.get("line")),
-                            indNode.getKind() + "  operator's index is not an integer."));
-                    return false;
-                }
-                break;
-            default:
-                break;
+        if (!this.nodeIsOfType(childRight, "int")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+                    "Index operator's index is not an integer."));
+            return false;
         }
 
         return true;

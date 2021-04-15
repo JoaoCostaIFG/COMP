@@ -81,7 +81,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     public boolean methodCallIsOfType(JmmNode node, String type) {
         JmmNode container = node.getChildren().get(0);
         // 'outside' methods, are assumed to have the correct type
-        if (container.get("type").equals("this")) {
+        if (!container.get("type").equals("this")) {
             return true;
         }
 
@@ -107,7 +107,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                         case "DOT":
                             // TODO ?????????????
                             break;
-                    }
+                    } // VOU DAR PUSH DECLARO AQUI QUE VOU DAR PUSH
                     break;
                 case "Unary":
                     methodParams.add(new Type("boolean", false));
@@ -147,9 +147,20 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             case "AND", "LESSTHAN" -> type.equals("boolean");
             case "ADD", "SUB", "MULT", "DIV" -> type.equals("int");
             // TODO IMP DOT PODE SER VAR OU LEN
-            case "DOT" -> methodCallIsOfType(node, type);
+            case "DOT" -> dotNodeIsOfType(node, type);
             default -> false;
         };
+    }
+
+    private boolean dotNodeIsOfType(JmmNode node, String type) {
+        JmmNode childLeft = node.getChildren().get(0), childRight = node.getChildren().get(1);
+        if (childRight.getKind().equals("Len")) { // Right child -> Len
+            // Left child -> int[]
+            return nodeIsOfType(childLeft, "int", true);
+        } else if(childRight.getKind().equals("FuncCall")) // Right Child -> FuncCall
+            return methodCallIsOfType(node, type);
+        else
+            return false;
     }
 
     private boolean literalNodeIsOfType(JmmNode node, String type, boolean isArray) {

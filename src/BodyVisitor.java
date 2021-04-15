@@ -23,6 +23,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         addVisit("Unary", this::visitUnary);
         addVisit("New", this::visitNew);
         addVisit("Assign", this::visitAssign);
+        addVisit("Cond", this::checkCondition);
     }
 
     private Boolean visitBinary(JmmNode node, List<Report> reports) {
@@ -248,4 +249,14 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
         return true;
     }
+
+    private boolean checkCondition(JmmNode node, List<Report> reports) {
+        if (!nodeIsOfType(node, "boolean")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+                    "Condition is not boolean."));
+            return false;
+        }
+        return true;
+    }
+
 }

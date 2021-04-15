@@ -236,7 +236,7 @@ void Statement() #void : {}
 
 void IfStatement() #If : {}
 {
-    <IF> <SPAR> Expression() <EPAR>
+    <IF> <SPAR> Expression() #Cond <EPAR>
         Statement()
     <ELSE>
         Statement()

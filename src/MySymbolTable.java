@@ -25,7 +25,13 @@ public class MySymbolTable implements SymbolTable {
     }
 
     public boolean hasImport(String methodName) {
-        return this.imports.contains(methodName);
+        for (String imp: imports) {
+            String[] parsed = imp.split("\\.");
+            String lastImport = parsed[parsed.length - 1];
+            if (lastImport.equals(methodName))
+                return true;
+        }
+        return false;
     }
 
     @Override

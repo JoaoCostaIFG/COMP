@@ -117,6 +117,10 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 }
             }
 
+            // - se for identifier, verificar se e var.
+            //         - se for var, ver se esta instanciada
+            //         - se nao, e uma chamada de funcao static e temos de ver se esta nos imports
+
             // TODO continue here
             //if (childLeft.getKind().equals("Literal")) {
             //    // TODO this only handles static methods
@@ -310,9 +314,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private Type getNewNodeType(JmmNode node) {
-        if (node.get("type").equals("array")) {
+        if (node.get("type").equals("array")) { // int array
             return new Type("int", true);
-        } else {
+        } else { // class instance
             return new Type(node.get("name"), false);
         }
     }

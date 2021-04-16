@@ -61,6 +61,6 @@ class Nachos extends Cute {
             }
 	    }
 
-	    return 2;
+	    return 2 + 1 + 0 * 3;
 	}
 }

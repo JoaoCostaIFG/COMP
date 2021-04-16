@@ -1,3 +1,6 @@
+import org.specs.comp.ollir.CallInstruction;
+import org.specs.comp.ollir.CallType;
+import org.specs.comp.ollir.parser.OllirParser;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
@@ -26,7 +29,7 @@ public class OptimizationStage implements JmmOptimization {
         JmmNode node = semanticsResult.getRootNode();
 
         // Convert the AST to a String containing the equivalent OLLIR code
-        OllirEmitter emitter = new OllirEmitter(semanticsResult.getSymbolTable());
+        OllirEmitter emitter = new OllirEmitter((MySymbolTable) semanticsResult.getSymbolTable());
         emitter.visit(node);
         String ollirCode = emitter.getOllirCode();
         System.err.println(ollirCode);

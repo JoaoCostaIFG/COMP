@@ -207,6 +207,17 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         }
     }
 
+    private String getUnaryOllir(String tabs, JmmNode node, boolean isAux) {
+        final String type = ".bool";
+        JmmNode child= node.getChildren().get(0);
+        String childOllir = this.getOpOllir(tabs, child, true);
+        String ret = childOllir + " !" + type + " " + childOllir;
+
+        if (isAux)
+            return this.injectTempVar(tabs, type, ret);
+        return ret;
+    }
+
     private String getIdentifierOllir(JmmNode node) {
         return node.get("name");
     }
@@ -234,6 +245,9 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         switch (node.getKind()) {
             case "Binary":
                 ret += this.getBinaryOllir(tabs, node, isAux);
+                break;
+            case "Unary":
+                ret += this.getUnaryOllir(tabs, node, isAux);
                 break;
             case "Literal":
                 ret += this.getLiteralOllir(node);

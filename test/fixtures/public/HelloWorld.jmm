@@ -2,6 +2,6 @@ import ioPlus;
 class HelloWorld {
 	public static void main(String[] args) {
 		//ioPlus.printHelloWorld();
-        1 < 2 && true; // ( >.>)
+        1 < 2 && !true; // ( >.>)
 	}
 }

@@ -1,8 +1,3 @@
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
@@ -13,6 +8,10 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class AnalysisStage implements JmmAnalysis {
 

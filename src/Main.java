@@ -1,13 +1,9 @@
-
-import jdk.jshell.spi.ExecutionControl;
 import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp.jmm.report.ReportType;
-import pt.up.fe.comp.jmm.report.Stage;
 
-import java.util.Arrays;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.List;
 
 public class Main implements JmmParser {

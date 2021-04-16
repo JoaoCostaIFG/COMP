@@ -9,7 +9,7 @@ import pt.up.fe.comp.jmm.report.Stage;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Integer.parseInt; // acho q é isto :))
+import static java.lang.Integer.parseInt;
 
 public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private int mainCount = 0;

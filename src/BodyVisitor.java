@@ -102,14 +102,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
         } else { // func call
             Type leftType = this.getNodeType(childLeft, reports);
-            if (leftType == null) { // is a variable
-                if (symbolTable.hasImport(childLeft.get("name"))) {
-                    return true;
-                } else {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
-                            "Object " + childLeft.get("name") + " is unknown."));
-                    return false;
-                }
+            if (leftType == null) { // is something unknown => if is import
+                return symbolTable.hasImport(childLeft.get("name"));
             } else if (leftType.getName().equals("int") || leftType.getName().equals("boolean")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(dotNode.get("line")),
                         "Calling method in object that isn't callable."));
@@ -124,9 +118,6 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                             "Method isn't part of the class/super class: " + childRight.get("methodName")));
                     return false;
                 }
-            }
-            else {
-                return this.getVar(childLeft, reports) != everythingSymbol;
             }
         }
 
@@ -259,8 +250,13 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
         }
 
-        // variable doesn't exist => return something to appease the masses
+        // variable doesn't exist
         if (s == null) {
+            // check for imports with that name
+            if (this.symbolTable.hasImport(varName))
+                return null;
+
+            // unknown => return something to appease the masses
             if (checkDeclared) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
                         "Variable is undeclared: " + varName + "."));
@@ -297,7 +293,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             // Right child -> Len
             // length can only be called on arrays
             return new Type("int", false);
-        } else if (childRight.getKind().equals("FuncCall")) {
+        } else { // FuncCall
             // Right Child -> FuncCall
             if (childLeft.getKind().equals("Literal") && childLeft.get("type").equals("this")) {
                 Type retType = getMethodCallType(node, reports);
@@ -308,8 +304,6 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             } else {
                 return BodyVisitor.everythingType;
             }
-        } else {
-            return null;
         }
     }
 

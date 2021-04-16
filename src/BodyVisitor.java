@@ -18,6 +18,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final Method method;
     private final Set<String> assignedVariables;
     private static final Type everythingType = new Type("", false);
+    private static final Symbol everythingSymbol = new Symbol(everythingType, "");
 
     public BodyVisitor(MySymbolTable symbolTable, Method method) {
         super();
@@ -57,14 +58,14 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         JmmNode childLeft = node.getChildren().get(0);
         if (!nodeIsOfType(childLeft, "int", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childLeft.get("line")),
-                    node.getKind() + "  operator's left operand is not a integer."));
+                    node.getKind() + " operator's left operand is not a integer."));
             return false;
         }
 
         JmmNode childRight = node.getChildren().get(1);
         if (!nodeIsOfType(childRight, "int", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
-                    node.getKind() + "  operator's right operand is not a integer."));
+                    node.getKind() + " operator's right operand is not a integer."));
             return false;
         }
 
@@ -123,8 +124,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                             "Method isn't part of the class/super class: " + childRight.get("methodName")));
                     return false;
                 }
-            } else {
-                return this.getVar(childLeft, reports, true) != null;
+            }
+            else {
+                return this.getVar(childLeft, reports) != everythingSymbol;
             }
         }
 
@@ -135,12 +137,12 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         String op = node.get("op");
         switch (op) {
             case "AND":
-            case "LESSTHAN":
                 return this.validateBooleanOp(node, reports);
             case "ADD":
             case "SUB":
             case "MULT":
             case "DIV":
+            case "LESSTHAN":
                 return this.validateArithmeticOp(node, reports);
             case "INDEX":
                 return this.validateIndexOp(node, reports);
@@ -187,7 +189,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private boolean visitCond(JmmNode node, List<Report> reports) {
-        if (!nodeIsOfType(node, "boolean", reports)) {
+        if (!nodeIsOfType(node.getChildren().get(0), "boolean", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     "Condition is not boolean."));
             return false;
@@ -197,9 +199,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private Boolean visitAssign(JmmNode node, List<Report> reports) {
         JmmNode varNode = node.getChildren().get(0);
-        System.err.println(node);
-        System.err.println(varNode);// Ha? dot para aqui?
         String varName = varNode.get("name");
+        // get var and check that it is declared
         Symbol var = this.getVar(varNode, reports, false);
         if (var == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
@@ -208,22 +209,36 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         }
         Type varType = var.getType();
 
-        JmmNode contentNode = node.getChildren().get(1);
-        Type contentType = this.getNodeType(contentNode, reports);
-        if (contentType == null) {
-            if (contentNode.getKind().equals("Literal")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
-                        "Undefined variable: " + contentNode.get("name") + "."));
-            }
+        // array accesses can only be performed on arrays
+        boolean varIsArrayAccess = varNode.get("isArrayAccess").equals("yes");
+        if (varIsArrayAccess && !varType.isArray()) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                    "Array access on non-array type variable: " + varName + "."));
             return false;
         }
 
-        if (contentType != BodyVisitor.everythingType &&
-                (!varType.getName().equals(contentType.getName()) ||
-                varType.isArray() != contentType.isArray())) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
-                    "Assignment variable and content have different types: " + varName + "."));
+        JmmNode contentNode = node.getChildren().get(1);
+        Type contentType = this.getNodeType(contentNode, reports);
+        if (contentType == null) {
             return false;
+        }
+
+        if (contentType != BodyVisitor.everythingType) {  // not everything type
+            if (varIsArrayAccess) {
+                // not an assignment to array index
+                if (!varType.getName().equals(contentType.getName()) || contentType.isArray()) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                            "Assignment variable and content have different types: " + varName + "."));
+                    return false;
+                }
+            } else {  // not a normal var assignment
+                if (!varType.getName().equals(contentType.getName()) ||
+                        varType.isArray() != contentType.isArray()) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                            "Assignment variable and content have different types: " + varName + "."));
+                    return false;
+                }
+            }
         }
 
         this.assignedVariables.add(varName);
@@ -237,13 +252,21 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         Symbol s = method.getVar(varName);
         if (s == null)  // check class scope
             s = this.symbolTable.getField(varName);
-        else if (checkDeclared) {
+        else if (checkDeclared) { // only check for declarations of vars in our scope
             if (!this.assignedVariables.contains(varName)) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
                         "Variable used before being assigned a value: " + varName + "."));
             }
         }
 
+        // variable doesn't exist => return something to appease the masses
+        if (s == null) {
+            if (checkDeclared) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                        "Variable is undeclared: " + varName + "."));
+            }
+            return BodyVisitor.everythingSymbol;
+        }
         return s;
     }
 

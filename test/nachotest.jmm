@@ -22,33 +22,39 @@ class Nachos extends Cute {
 	public int metodo(int param1, ABC param2) {
 	    int EOF;
 	    int KKKKKK;
+	    int numero;
+	    int[] boots;
+	    int asj$d7as_211d$sa;
+	    int sim;
+	    int cats;
 
+        cats = 99999999999;
+	    boots = new int[2];
 	    EOF = 0xa8192;
         boots[0] = 10l + 9l * 8l;
         boots[0L] = 7l * 6l + 5l;
 
         numero = 129_2312_23_12l;  // not integer (too >)
 
-        1<2[1][0];
-        this.a(1,2)[1][0];
+        this.a(1,2)[1];
 
-        new int[1 < 2][this.a(1,2)[1][0]];
-        this.a(new int[1])[new int[2]];
+        new int[0][1]; // TODO
 
-        L[i] = L.length - i;
-        !false.length; // Ta male doe
-        !new int[nachos[2]].length < true;
-        true.break(1.length);
-        false.$(9999l - 10000L) < 1;
-        false[true] < $$$$$$$$$$$$$$$$$;
-        a.length.length.length;
+        1 < 2;
+        // !false < true;
+        // true.break(1.length);
+        // false.$(9999l - 10000L) < false;
+        // false[true] < $$$$$$$$$$$$$$$$$;
+        // a.length.length.length;
 
-        true && this && false;
+        true && true && false;
         this.asd(this.asd(true), false);
 
+	    asj$d7as_211d$sa = 1;
+	    sim = 2;
 	    while (asj$d7as_211d$sa < sim) {
-            if (boots < cats) {
-                boots = cats;
+            if (boots[0] < cats) {
+                boots[2] = cats;
             }
             else {
                 true;

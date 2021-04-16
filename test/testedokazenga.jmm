@@ -1,0 +1,12 @@
+/*  REASON:
+    Isto só parte
+*/
+
+import a;
+
+class T {
+    public static void main(String[] a) {
+        int a; // eu sei joka
+        a.merdas();
+    }
+}

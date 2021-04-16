@@ -41,13 +41,20 @@ public class SemanticTests {
     @Test
     public void NachoTest() {
         String jmmCode = SpecsIo.read("test/nachotest.jmm");
-//        String jmmCode = SpecsIo.read("test/badnachotest.jmm");
         JmmParserResult result = TestUtils.parse(jmmCode);
+        System.out.println(result.getRootNode().toJson());
+        goodTest(jmmCode); // calma homem tava a meter os testes :ok_hand:
     }
 
     /*
      *  bad
      */
+    @Test
+    public void KazengaTest() {
+        String jmmCode = SpecsIo.read("test/testedokazenga.jmm");
+        badTest(jmmCode, 1);
+    }
+
     @Test
     public void ArrIndexNotIntTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_index_not_int.jmm"), 1);

@@ -101,7 +101,15 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
         } else { // func call
             Type leftType = this.getNodeType(childLeft, reports);
-            if (leftType.getName().equals("int") || leftType.getName().equals("boolean")) {
+            if (leftType == null) { // is a variable
+                if (symbolTable.hasImport(childLeft.get("name"))) {
+                    return true;
+                } else {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+                            "Object " + childLeft.get("name") + " is unknown."));
+                    return false;
+                }
+            } else if (leftType.getName().equals("int") || leftType.getName().equals("boolean")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(dotNode.get("line")),
                         "Calling method in object that isn't callable."));
                 return false;
@@ -115,21 +123,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                             "Method isn't part of the class/super class: " + childRight.get("methodName")));
                     return false;
                 }
+            } else {
+                return this.getVar(childLeft, reports, true) != null;
             }
-
-            // - se for identifier, verificar se e var.
-            //         - se for var, ver se esta instanciada
-            //         - se nao, e uma chamada de funcao static e temos de ver se esta nos imports
-
-            // TODO continue here
-            //if (childLeft.getKind().equals("Literal")) {
-            //    // TODO this only handles static methods
-            //    if (!symbolTable.hasImport(childLeft.get("name"))) {
-            //        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
-            //                "Object " + childLeft.get("name") + " is unknown."));
-            //        return false;
-            //    }
-            //}
         }
 
         return true;
@@ -201,6 +197,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private Boolean visitAssign(JmmNode node, List<Report> reports) {
         JmmNode varNode = node.getChildren().get(0);
+        System.err.println(node);
+        System.err.println(varNode);// Ha? dot para aqui?
         String varName = varNode.get("name");
         Symbol var = this.getVar(varNode, reports, false);
         if (var == null) {

@@ -19,6 +19,7 @@ public class SyntaticTests {
         JmmParserResult result = TestUtils.parse(jmmCode);
         List<Report> reports = result.getReports();
         TestUtils.noErrors(reports);
+        // System.out.println(result.getRootNode().toJson());
 
         return result;
     }

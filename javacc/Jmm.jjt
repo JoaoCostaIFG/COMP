@@ -321,7 +321,7 @@ void UnaryTerm() #void : { Token t; }
     t=<NOT> UnaryTerm() {
         jjtThis.put("op", "NOT");
         jjtThis.put("line", Integer.toString(t.beginLine));
-    } #Unary
+    } #Unary(1)
     |   PostfixTerm()
 }
 

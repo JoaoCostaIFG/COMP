@@ -9,14 +9,15 @@ import pt.up.fe.comp.jmm.report.Stage;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Integer.parseInt;
+import static java.lang.Integer.parseInt; // acho q é isto :))
 
 public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
-    private static int mainCount = 0;
+    private int mainCount = 0;
     private final MySymbolTable symbolTable;
 
     public MethodVisitor(MySymbolTable symbolTable) {
         super();
+        this.mainCount = 0;
         this.symbolTable = symbolTable;
         addVisit("MethodDeclaration", this::parseMethodDeclaration);
     }
@@ -52,12 +53,12 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private boolean visitMainFunction(JmmNode node, String methodName, List<Report> reports) {
         // only allow a single main definition
-        if (mainCount >= 1) {
+        if (this.mainCount >= 1) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     "Redeclaration of main function."));
             return false;
         }
-        ++mainCount;
+        ++this.mainCount;
         // return type
         Type returnType = new Type("void", false);
         // parameter

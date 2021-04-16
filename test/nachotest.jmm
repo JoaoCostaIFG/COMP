@@ -36,7 +36,7 @@ class Nachos extends Cute {
         this.a(new int[1])[new int[2]];
 
         L[i] = L.length - i;
-        !false.length; // TODO :)
+        !false.length; // Ta male doe
         !new int[nachos[2]].length < true;
         true.break(1.length);
         false.$(9999l - 10000L) < 1;

@@ -27,7 +27,8 @@ public class OptimizationStage implements JmmOptimization {
 
         // Convert the AST to a String containing the equivalent OLLIR code
         OllirEmitter emitter = new OllirEmitter(semanticsResult.getSymbolTable());
-        String ollirCode = emitter.visit(node);
+        emitter.visit(node);
+        String ollirCode = emitter.getOllirCode();
         System.err.println(ollirCode);
 
         // More reports from this stage

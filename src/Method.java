@@ -60,4 +60,8 @@ public class Method {
     public JmmNode getNode() {
         return this.node;
     }
+
+    public static String getNameFromString(String methodId) {
+        return methodId.split(":")[0];
+    }
 }

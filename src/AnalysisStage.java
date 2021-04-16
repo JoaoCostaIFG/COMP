@@ -38,36 +38,36 @@ public class AnalysisStage implements JmmAnalysis {
         // FILL SYMBOL TABLE
         ImportVisitor importVisitor = new ImportVisitor(symbolTable);
         importVisitor.visit(rootNode, reports);
-        System.out.println("Imports: " + symbolTable.getImports());
+//        System.out.println("Imports: " + symbolTable.getImports());
 
         ClassVisitor classVisitor = new ClassVisitor(symbolTable);
         classVisitor.visit(rootNode, reports);
-        System.out.println("Class: " + symbolTable.getClassName() + " " + symbolTable.getSuper());
+//        System.out.println("Class: " + symbolTable.getClassName() + " " + symbolTable.getSuper());
 
         ClassFieldVisitor classFieldVisitor = new ClassFieldVisitor(symbolTable);
         classFieldVisitor.visit(rootNode, reports);
-        System.out.println("Class fields:");
-        for (Symbol s : symbolTable.getFields()) {
-            Type t = s.getType();
-            System.out.println("\t" + t.getName() + (t.isArray() ? "[]" : "") + " " + s.getName());
-        }
+//        System.out.println("Class fields:");
+//        for (Symbol s : symbolTable.getFields()) {
+//            Type t = s.getType();
+//            System.out.println("\t" + t.getName() + (t.isArray() ? "[]" : "") + " " + s.getName());
+//        }
 
         MethodVisitor methodVisitor = new MethodVisitor(symbolTable);
         methodVisitor.visit(rootNode, reports);
-        System.out.println("Methods:");
-        for (String methodName : symbolTable.getMethods()) {
-            Type returnType = symbolTable.getReturnType(methodName);
-            System.out.println("\t" + returnType.getName() + (returnType.isArray() ? "[]" : "") + " " + methodName);
-            for (Symbol param : symbolTable.getParameters(methodName)) {
-                Type paramType = param.getType();
-                System.out.println("\t\t" + paramType.getName() + (paramType.isArray() ? "[]" : "") + " " + param.getName());
-            }
-            System.out.println("\t\t-------------------------------");
-            for (Symbol localVar : symbolTable.getLocalVariables(methodName)) {
-                Type varType = localVar.getType();
-                System.out.println("\t\t" + varType.getName() + (varType.isArray() ? "[]" : "") + " " + localVar.getName());
-            }
-        }
+//        System.out.println("Methods:");
+//        for (String methodName : symbolTable.getMethods()) {
+//            Type returnType = symbolTable.getReturnType(methodName);
+//            System.out.println("\t" + returnType.getName() + (returnType.isArray() ? "[]" : "") + " " + methodName);
+//            for (Symbol param : symbolTable.getParameters(methodName)) {
+//                Type paramType = param.getType();
+//                System.out.println("\t\t" + paramType.getName() + (paramType.isArray() ? "[]" : "") + " " + param.getName());
+//            }
+//            System.out.println("\t\t-------------------------------");
+//            for (Symbol localVar : symbolTable.getLocalVariables(methodName)) {
+//                Type varType = localVar.getType();
+//                System.out.println("\t\t" + varType.getName() + (varType.isArray() ? "[]" : "") + " " + localVar.getName());
+//            }
+//        }
 
         // visit method bodies and do semantic analysis
         for (String methodName : symbolTable.getMethods()) {
@@ -76,7 +76,7 @@ public class AnalysisStage implements JmmAnalysis {
             bodyVisitor.visit(method.getNode(), reports);
         }
 
-        System.out.println("Reports: " + reports);
+//        System.out.println("Reports: " + reports);
         return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }

@@ -9,11 +9,11 @@ class T {
         false;
         if (true) {
             1+2;
-            if (false) {
-                1+2;
-            } else {
-                1+2;
-            }
+           if (false) {
+               1+2;
+           } else {
+               1+2;
+           }
         } else {
             1+2;
         }

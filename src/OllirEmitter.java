@@ -8,6 +8,7 @@ import java.util.List;
 public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private final MySymbolTable symbolTable;
     private final StringBuilder ollirCode;
+    private int labelCount;
     private Integer auxCount;
 
     public OllirEmitter(MySymbolTable symbolTable) {
@@ -15,6 +16,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.symbolTable = symbolTable;
         this.ollirCode = new StringBuilder();
         this.auxCount = 0;
+        this.labelCount = 0;
         this.addVisit("Program", this::visitRoot);
     }
 
@@ -26,6 +28,10 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         String auxVarName = "aux" + this.auxCount.toString();
         ++this.auxCount;
         return auxVarName;
+    }
+
+    private String getNextLabel(String pre) {
+        return pre + (this.labelCount++);
     }
 
     private String primitiveType(Type type) {
@@ -124,8 +130,30 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
                     break;
                 case "If":
                     this.getIfOllir(tabs, n);
+                    break;
+                case "WhileLoop":
+                    this.getWhileOllir(tabs, n);
+                    break;
             }
         }
+    }
+
+    private void getWhileOllir(String tabs, JmmNode n) {
+        JmmNode condNode = n.getChildren().get(0);
+        JmmNode body = n.getChildren().get(1);
+        JmmNode elseBody = n.getChildren().get(2);
+        String condOllir = this.getOpOllir("", condNode.getChildren().get(0));
+        String elseLabel = this.getNextLabel("else");
+        String endLabel = this.getNextLabel("endif");
+        // If condition
+        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(elseLabel).append(";\n");
+        // If BOdy
+        this.getBodyOllir(tabs + "\t", body);
+        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+        // Else
+        this.ollirCode.append(tabs).append(elseLabel).append(":\n");
+        this.getBodyOllir(tabs + "\t", elseBody);
+        this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
     }
 
     public void getIfOllir(String tabs, JmmNode n) {
@@ -133,11 +161,17 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         JmmNode body = n.getChildren().get(1);
         JmmNode elseBody = n.getChildren().get(2);
         String condOllir = this.getOpOllir("", condNode.getChildren().get(0));
-        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") {\n");
+        String elseLabel = this.getNextLabel("else");
+        String endLabel = this.getNextLabel("endif");
+        // If condition
+        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(elseLabel).append(";\n");
+        // If BOdy
         this.getBodyOllir(tabs + "\t", body);
-        this.ollirCode.append(tabs).append("} else {\n");
+        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+        // Else
+        this.ollirCode.append(tabs).append(elseLabel).append(":\n");
         this.getBodyOllir(tabs + "\t", elseBody);
-        this.ollirCode.append(tabs).append("}\n");
+        this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
     }
 
     private String injectTempVar(String tabs, String type, String content) {

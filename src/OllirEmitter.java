@@ -317,7 +317,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return "";
     }
 
-    private String getIdentifierOllir(JmmNode node) {
+    private String getIdentifierOllir(String tabs, JmmNode node, boolean isAux) {
         String name = node.get("name");
         // local variable
         for (Symbol s : this.localVars) {
@@ -336,7 +336,12 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         for (Symbol s : this.symbolTable.getFields()) {
             if (s.getName().equals(name)) {
                 // ganhamos! A angola e nossa!
-                return "getfield(this, " + this.getSymbolOllir(s) + ")" + this.getTypeOllir(s.getType());
+                // if is aux, getfield needs to be stored on temp var
+                String typeOllir = this.getTypeOllir(s.getType());
+                String ret = "getfield(this, " + this.getSymbolOllir(s) + ")" + typeOllir;
+                if (isAux)
+                    return this.injectTempVar(tabs, typeOllir, ret);
+                return ret;
             }
         }
 
@@ -344,7 +349,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return "";
     }
 
-    private String getLiteralOllir(JmmNode node) {
+    private String getLiteralOllir(String tabs, JmmNode node, boolean isAux) {
         switch (node.get("type")) {
             case "boolean":
                 return (node.get("value").equals("true") ? "1" : "0") + ".bool";
@@ -353,7 +358,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             case "this":
                 return "this";
             case "identifier":
-                return this.getIdentifierOllir(node);
+                return this.getIdentifierOllir(tabs, node, isAux);
             default:
                 return "";
         }
@@ -366,16 +371,21 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         if (node.get("type").equals("array")) {
             type = ".array.i32";
             ret += "array, " + this.getOpOllir(tabs, node.getChildren().get(0), true) + ")" + type;
-        } else {
+
+            if (isAux) {
+                ret = this.injectTempVar(tabs, type, ret);
+            }
+        } else {  // class object
             String name = node.get("name");
             type = "." + name;
             ret += name + ")" + type;
+
+            if (isAux) {
+                ret = this.injectTempVar(tabs, type, ret);
+                this.ollirCode.append(tabs).append("invokespecial(").append(ret).append(", \"<init>\").V\n");
+            }
         }
 
-        if (isAux) {
-            ret = this.injectTempVar(tabs, type, ret);
-            this.ollirCode.append(tabs).append("invokespecial(").append(ret).append(", \"<init>\").V\n");
-        }
 
         return ret;
     }
@@ -391,10 +401,13 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         // if is array access
         if (leftChild.get("isArrayAccess").equals("yes")) {
             ret += "[" + this.getOpOllir(tabs, leftChild.getChildren().get(0), true) + "]";
+            // remove the array part of the type (.array.i32 -> .i32)
+            type = "." + type.split("\\.")[2];
         }
-        ret += type + " :=" + type + " " + getOpOllir(tabs, rightChild).trim();
+        ret += type + " :=" + type + " " + this.getOpOllir(tabs, rightChild).trim();
 
-        if (rightChild.getKind().equals("New"))
+        // classes need to be instantiated
+        if (rightChild.getKind().equals("New") && rightChild.get("type").equals("class"))
             ret += "\n" + tabs + "invokespecial(" + assigneeNome + type + ", \"<init>\").V";
         return ret;
     }
@@ -412,7 +425,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
                 ret += this.getUnaryOllir(tabs, node, isAux);
                 break;
             case "Literal":
-                ret += this.getLiteralOllir(node);
+                ret += this.getLiteralOllir(tabs, node, isAux);
                 break;
             case "New":
                 ret += this.getNewOllir(tabs, node, isAux);

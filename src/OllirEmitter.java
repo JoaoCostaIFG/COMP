@@ -3,6 +3,7 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
@@ -10,6 +11,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private final StringBuilder ollirCode;
     private int labelCount;
     private Integer auxCount;
+    private List<Symbol> localVars, parameters;
 
     public OllirEmitter(MySymbolTable symbolTable) {
         super();
@@ -17,6 +19,8 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.ollirCode = new StringBuilder();
         this.auxCount = 0;
         this.labelCount = 0;
+        this.localVars = new ArrayList<>();
+        this.parameters = new ArrayList<>();
         this.addVisit("Program", this::visitRoot);
     }
 
@@ -32,6 +36,11 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getNextLabel(String pre) {
         return pre + (this.labelCount++);
+    }
+
+    private void loadMethod(Method method) {
+        this.localVars = method.getLocalVars();
+        this.parameters = method.getParameters();
     }
 
     private String primitiveType(Type type) {
@@ -76,7 +85,6 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.ollirCode.append("\t\tinvokespecial(this, \"<init>\").V;\n");
         this.ollirCode.append("\t}\n");
 
-        // TODO iterar pelos filhos instead?
         for (String methodName : this.symbolTable.getMethods()) {
             this.getMethodOllir(methodName);
         }
@@ -86,7 +94,10 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private void getMethodOllir(String methodId) {
-        String methodName = Method.getNameFromString(methodId);
+        Method method = this.symbolTable.getMethod(methodId);
+        this.loadMethod(method);
+
+        String methodName = method.getName();
         String tabs = "\t";
         this.ollirCode.append(tabs).append(".method public ");
         if (methodName.equals("main"))
@@ -102,7 +113,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.ollirCode.append(").").append(this.getTypeOllir(this.symbolTable.getReturnType(methodId))).append(" {\n");
 
         // method body
-        JmmNode methodNode = this.symbolTable.getMethod(methodId).getNode();
+        JmmNode methodNode = method.getNode();
         JmmNode methodBodyNode = null;
         JmmNode methodRetNode = null;
         for (JmmNode n : methodNode.getChildren()) {
@@ -267,8 +278,55 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return ret;
     }
 
+    private String getVarType(String name) {
+        // local variable
+        for (Symbol s : this.localVars) {
+            if (s.getName().equals(name)) {
+                return this.getTypeOllir(s.getType());
+            }
+        }
+        // method parameter
+        for (Symbol s : this.parameters) {
+            if (s.getName().equals(name)) {
+                return this.getTypeOllir(s.getType());
+            }
+        }
+        // class field
+        for (Symbol s : this.symbolTable.getFields()) {
+            if (s.getName().equals(name)) {
+                return this.getTypeOllir(s.getType());
+            }
+        }
+
+        // IMP unreachable
+        return "";
+    }
+
     private String getIdentifierOllir(JmmNode node) {
-        return node.get("name");
+        String name = node.get("name");
+        // local variable
+        for (Symbol s : this.localVars) {
+            if (s.getName().equals(name)) {
+                return this.getSymbolOllir(s);
+            }
+        }
+        // method parameter
+        for (int i = 0; i < this.parameters.size(); ++i) {
+            Symbol s = this.parameters.get(i);
+            if (s.getName().equals(name)) {
+                return "$" + i + "." + this.getSymbolOllir(s);
+            }
+        }
+        // class field
+        for (Symbol s : this.symbolTable.getFields()) {
+            if (s.getName().equals(name)) {
+                // ganhamos! A angola e nossa!
+                return "getfield(this, " + this.getSymbolOllir(s) + ")." + this.getTypeOllir(s.getType());
+            }
+        }
+
+        // TODO import
+        return "";
     }
 
     private String getLiteralOllir(JmmNode node) {

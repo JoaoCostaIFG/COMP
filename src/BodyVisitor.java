@@ -324,12 +324,21 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private Type getBinaryNodeType(JmmNode node, List<Report> reports) {
         String op = node.get("op");
-        return switch (op) {
-            case "AND", "LESSTHAN" -> new Type("boolean", false);
-            case "ADD", "SUB", "MULT", "DIV", "INDEX" -> new Type("int", false);
-            case "DOT" -> getDotNodeType(node, reports);
-            default -> null;
-        };
+        switch (op) {
+            case "AND":
+            case "LESSTHAN":
+                return new Type("boolean", false);
+            case "ADD":
+            case "SUB":
+            case "MULT":
+            case "DIV":
+            case "INDEX":
+                return new Type("int", false);
+            case "DOT":
+                return this.getDotNodeType(node, reports);
+            default:
+                return null;
+        }
     }
 
     private Type getLiteralNodeType(JmmNode node, List<Report> reports) {
@@ -352,13 +361,18 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     public Type getNodeType(JmmNode node, List<Report> reports) {
-        return switch (node.getKind()) {
-            case "Binary" -> this.getBinaryNodeType(node, reports);
-            case "Literal" -> this.getLiteralNodeType(node, reports);
-            case "Unary" -> new Type("boolean", false);
-            case "New" -> getNewNodeType(node);
-            default -> null;
-        };
+        switch (node.getKind()) {
+            case "Binary":
+                return this.getBinaryNodeType(node, reports);
+            case "Literal":
+                return this.getLiteralNodeType(node, reports);
+            case "Unary":
+                return new Type("boolean", false);
+            case "New":
+                return this.getNewNodeType(node);
+            default:
+                return null;
+        }
     }
 
     public boolean nodeIsOfType(JmmNode node, String type, boolean isArray, List<Report> reports) {

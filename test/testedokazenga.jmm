@@ -6,16 +6,14 @@ import b;
 
 class T {
     public static void main(String[] a) {
-        false;
-        if (true) {
-            1+2;
-           if (false) {
-               1+2;
-           } else {
-               1+2;
-           }
-        } else {
-            1+2;
+        while(true && false && true) {
+            if (1 < 2 && true) {
+                1 + 2;
+            } else {
+                while(true) {
+                    1 + 2;
+                }
+            }
         }
     }
 }

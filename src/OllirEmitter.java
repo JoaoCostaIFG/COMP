@@ -141,30 +141,29 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private void getWhileOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
-        JmmNode elseBody = n.getChildren().get(2);
-        String condOllir = this.getOpOllir("", condNode.getChildren().get(0));
-        String elseLabel = this.getNextLabel("else");
-        String endLabel = this.getNextLabel("endif");
-        // If condition
-        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(elseLabel).append(";\n");
-        // If BOdy
+
+        String loopLabel = this.getNextLabel("Loop");
+        String endLabel = this.getNextLabel("EndLoop");
+
+        this.ollirCode.append(tabs).append(loopLabel).append(":\n");
+        String condOllir = this.getOpOllir(tabs + "\t", condNode.getChildren().get(0));
+        this.ollirCode.append(tabs).append("\t").append("if (").append(condOllir.trim())
+                .append(") goto ").append(endLabel).append(";\n");
         this.getBodyOllir(tabs + "\t", body);
-        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
-        // Else
-        this.ollirCode.append(tabs).append(elseLabel).append(":\n");
-        this.getBodyOllir(tabs + "\t", elseBody);
-        this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
+        this.ollirCode.append(tabs).append(endLabel).append(":\n");
     }
 
     public void getIfOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
         JmmNode elseBody = n.getChildren().get(2);
-        String condOllir = this.getOpOllir("", condNode.getChildren().get(0));
+
+        String condOllir = this.getOpOllir(tabs, condNode.getChildren().get(0));
         String elseLabel = this.getNextLabel("else");
         String endLabel = this.getNextLabel("endif");
+
         // If condition
-        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(elseLabel).append(";\n");
+        this.ollirCode.append(tabs).append("if (").append(condOllir.trim()).append(") goto ").append(elseLabel).append(";\n");
         // If BOdy
         this.getBodyOllir(tabs + "\t", body);
         this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");

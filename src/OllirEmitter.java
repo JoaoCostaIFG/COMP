@@ -228,18 +228,32 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return ret;
     }
 
+    private boolean identIsImport(String name) {
+        return this.localVars.stream().noneMatch(v -> v.getName().equals(name)) &&
+                this.parameters.stream().noneMatch(v -> v.getName().equals(name)) &&
+                this.symbolTable.getFields().stream().noneMatch(v -> v.getName().equals(name));
+    }
+
     private String getDotOllir(String tabs, JmmNode node, boolean isAux) {
         List<JmmNode> children = node.getChildren();
-        String ret = "";
+        JmmNode leftChild = children.get(0);
+        JmmNode rightChild = children.get(1);
+        String ret;
         String type = "";
 
-        if (children.get(1).getKind().equals("Len")) {
+        if (rightChild.getKind().equals("Len")) {
             type = ".i32";
-            ret += "arraylength(" + this.getOpOllir(tabs, children.get(0)) + ")" + type;
+            ret = "arraylength(" + this.getOpOllir(tabs, leftChild) + ")" + type;
         } else { // func call
+            // invoquestatic on imports
+            if (leftChild.getKind().equals("Literal") &&
+                    leftChild.get("type").equals("identifier") &&
+                    this.identIsImport(leftChild.get("name"))) {
+                ret = "invokestatic(" + children.get(0).get("name") +
+                        ", \"" + children.get(1).get("methodName") + "\"" + ").V";
+            }
+
             // TODO
-            ret += "invokestatic(" + children.get(0).get("name") +
-                    ", \"" + children.get(1).get("methodName") + "\"" + ").V";
         }
 
         if (isAux)
@@ -345,8 +359,8 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             }
         }
 
-        // TODO import
-        return "";
+        // has to be an import
+        return node.get("name");
     }
 
     private String getLiteralOllir(String tabs, JmmNode node, boolean isAux) {
@@ -391,8 +405,8 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private boolean varIsClassField(String name) {
-        return !this.localVars.stream().anyMatch(v -> v.getName().equals(name)) &&
-                !this.parameters.stream().anyMatch(v -> v.getName().equals(name)) &&
+        return this.localVars.stream().noneMatch(v -> v.getName().equals(name)) &&
+                this.parameters.stream().noneMatch(v -> v.getName().equals(name)) &&
                 this.symbolTable.getFields().stream().anyMatch(v -> v.getName().equals(name));
     }
 

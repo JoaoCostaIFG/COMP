@@ -107,22 +107,37 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         }
 
         if (methodBodyNode != null)
-            this.getMethodBodyOllir(tabs + "\t", methodBodyNode, methodId);
+            this.getBodyOllir(tabs + "\t", methodBodyNode);
 
         // TODO return statement
 
         this.ollirCode.append(tabs).append("}\n");
     }
 
-    private void getMethodBodyOllir(String tabs, JmmNode node, String methodId) {
+    private void getBodyOllir(String tabs, JmmNode node) {
         for (JmmNode n : node.getChildren()) {
             switch (n.getKind()) {
+                case "Literal":
                 case "Binary":
                 case "Unary":
                     this.ollirCode.append(this.getOpOllir(tabs, n)).append(";\n");
                     break;
+                case "If":
+                    this.getIfOllir(tabs, n);
             }
         }
+    }
+
+    public void getIfOllir(String tabs, JmmNode n) {
+        JmmNode condNode = n.getChildren().get(0);
+        JmmNode body = n.getChildren().get(1);
+        JmmNode elseBody = n.getChildren().get(2);
+        String condOllir = this.getOpOllir("", condNode.getChildren().get(0));
+        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") {\n");
+        this.getBodyOllir(tabs + "\t", body);
+        this.ollirCode.append(tabs).append("} else {\n");
+        this.getBodyOllir(tabs + "\t", elseBody);
+        this.ollirCode.append(tabs).append("}\n");
     }
 
     private String injectTempVar(String tabs, String type, String content) {
@@ -141,6 +156,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             type = ".i32";
             ret += "arraylength(" + this.getOpOllir(tabs, children.get(0)) + ")" + type;
         } else { // func call
+            // TODO
             ret += "invokestatic(" + children.get(0).get("name") +
                     ", \"" + children.get(1).get("methodName") + "\"" + ").V";
         }

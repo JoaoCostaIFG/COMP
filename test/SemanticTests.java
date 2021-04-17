@@ -42,8 +42,8 @@ public class SemanticTests {
     public void NachoTest() {
         String jmmCode = SpecsIo.read("test/nachotest.jmm");
         JmmParserResult result = TestUtils.parse(jmmCode);
-        System.out.println(result.getRootNode().toJson());
-        goodTest(jmmCode); // calma homem tava a meter os testes :ok_hand:
+        // System.out.println(result.getRootNode().toJson());
+        goodTest(jmmCode); // calma jovem tava a meter os testes :ok_hand:
     }
 
     /*

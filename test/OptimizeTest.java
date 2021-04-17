@@ -31,6 +31,21 @@ public class OptimizeTest {
     }
 
     @Test
+    public void testNachos() {
+        String jmmCode = SpecsIo.read("test/nachotest.jmm");
+        JmmParserResult result = TestUtils.parse(jmmCode);
+        optimizeTest(jmmCode);
+    }
+
+    @Test
+    public void testKazenga() {
+        String jmmCode = SpecsIo.read("test/testedokazenga.jmm");
+        JmmParserResult result = TestUtils.parse(jmmCode);
+        // System.err.println(result.getRootNode().toJson());
+        optimizeTest(jmmCode);
+    }
+
+    @Test
     public void testFindMaximum() {
         optimizeTest(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
     }

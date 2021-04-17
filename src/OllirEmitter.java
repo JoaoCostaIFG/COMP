@@ -8,6 +8,7 @@ import java.util.List;
 public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private final MySymbolTable symbolTable;
     private final StringBuilder ollirCode;
+    private int labelCount;
     private Integer auxCount;
 
     public OllirEmitter(MySymbolTable symbolTable) {
@@ -15,6 +16,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.symbolTable = symbolTable;
         this.ollirCode = new StringBuilder();
         this.auxCount = 0;
+        this.labelCount = 0;
         this.addVisit("Program", this::visitRoot);
     }
 
@@ -26,6 +28,10 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         String auxVarName = "aux" + this.auxCount.toString();
         ++this.auxCount;
         return auxVarName;
+    }
+
+    private String getNextLabel(String pre) {
+        return pre + (this.labelCount++);
     }
 
     private String primitiveType(Type type) {
@@ -107,22 +113,65 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         }
 
         if (methodBodyNode != null)
-            this.getMethodBodyOllir(tabs + "\t", methodBodyNode, methodId);
+            this.getBodyOllir(tabs + "\t", methodBodyNode);
 
         // TODO return statement
 
         this.ollirCode.append(tabs).append("}\n");
     }
 
-    private void getMethodBodyOllir(String tabs, JmmNode node, String methodId) {
+    private void getBodyOllir(String tabs, JmmNode node) {
         for (JmmNode n : node.getChildren()) {
             switch (n.getKind()) {
+                case "Literal":
                 case "Binary":
                 case "Unary":
                     this.ollirCode.append(this.getOpOllir(tabs, n)).append(";\n");
                     break;
+                case "If":
+                    this.getIfOllir(tabs, n);
+                    break;
+                case "WhileLoop":
+                    this.getWhileOllir(tabs, n);
+                    break;
             }
         }
+    }
+
+    private void getWhileOllir(String tabs, JmmNode n) {
+        JmmNode condNode = n.getChildren().get(0);
+        JmmNode body = n.getChildren().get(1);
+        JmmNode elseBody = n.getChildren().get(2);
+        String condOllir = this.getOpOllir("", condNode.getChildren().get(0));
+        String elseLabel = this.getNextLabel("else");
+        String endLabel = this.getNextLabel("endif");
+        // If condition
+        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(elseLabel).append(";\n");
+        // If BOdy
+        this.getBodyOllir(tabs + "\t", body);
+        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+        // Else
+        this.ollirCode.append(tabs).append(elseLabel).append(":\n");
+        this.getBodyOllir(tabs + "\t", elseBody);
+        this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
+    }
+
+    public void getIfOllir(String tabs, JmmNode n) {
+        JmmNode condNode = n.getChildren().get(0);
+        JmmNode body = n.getChildren().get(1);
+        JmmNode elseBody = n.getChildren().get(2);
+        String condOllir = this.getOpOllir("", condNode.getChildren().get(0));
+        String elseLabel = this.getNextLabel("else");
+        String endLabel = this.getNextLabel("endif");
+        // If condition
+        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(elseLabel).append(";\n");
+        // If BOdy
+        this.getBodyOllir(tabs + "\t", body);
+        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+        // Else
+        this.ollirCode.append(tabs).append(elseLabel).append(":\n");
+        this.getBodyOllir(tabs + "\t", elseBody);
+        this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
     }
 
     private String injectTempVar(String tabs, String type, String content) {
@@ -141,6 +190,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             type = ".i32";
             ret += "arraylength(" + this.getOpOllir(tabs, children.get(0)) + ")" + type;
         } else { // func call
+            // TODO
             ret += "invokestatic(" + children.get(0).get("name") +
                     ", \"" + children.get(1).get("methodName") + "\"" + ").V";
         }

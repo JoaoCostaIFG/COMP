@@ -8,6 +8,6 @@ class C {
     public static void main(String[] a) {
         // while((new Preto()).a()) {}
         int b;
-        b = 1;
+        b = 1 + 2 + 3 + 4;
     }
 }

@@ -358,11 +358,17 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return ret;
     }
 
-    private String getAssignOllir(String tabs, JmmNode node, boolean isAux) {
+    private String getAssignOllir(String tabs, JmmNode node) {
         // TODO Check if left is this => use set field
         JmmNode leftChild = node.getChildren().get(0),
             rightChild = node.getChildren().get(1);
-        return tabs + leftChild.get("name") + ".tipo" + " := " + getOpOllir("", rightChild, false);
+        String assigneeNome = leftChild.get("name");
+        String type = "." + this.getVarType(assigneeNome);
+        String ret = assigneeNome + type + " :=" + type + " " + getOpOllir(tabs, rightChild).trim();
+
+        if (rightChild.getKind().equals("New"))
+            ret += "\n" + tabs + "invokespecial(" + assigneeNome + type + ", \"<init>\").V";
+        return ret;
     }
 
     private String getOpOllir(String tabs, JmmNode node, boolean isAux) {
@@ -384,7 +390,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
                 ret += this.getNewOllir(tabs, node, isAux);
                 break;
             case "Assign":
-                ret += this.getAssignOllir(tabs, node, isAux);
+                ret += this.getAssignOllir(tabs, node);
                 break;
         }
 

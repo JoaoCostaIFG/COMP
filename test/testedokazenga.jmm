@@ -5,13 +5,9 @@
 import b;
 
 class C {
-    int a;
+    int[] a;
 
     public static void main(String[] args) {
-        int b;
-        int[] arr;
-        arr = new int[4];
-        b = 1;
-        arr[0] = a + b;
+        a[0] = 2 + 3 + 4;
     }
 }

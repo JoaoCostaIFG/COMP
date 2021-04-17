@@ -188,7 +188,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private String injectTempVar(String tabs, String type, String content) {
         String auxVarName = this.getNextAuxVar() + type;
         this.ollirCode.append(tabs).append(auxVarName).append(" :=")
-                .append(type).append(" ").append(content).append("\n");
+                .append(type).append(" ").append(content).append(";\n");
         return auxVarName;
     }
 
@@ -390,25 +390,43 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return ret;
     }
 
-    private String getAssignOllir(String tabs, JmmNode node) {
-        // TODO Check if left is this => use set field
+    private boolean varIsClassField(String name) {
+        return !this.localVars.stream().anyMatch(v -> v.getName().equals(name)) &&
+                !this.parameters.stream().anyMatch(v -> v.getName().equals(name)) &&
+                this.symbolTable.getFields().stream().anyMatch(v -> v.getName().equals(name));
+    }
 
+    private String getAssignOllir(String tabs, JmmNode node) {
         JmmNode leftChild = node.getChildren().get(0),
                 rightChild = node.getChildren().get(1);
         String assigneeNome = leftChild.get("name");
+        boolean isField = this.varIsClassField(assigneeNome);
         String type = this.getVarType(assigneeNome);
-        String ret = assigneeNome;
+
+        // assignee
+        String assignee = assigneeNome;
         // if is array access
         if (leftChild.get("isArrayAccess").equals("yes")) {
-            ret += "[" + this.getOpOllir(tabs, leftChild.getChildren().get(0), true) + "]";
+            assignee += "[" + this.getOpOllir(tabs, leftChild.getChildren().get(0), true) + "]";
             // remove the array part of the type (.array.i32 -> .i32)
             type = "." + type.split("\\.")[2];
         }
-        ret += type + " :=" + type + " " + this.getOpOllir(tabs, rightChild).trim();
+        assignee += type;
+
+        // content (on fields, it needs to have an aux var)
+        String content = this.getOpOllir(tabs, rightChild, isField).trim();
+
+        String ret;
+        if (isField) {
+            ret = "putfield(this, " + assignee + ", " + content + ")";
+        } else {
+            ret = assignee + " :=" + type + " " + content;
+        }
 
         // classes need to be instantiated
         if (rightChild.getKind().equals("New") && rightChild.get("type").equals("class"))
-            ret += "\n" + tabs + "invokespecial(" + assigneeNome + type + ", \"<init>\").V";
+            ret += ";\n" + tabs + "invokespecial(" + assigneeNome + type + ", \"<init>\").V";
+
         return ret;
     }
 

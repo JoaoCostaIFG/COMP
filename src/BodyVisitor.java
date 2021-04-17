@@ -16,14 +16,16 @@ import static java.lang.Integer.parseInt;
 public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final MySymbolTable symbolTable;
     private final Method method;
+    private final String methodName;
     private final Set<String> assignedVariables;
     private static final Type everythingType = new Type("", false);
     private static final Symbol everythingSymbol = new Symbol(everythingType, "");
 
-    public BodyVisitor(MySymbolTable symbolTable, Method method) {
+    public BodyVisitor(MySymbolTable symbolTable, Method method, String methodName) {
         super();
         this.symbolTable = symbolTable;
         this.method = method;
+        this.methodName = methodName;
         this.assignedVariables = new HashSet<>();
         for (Symbol s : method.getParameters()) { // method parameters are already initialised
             assignedVariables.add(s.getName());
@@ -34,6 +36,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         addVisit("Unary", this::visitUnary);
         addVisit("Binary", this::visitBinary);
         addVisit("Cond", this::visitCond);
+        addVisit("Return", this::visitReturn);
     }
 
     private boolean validateBooleanOp(JmmNode node, List<Report> reports) {
@@ -110,7 +113,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 return false;
             }
 
-            if (leftType.getName().equals("this")) {
+            if (leftType.getName().equals("this") || leftType.getName().equals(this.symbolTable.getClassName())) {
                 // check if given method exists in class/super class
                 Type t = getMethodCallType(dotNode, reports);
                 if (t == null && symbolTable.getSuper() == null) {
@@ -121,6 +124,18 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
         }
 
+        return true;
+    }
+
+    private Boolean visitReturn(JmmNode node, List<Report> reports) {
+        JmmNode child = node.getChildren().get(0);
+        Type retType = this.symbolTable.getReturnType(this.methodName);
+        if (!this.nodeIsOfType(child, retType, reports)) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")),
+                    "Method's return statement doesn't have the correct type: " +
+                            retType.getName() + (retType.isArray() ? "[]" : "")));
+            return false;
+        }
         return true;
     }
 
@@ -353,6 +368,10 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     public boolean nodeIsOfType(JmmNode node, String type, List<Report> reports) {
-        return nodeIsOfType(node, type, false, reports);
+        return this.nodeIsOfType(node, type, false, reports);
+    }
+
+    public boolean nodeIsOfType(JmmNode node, Type type, List<Report> reports) {
+        return this.nodeIsOfType(node, type.getName(), type.isArray(), reports);
     }
 }

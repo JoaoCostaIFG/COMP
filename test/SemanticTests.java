@@ -52,7 +52,7 @@ public class SemanticTests {
     @Test
     public void KazengaTest() {
         String jmmCode = SpecsIo.read("test/testedokazenga.jmm");
-        badTest(jmmCode, 1);
+        badTest(jmmCode, 0);
     }
 
     @Test

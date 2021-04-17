@@ -72,11 +72,11 @@ public class AnalysisStage implements JmmAnalysis {
         // visit method bodies and do semantic analysis
         for (String methodName : symbolTable.getMethods()) {
             Method method = symbolTable.getMethod(methodName);
-            BodyVisitor bodyVisitor = new BodyVisitor(symbolTable, method);
+            BodyVisitor bodyVisitor = new BodyVisitor(symbolTable, method, methodName);
             bodyVisitor.visit(method.getNode(), reports);
         }
 
-//        System.out.println("Reports: " + reports);
+        // System.out.println("Reports: " + reports);
         return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }

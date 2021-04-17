@@ -157,8 +157,8 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         List<Symbol> localVars = this.visitBody(bodyNode, methodName, methodParameters, reports);
         if (localVars == null) return false;
 
-        // TODO verify return variable type to match method's type
-        JmmNode returnNode = children.get(3);
+        // Return  verification is made on the body visitor
+        // JmmNode returnNode = children.get(3);
 
         this.symbolTable.addMethod(methodName, returnType, methodParameters, localVars, node);
         return true;

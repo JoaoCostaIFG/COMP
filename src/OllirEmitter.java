@@ -123,9 +123,11 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private void getBodyOllir(String tabs, JmmNode node) {
         for (JmmNode n : node.getChildren()) {
             switch (n.getKind()) {
+                case "New":
                 case "Literal":
                 case "Binary":
                 case "Unary":
+                case "Assign":
                     this.ollirCode.append(this.getOpOllir(tabs, n)).append(";\n");
                     break;
                 case "If":
@@ -286,6 +288,25 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         }
     }
 
+    private String getNewOllir(String tabs, JmmNode node, boolean isAux) {
+        String ret = "";
+        String newString = "new(" + node.get("name") + ")." + node.get("name");
+        if (isAux) {
+            ret = this.injectTempVar(tabs, "." + node.get("name"), newString) ;
+            this.ollirCode.append(tabs).append("invokespecial(").append(ret).append(", \"<init>\").V\n");
+        } else
+            ret = newString;
+
+        return ret;
+    }
+
+    private String getAssignOllir(String tabs, JmmNode node, boolean isAux) {
+        // TODO Check if left is this => use set field
+        JmmNode leftChild = node.getChildren().get(0),
+            rightChild = node.getChildren().get(1);
+        return tabs + leftChild.get("name") + ".tipo" + " := " + getOpOllir("", rightChild, false);
+    }
+
     private String getOpOllir(String tabs, JmmNode node, boolean isAux) {
         String ret = "";
         if (!isAux)
@@ -300,6 +321,12 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
                 break;
             case "Literal":
                 ret += this.getLiteralOllir(node);
+                break;
+            case "New":
+                ret += this.getNewOllir(tabs, node, isAux);
+                break;
+            case "Assign":
+                ret += this.getAssignOllir(tabs, node, isAux);
                 break;
         }
 

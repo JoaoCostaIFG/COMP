@@ -41,7 +41,7 @@ public class OptimizeTest {
     public void testKazenga() {
         String jmmCode = SpecsIo.read("test/testedokazenga.jmm");
         JmmParserResult result = TestUtils.parse(jmmCode);
-        //System.err.println(result.getRootNode().toJson());
+        // System.err.println(result.getRootNode().toJson());
         optimizeTest(jmmCode);
     }
 

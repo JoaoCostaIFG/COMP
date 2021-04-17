@@ -53,10 +53,9 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private String getTypeOllir(Type type) {
-        String ret = "";
-        if (type.isArray()) {
-            ret = "array.";
-        }
+        String ret = ".";
+        if (type.isArray())
+            ret += "array.";
 
         String primitiveType = this.primitiveType(type);
         if (primitiveType == null)
@@ -68,7 +67,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private String getSymbolOllir(Symbol var) {
-        return var.getName() + "." + this.getTypeOllir(var.getType());
+        return var.getName() + this.getTypeOllir(var.getType());
     }
 
     private String visitRoot(JmmNode node, Boolean ignored) {
@@ -110,7 +109,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             this.ollirCode.append(first ? "" : ", ").append(this.getSymbolOllir(param));
             first = false;
         }
-        this.ollirCode.append(").").append(this.getTypeOllir(this.symbolTable.getReturnType(methodId))).append(" {\n");
+        this.ollirCode.append(")").append(this.getTypeOllir(this.symbolTable.getReturnType(methodId))).append(" {\n");
 
         // method body
         JmmNode methodNode = method.getNode();
@@ -193,25 +192,6 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return auxVarName;
     }
 
-    private String getDotOllir(String tabs, JmmNode node, boolean isAux) {
-        List<JmmNode> children = node.getChildren();
-        String ret = "";
-        String type = "";
-
-        if (children.get(1).getKind().equals("Len")) {
-            type = ".i32";
-            ret += "arraylength(" + this.getOpOllir(tabs, children.get(0)) + ")" + type;
-        } else { // func call
-            // TODO
-            ret += "invokestatic(" + children.get(0).get("name") +
-                    ", \"" + children.get(1).get("methodName") + "\"" + ").V";
-        }
-
-        if (isAux)
-            return this.injectTempVar(tabs, type, ret);
-        return ret;
-    }
-
     private String getIntOpOllir(String tabs, JmmNode node, String op, boolean isAux) {
         final String type = ".i32";
         List<JmmNode> children = node.getChildren();
@@ -248,6 +228,37 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return ret;
     }
 
+    private String getDotOllir(String tabs, JmmNode node, boolean isAux) {
+        List<JmmNode> children = node.getChildren();
+        String ret = "";
+        String type = "";
+
+        if (children.get(1).getKind().equals("Len")) {
+            type = ".i32";
+            ret += "arraylength(" + this.getOpOllir(tabs, children.get(0)) + ")" + type;
+        } else { // func call
+            // TODO
+            ret += "invokestatic(" + children.get(0).get("name") +
+                    ", \"" + children.get(1).get("methodName") + "\"" + ").V";
+        }
+
+        if (isAux)
+            return this.injectTempVar(tabs, type, ret);
+        return ret;
+    }
+
+    private String getIndexOllir(String tabs, JmmNode node) {
+        final String type = ".i32";
+        List<JmmNode> children = node.getChildren();
+        String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
+        String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
+
+        // IMP array access have always to be stored in a temporary variable before usage
+        // we are splitting the left child by "." on the left because we don't want the type to show
+        String ret = childLeftOllir.split("\\.")[0] + "[" + childRightOllir + "]" + type;
+        return this.injectTempVar(tabs, type, ret);
+    }
+
     private String getBinaryOllir(String tabs, JmmNode node, boolean isAux) {
         switch (node.get("op")) {
             case "ADD":
@@ -258,12 +269,14 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
                 return this.getIntOpOllir(tabs, node, "*", isAux);
             case "DIV":
                 return this.getIntOpOllir(tabs, node, "/", isAux);
-            case "DOT":
-                return this.getDotOllir(tabs, node, isAux);
             case "AND":
                 return this.getAndOllir(tabs, node, isAux);
             case "LESSTHAN":
                 return this.getLessThanOllir(tabs, node, isAux);
+            case "DOT":
+                return this.getDotOllir(tabs, node, isAux);
+            case "INDEX":
+                return this.getIndexOllir(tabs, node);
             default:
                 return "";
         }
@@ -271,7 +284,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getUnaryOllir(String tabs, JmmNode node, boolean isAux) {
         final String type = ".bool";
-        JmmNode child= node.getChildren().get(0);
+        JmmNode child = node.getChildren().get(0);
         String childOllir = this.getOpOllir(tabs, child, true);
         String ret = childOllir + " !" + type + " " + childOllir;
 
@@ -323,7 +336,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         for (Symbol s : this.symbolTable.getFields()) {
             if (s.getName().equals(name)) {
                 // ganhamos! A angola e nossa!
-                return "getfield(this, " + this.getSymbolOllir(s) + ")." + this.getTypeOllir(s.getType());
+                return "getfield(this, " + this.getSymbolOllir(s) + ")" + this.getTypeOllir(s.getType());
             }
         }
 
@@ -347,24 +360,39 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private String getNewOllir(String tabs, JmmNode node, boolean isAux) {
-        String ret = "";
-        String newString = "new(" + node.get("name") + ")." + node.get("name");
+        String ret = "new(";
+        String type;
+
+        if (node.get("type").equals("array")) {
+            type = ".array.i32";
+            ret += "array, " + this.getOpOllir(tabs, node.getChildren().get(0), true) + ")" + type;
+        } else {
+            String name = node.get("name");
+            type = "." + name;
+            ret += name + ")" + type;
+        }
+
         if (isAux) {
-            ret = this.injectTempVar(tabs, "." + node.get("name"), newString) ;
+            ret = this.injectTempVar(tabs, type, ret);
             this.ollirCode.append(tabs).append("invokespecial(").append(ret).append(", \"<init>\").V\n");
-        } else
-            ret = newString;
+        }
 
         return ret;
     }
 
     private String getAssignOllir(String tabs, JmmNode node) {
         // TODO Check if left is this => use set field
+
         JmmNode leftChild = node.getChildren().get(0),
-            rightChild = node.getChildren().get(1);
+                rightChild = node.getChildren().get(1);
         String assigneeNome = leftChild.get("name");
-        String type = "." + this.getVarType(assigneeNome);
-        String ret = assigneeNome + type + " :=" + type + " " + getOpOllir(tabs, rightChild).trim();
+        String type = this.getVarType(assigneeNome);
+        String ret = assigneeNome;
+        // if is array access
+        if (leftChild.get("isArrayAccess").equals("yes")) {
+            ret += "[" + this.getOpOllir(tabs, leftChild.getChildren().get(0), true) + "]";
+        }
+        ret += type + " :=" + type + " " + getOpOllir(tabs, rightChild).trim();
 
         if (rightChild.getKind().equals("New"))
             ret += "\n" + tabs + "invokespecial(" + assigneeNome + type + ", \"<init>\").V";

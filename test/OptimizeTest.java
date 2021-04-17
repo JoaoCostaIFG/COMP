@@ -14,13 +14,64 @@
 
 import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.JmmParserResult;
+import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.specs.util.SpecsIo;
+
+import java.util.List;
 
 public class OptimizeTest {
 
+    /*
+     *  helper
+     */
+    private void optimizeTest(String jmmCode) {
+        var result = TestUtils.optimize(jmmCode);
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testFindMaximum() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
+    }
+
     @Test
     public void testHelloWorld() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
-        TestUtils.noErrors(result.getReports());
+        optimizeTest(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
+    }
+
+    @Test
+    public void testLazysort() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
+    }
+
+    @Test
+    public void testLife() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/Life.jmm"));
+    }
+
+    @Test
+    public void testMonteCarloPi() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"));
+    }
+
+    @Test
+    public void testQuickSort() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
+    }
+
+    @Test
+    public void testSimple() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/Simple.jmm"));
+    }
+
+    @Test
+    public void testTicTacToe() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
+    }
+
+    @Test
+    public void testWhileAndIF() {
+        optimizeTest(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
     }
 }

@@ -128,7 +128,14 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         if (methodBodyNode != null)
             this.getBodyOllir(tabs + "\t", methodBodyNode);
 
-        // TODO return statement
+        if (methodRetNode == null) { // no return statement (void method)
+            this.ollirCode.append(tabs + "\t").append("ret.V;\n");
+        } else {
+            String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0));
+            this.ollirCode.append(tabs + "\t")
+                    .append("ret").append(this.getTypeOllir(method.getReturnType()))
+                    .append(" ").append(retOllir.trim()).append(";\n");
+        }
 
         this.ollirCode.append(tabs).append("}\n");
     }

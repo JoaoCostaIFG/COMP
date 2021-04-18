@@ -1,8 +1,8 @@
 import b;
 
 class C {
-    public int a() {
-        return 2;
+    public int[] a() {
+        return new int [2];
     }
 
     public static void main(String[] args) {

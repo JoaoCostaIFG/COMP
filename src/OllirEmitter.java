@@ -53,7 +53,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             case "i32":
                 return new Type("int", split.length >= 2);
             case "bool":
-                return new Type("bool", split.length >= 2);
+                return new Type("boolean", split.length >= 2);
             default:
                 return new Type(split[0], split.length >= 2);
         }
@@ -63,7 +63,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         switch (type.getName()) {
             case "int":
                 return "i32";
-            case "bool":
+            case "boolean":
                 return "bool";
             case "void":
                 return "V";
@@ -413,7 +413,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getLiteralOllir(String tabs, JmmNode node, boolean isAux) {
         switch (node.get("type")) {
-            case "bool":
+            case "boolean":
                 return (node.get("value").equals("true") ? "1" : "0") + ".bool";
             case "int":
                 return node.get("value") + ".i32";

@@ -18,6 +18,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final Method method;
     private final String methodName;
     private final Set<String> assignedVariables;
+    private boolean isMain = false;
+
     private static final Type everythingType = new Type("", false);
     private static final Symbol everythingSymbol = new Symbol(everythingType, "");
 
@@ -31,6 +33,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             assignedVariables.add(s.getName());
         }
 
+        addVisit("MethodDeclaration", this::visitMethodRoot);
         addVisit("New", this::visitNew);
         addVisit("Assign", this::visitAssign);
         addVisit("Unary", this::visitUnary);
@@ -39,16 +42,25 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         addVisit("Return", this::visitReturn);
     }
 
+    private Boolean visitMethodRoot(JmmNode jmmNode, List<Report> reports) {
+        for (JmmNode child : jmmNode.getChildren()) {
+            if (child.getKind().equals("MainParameter")) {
+                this.isMain = true;
+            }
+        }
+        return true;
+    }
+
     private boolean validateBooleanOp(JmmNode node, List<Report> reports) {
         JmmNode childLeft = node.getChildren().get(0);
-        if (!nodeIsOfType(childLeft, "bool", reports)) {
+        if (!nodeIsOfType(childLeft, "boolean", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + "  operator left operand is not a boolean."));
             return false;
         }
 
         JmmNode childRight = node.getChildren().get(1);
-        if (!nodeIsOfType(childRight, "bool", reports)) {
+        if (!nodeIsOfType(childRight, "boolean", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + "  operator right operand is not a boolean."));
             return false;
@@ -107,13 +119,18 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             Type leftType = this.getNodeType(childLeft, reports);
             if (leftType == null) { // is something unknown => if is import
                 return symbolTable.hasImport(childLeft.get("name"));
-            } else if (leftType.getName().equals("int") || leftType.getName().equals("bool")) {
+            } else if (leftType.getName().equals("int") || leftType.getName().equals("boolean")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(dotNode.get("line")),
                         "Calling method in object that isn't callable."));
                 return false;
             }
 
             if (leftType.getName().equals("this") || leftType.getName().equals(this.symbolTable.getClassName())) {
+                if (this.isMain) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+                            "This cannot be referenced from a static context."));
+                    return false;
+                }
                 // check if given method exists in class/super class
                 Type t = getMethodCallType(dotNode, reports);
                 if (t == null && symbolTable.getSuper() == null) {
@@ -164,7 +181,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private Boolean visitUnary(JmmNode node, List<Report> reports) {
         // This is always the NOT operator
         JmmNode child = node.getChildren().get(0);
-        if (!this.nodeIsOfType(child, "bool", reports)) {
+        if (!this.nodeIsOfType(child, "boolean", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")),
                     "The NOT operator can only be applied to boolean values."));
             return false;
@@ -182,7 +199,6 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
         }
         // else {
-        // TODO can we only instantiate our own class?
         // String instName = node.get("name");
         // if (!this.symbolTable.getClassName().equals(instName)) {
         //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
@@ -195,7 +211,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private boolean visitCond(JmmNode node, List<Report> reports) {
-        if (!nodeIsOfType(node.getChildren().get(0), "bool", reports)) {
+        if (!nodeIsOfType(node.getChildren().get(0), "boolean", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     "Condition is not boolean."));
             return false;
@@ -330,7 +346,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         switch (op) {
             case "AND":
             case "LESSTHAN":
-                return new Type("bool", false);
+                return new Type("boolean", false);
             case "ADD":
             case "SUB":
             case "MULT":
@@ -370,7 +386,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             case "Literal":
                 return this.getLiteralNodeType(node, reports);
             case "Unary":
-                return new Type("bool", false);
+                return new Type("boolean", false);
             case "New":
                 return this.getNewNodeType(node);
             default:

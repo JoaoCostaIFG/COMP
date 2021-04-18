@@ -368,11 +368,11 @@ int DotExpansion() #FuncCall : { Token t; }
 void PrimaryTerm() #void : { Token t; }
 {
     t=<TRUE> {
-        jjtThis.put("type", "bool"); jjtThis.put("value", "true");
+        jjtThis.put("type", "boolean"); jjtThis.put("value", "true");
         jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
     |   t=<FALSE> {
-        jjtThis.put("type", "bool"); jjtThis.put("value", "false");
+        jjtThis.put("type", "boolean"); jjtThis.put("value", "false");
         jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
     |   t=<THIS> {

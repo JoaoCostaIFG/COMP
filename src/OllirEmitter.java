@@ -11,6 +11,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private final StringBuilder ollirCode;
     private int labelCount;
     private Integer auxCount;
+    private Method loadedMethod;
     private List<Symbol> localVars, parameters;
 
     public OllirEmitter(MySymbolTable symbolTable) {
@@ -19,6 +20,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.ollirCode = new StringBuilder();
         this.auxCount = 0;
         this.labelCount = 0;
+        this.loadedMethod = null;
         this.localVars = new ArrayList<>();
         this.parameters = new ArrayList<>();
         this.addVisit("Program", this::visitRoot);
@@ -39,6 +41,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private void loadMethod(Method method) {
+        this.loadedMethod = method;
         this.localVars = method.getLocalVars();
         this.parameters = method.getParameters();
     }
@@ -243,17 +246,27 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
         if (rightChild.getKind().equals("Len")) {
             type = ".i32";
-            ret = "arraylength(" + this.getOpOllir(tabs, leftChild) + ")" + type;
+            ret = "arraylength(" + this.getOpOllir(tabs, leftChild, true) + ")" + type;
         } else { // func call
             // invoquestatic on imports
             if (leftChild.getKind().equals("Literal") &&
                     leftChild.get("type").equals("identifier") &&
                     this.identIsImport(leftChild.get("name"))) {
-                ret = "invokestatic(" + children.get(0).get("name") +
-                        ", \"" + children.get(1).get("methodName") + "\"" + ").V";
+                ret = "invokestatic(";
+            } else {  // invoke virtual on class instances
+                ret = "invokevirtual(";
             }
 
-            // TODO
+            // method name and class instance
+            String methodName = rightChild.get("methodName");
+            ret += this.getOpOllir(tabs, leftChild, true) + ", \"" + methodName + "\"";
+
+            // func call args
+            for (JmmNode argNode : rightChild.getChildren())
+                ret += ", " + this.getOpOllir(tabs, argNode, true);
+
+            // TODO return type
+            ret += ").V";
         }
 
         if (isAux)

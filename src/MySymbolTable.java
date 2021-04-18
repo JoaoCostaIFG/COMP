@@ -105,13 +105,16 @@ public class MySymbolTable implements SymbolTable {
             List<Symbol> params = method.getParameters();
             if (params.size() != paramsTypes.size()) continue;
 
+            boolean isEqual = true;
             for (int i = 0; i < params.size(); ++i) {
                 Type paramType = params.get(i).getType();
                 Type paramToTest = paramsTypes.get(i);
                 if (paramType.getName().equals(paramToTest.getName()) &&
                         paramType.isArray() == paramToTest.isArray())
-                    return method;
+                    isEqual = false;
             }
+            if (isEqual)
+                return method;
         }
 
         return null;

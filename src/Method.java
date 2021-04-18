@@ -2,6 +2,7 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Method {
@@ -36,7 +37,15 @@ public class Method {
     }
 
     public List<Symbol> getParameters() {
-        return parameters;
+        return this.parameters;
+    }
+
+    public List<Type> getParamTypes() {
+        List<Type> ret = new ArrayList<>();
+        for (int i = 0; i < this.parameters.size(); ++i) {
+            ret.add(this.parameters.get(i).getType());
+        }
+        return ret;
     }
 
     public List<Symbol> getLocalVars() {

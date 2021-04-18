@@ -1,13 +1,11 @@
-            /*  REASON:
-    Isto só parte
-*/
-
 import b;
 
 class C {
-    int[] a;
+    public int a() {
+        return 2;
+    }
 
     public static void main(String[] args) {
-        a[0] = 2 + 3 + 4;
+        this.a();
     }
 }

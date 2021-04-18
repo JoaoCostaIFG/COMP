@@ -6,7 +6,10 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static java.lang.Integer.parseInt;
 
@@ -51,14 +54,16 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private boolean validateBooleanOp(JmmNode node, List<Report> reports) {
         JmmNode childLeft = node.getChildren().get(0);
         if (!nodeIsOfType(childLeft, "boolean", reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     node.getKind() + "  operator left operand is not a boolean."));
             return false;
         }
 
         JmmNode childRight = node.getChildren().get(1);
         if (!nodeIsOfType(childRight, "boolean", reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     node.getKind() + "  operator right operand is not a boolean."));
             return false;
         }
@@ -69,14 +74,16 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private boolean validateArithmeticOp(JmmNode node, List<Report> reports) {
         JmmNode childLeft = node.getChildren().get(0);
         if (!nodeIsOfType(childLeft, "int", reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childLeft.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(childLeft.get("line")), parseInt(childLeft.get("col")),
                     node.getKind() + " operator's left operand is not a integer."));
             return false;
         }
 
         JmmNode childRight = node.getChildren().get(1);
         if (!nodeIsOfType(childRight, "int", reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                     node.getKind() + " operator's right operand is not a integer."));
             return false;
         }
@@ -87,14 +94,16 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private boolean validateIndexOp(JmmNode indNode, List<Report> reports) {
         JmmNode childLeft = indNode.getChildren().get(0);
         if (!this.nodeIsOfType(childLeft, "int", true, reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childLeft.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(childLeft.get("line")), parseInt(childLeft.get("col")),
                     "Index operator can only be used in arrays."));
             return false;
         }
 
         JmmNode childRight = indNode.getChildren().get(1);
         if (!this.nodeIsOfType(childRight, "int", reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                     "Index operator's index is not an integer."));
             return false;
         }
@@ -108,7 +117,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
         if (childRight.getKind().equals("Len")) {
             if (!this.nodeIsOfType(childLeft, "int", true, reports)) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                         "Length is a property of arrays."));
                 return false;
             }
@@ -117,21 +127,24 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             if (leftType == null) { // is something unknown => if is import
                 return symbolTable.hasImport(childLeft.get("name"));
             } else if (leftType.getName().equals("int") || leftType.getName().equals("boolean")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(dotNode.get("line")),
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(dotNode.get("line")), parseInt(dotNode.get("col")),
                         "Calling method in object that isn't callable."));
                 return false;
             }
 
             if (leftType.getName().equals("this") || leftType.getName().equals(this.symbolTable.getClassName())) {
                 if (this.isMain) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                            parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                             "This cannot be referenced from a static context."));
                     return false;
                 }
                 // check if given method exists in class/super class
                 Type t = getMethodCallType(dotNode, reports);
                 if (t == null && symbolTable.getSuper() == null) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(childRight.get("line")),
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                            parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                             "Method isn't part of the class/super class: " + childRight.get("methodName")));
                     return false;
                 }
@@ -145,7 +158,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         JmmNode child = node.getChildren().get(0);
         Type retType = this.symbolTable.getReturnType(this.methodName);
         if (!this.nodeIsOfType(child, retType, reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(child.get("line")), parseInt(child.get("col")),
                     "Method's return statement doesn't have the correct type: " +
                             retType.getName() + (retType.isArray() ? "[]" : "")));
             return false;
@@ -179,7 +193,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // This is always the NOT operator
         JmmNode child = node.getChildren().get(0);
         if (!this.nodeIsOfType(child, "boolean", reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(child.get("line")), parseInt(child.get("col")),
                     "The NOT operator can only be applied to boolean values."));
             return false;
         }
@@ -190,7 +205,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         if (node.get("type").equals("array")) {
             JmmNode arrIndexNode = node.getChildren().get(0);
             if (!this.nodeIsOfType(arrIndexNode, "int", reports)) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(arrIndexNode.get("line")),
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(arrIndexNode.get("line")), parseInt(arrIndexNode.get("col")),
                         "The size of an array has to be an integer."));
                 return false;
             }
@@ -209,7 +225,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private boolean visitCond(JmmNode node, List<Report> reports) {
         if (!nodeIsOfType(node.getChildren().get(0), "boolean", reports)) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     "Condition is not boolean."));
             return false;
         }
@@ -222,7 +239,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // get var and check that it is declared
         Symbol var = this.getVar(varNode, reports, false);
         if (var == null) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                     "Assignment to undeclared variable: " + varName + "."));
             return false;
         }
@@ -231,7 +249,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // array accesses can only be performed on arrays
         boolean varIsArrayAccess = varNode.get("isArrayAccess").equals("yes");
         if (varIsArrayAccess && !varType.isArray()) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                     "Array access on non-array type variable: " + varName + "."));
             return false;
         }
@@ -246,14 +265,16 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             if (varIsArrayAccess) {
                 // not an assignment to array index
                 if (!varType.getName().equals(contentType.getName()) || contentType.isArray()) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                            parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                             "Assignment variable and content have different types: " + varName + "."));
                     return false;
                 }
             } else {  // not a normal var assignment
                 if (!varType.getName().equals(contentType.getName()) ||
                         varType.isArray() != contentType.isArray()) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                            parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                             "Assignment variable and content have different types: " + varName + "."));
                     return false;
                 }
@@ -273,7 +294,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             s = this.symbolTable.getField(varName);
         else if (checkDeclared) { // only check for declarations of vars in our scope
             if (!this.assignedVariables.contains(varName)) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                         "Variable used before being assigned a value: " + varName + "."));
             }
         }
@@ -286,7 +308,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
             // unknown => return something to appease the masses
             if (checkDeclared) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(varNode.get("line")),
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                         "Variable is undeclared: " + varName + "."));
             }
             return BodyVisitor.everythingSymbol;

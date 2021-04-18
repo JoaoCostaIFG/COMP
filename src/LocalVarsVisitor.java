@@ -31,17 +31,11 @@ public class LocalVarsVisitor extends PreorderJmmVisitor<List<Report>, Boolean> 
 
     private Boolean parseLocalVars(JmmNode node, List<Report> reports) {
         String varName = node.get("varName");
-        // conflicts with class field
-        // if (this.symbolTable.getField(varName) != null) {
-        //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-        //             "Variable declaration " + varName + " conflicts with the class field with the same name."));
-        //     this.success = false;
-        //     return false;
-        // }
 
         // conflicts with parameter
         if (this.methodParameters.stream().anyMatch(s -> s.getName().equals(varName))) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     "Variable declaration " + varName + " conflicts with the parameter with the same name."));
             this.success = false;
             return false;
@@ -49,7 +43,8 @@ public class LocalVarsVisitor extends PreorderJmmVisitor<List<Report>, Boolean> 
 
         // conflicts with another local var
         if (this.localVars.stream().anyMatch(s -> s.getName().equals(varName))) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     "Variable declaration " + varName + " conflicts with another local variable with the same name."));
             this.success = false;
             return false;
@@ -58,7 +53,8 @@ public class LocalVarsVisitor extends PreorderJmmVisitor<List<Report>, Boolean> 
         // type
         JmmNode typeNode = node.getChildren().get(0);
         if (!typeNode.getKind().equals("Type")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(typeNode.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(typeNode.get("line")), parseInt(typeNode.get("col")),
                     "Declaration of variable " + varName + " doesn't have a type."));
             this.success = false;
             return false;

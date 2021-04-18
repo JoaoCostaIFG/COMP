@@ -23,7 +23,8 @@ public class ClassFieldVisitor extends PreorderJmmVisitor<List<Report>, Boolean>
 
     private Boolean parseClassFields(JmmNode node, List<Report> reports) {
         if (ClassFieldVisitor.nodesFoundNo >= 1) {
-            reports.add(new Report(ReportType.WARNING, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.WARNING, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     "Found more than one class field code section. This shouldn't happen."));
             return false;
         }
@@ -31,7 +32,8 @@ public class ClassFieldVisitor extends PreorderJmmVisitor<List<Report>, Boolean>
         List<Symbol> classFields = new ArrayList<>();
         for (var child : node.getChildren()) {
             if (!child.getKind().equals("VarDeclaration")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")),
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(child.get("line")), parseInt(child.get("col")),
                         "This should be a variable declaration. Only variable declarations are allowed on the class parameters section."));
             } else {
                 Symbol varDeclaration = this.parseVarDeclaration(child);

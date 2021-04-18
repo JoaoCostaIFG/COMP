@@ -23,7 +23,9 @@ public class ImportVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         List<String> imports = new ArrayList<>();
         for (var child : node.getChildren()) {
             if (!child.getKind().equals("ImportDeclaration"))
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")), "This should be an import declaration"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(child.get("line")), parseInt(child.get("col")),
+                        "This should be an import declaration"));
             else
                 imports.add(child.get("importPath"));
         }

@@ -43,7 +43,8 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private List<Symbol> visitBody(JmmNode bodyNode, String methodName, List<Symbol> methodParameters, List<Report> reports) {
         // get local var declarations from body
         if (!bodyNode.getKind().equals("MethodBody")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(bodyNode.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(bodyNode.get("line")), parseInt(bodyNode.get("col")),
                     "Method " + methodName + " doesn't have a properly formatted body."));
             return null;
         }
@@ -54,7 +55,8 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private boolean visitMainFunction(JmmNode node, String methodName, List<Report> reports) {
         // only allow a single main definition
         if (this.mainCount >= 1) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     "Redeclaration of main function."));
             return false;
         }
@@ -64,17 +66,12 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // parameter
         JmmNode mainParam = node.getChildren().get(0);
         if (!mainParam.getKind().equals("MainParameter")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(mainParam.get("line")), parseInt(mainParam.get("col")),
                     "Main parameter name isn't defined."));
             return false;
         }
         String paramName = mainParam.get("paramName");
-        // // conflicts with class field
-        // if (this.symbolTable.getField(paramName) != null) {
-        //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(mainParam.get("line")),
-        //             "Main parameter name conflicts with class field name: " + paramName + "."));
-        //     return false;
-        // }
         List<Symbol> methodParameters = new ArrayList<>();
         methodParameters.add(new Symbol(new Type("String", true), paramName));
 
@@ -90,7 +87,8 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private boolean visitClassMethod(JmmNode node, String methodName, List<Report> reports) {
         List<JmmNode> children = node.getChildren();
         if (children.size() != 4) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     "Method " + methodName + " isn't properly defined."));
             return false;
         }
@@ -98,7 +96,8 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // return type
         JmmNode methodTypeNode = children.get(0);
         if (!methodTypeNode.getKind().equals("Type")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(methodTypeNode.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(methodTypeNode.get("line")), parseInt(methodTypeNode.get("col")),
                     "Method " + methodName + " doesn't have a properly formatted return type."));
             return false;
         }
@@ -107,19 +106,14 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // parameters
         JmmNode parametersNode = children.get(1);
         if (!parametersNode.getKind().equals("MethodParameters")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(parametersNode.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(parametersNode.get("line")), parseInt(parametersNode.get("col")),
                     "Method " + methodName + " doesn't have a properly formatted parameters."));
             return false;
         }
         List<Symbol> methodParameters = new ArrayList<>();
         for (JmmNode paramNode : parametersNode.getChildren()) {
             String paramName = paramNode.get("paramName");
-            // // conflicts with class field
-            // if (this.symbolTable.getField(paramName) != null) {
-            //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(paramNode.get("line")),
-            //             "Method parameter name conflicts with class field name: " + paramName + "."));
-            //     return false;
-            // }
             // parameter type
             JmmNode typeNode = paramNode.getChildren().get(0);
             Type paramType = new Type(typeNode.get("dataType"), typeNode.get("isArray").equals("yes"));
@@ -147,7 +141,8 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             }
         }
         if (conflicts) {  // in case it conflicts with something
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
                     "Method " + methodName + " is already defined."));
             return false;
         }

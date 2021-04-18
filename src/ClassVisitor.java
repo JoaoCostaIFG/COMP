@@ -19,10 +19,15 @@ public class ClassVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private Boolean parseClass(JmmNode node, List<Report> reports) {
         if (!node.getKind().equals("ClassDeclaration"))
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")), "This should be a class declaration"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
+                    "This should be a class declaration"));
 
         this.symbolTable.setClassName(node.get("className"));
-        try { this.symbolTable.setSuper(node.get("extendsName")); } catch (Exception ignored) {}
+        try {
+            this.symbolTable.setSuper(node.get("extendsName"));
+        } catch (Exception ignored) {
+        }
         return true;
     }
 }

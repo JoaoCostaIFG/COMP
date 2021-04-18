@@ -11,7 +11,6 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private final StringBuilder ollirCode;
     private int labelCount;
     private Integer auxCount;
-    private Method loadedMethod;
     private List<Symbol> localVars, parameters;
 
     public OllirEmitter(MySymbolTable symbolTable) {
@@ -20,7 +19,6 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.ollirCode = new StringBuilder();
         this.auxCount = 0;
         this.labelCount = 0;
-        this.loadedMethod = null;
         this.localVars = new ArrayList<>();
         this.parameters = new ArrayList<>();
         this.addVisit("Program", this::visitRoot);
@@ -41,18 +39,37 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private void loadMethod(Method method) {
-        this.loadedMethod = method;
         this.localVars = method.getLocalVars();
         this.parameters = method.getParameters();
+        // reset label and auxiliar variables counters
+        this.auxCount = 0;
+        this.labelCount = 0;
+    }
+
+    private Type getTypeFromOllir(String typeOllir) {
+        String ollirNameTrim = typeOllir.replaceFirst("(.*?)\\.", "");
+        String[] split = ollirNameTrim.split("\\.");
+        switch (split[split.length - 1]) {
+            case "i32":
+                return new Type("int", split.length >= 2);
+            case "bool":
+                return new Type("bool", split.length >= 2);
+            default:
+                return new Type(split[0], split.length >= 2);
+        }
     }
 
     private String primitiveType(Type type) {
-        if (type.getName().equals("int"))
-            return "i32";
-        else if (type.getName().equals("boolean"))
-            return "bool";
-        else
-            return null;
+        switch (type.getName()) {
+            case "int":
+                return "i32";
+            case "bool":
+                return "bool";
+            case "void":
+                return "V";
+            default:
+                return null;
+        }
     }
 
     private String getTypeOllir(Type type) {
@@ -129,10 +146,10 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             this.getBodyOllir(tabs + "\t", methodBodyNode);
 
         if (methodRetNode == null) { // no return statement (void method)
-            this.ollirCode.append(tabs + "\t").append("ret.V;\n");
+            this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0));
-            this.ollirCode.append(tabs + "\t")
+            this.ollirCode.append(tabs).append("\t")
                     .append("ret").append(this.getTypeOllir(method.getReturnType()))
                     .append(" ").append(retOllir.trim()).append(";\n");
         }
@@ -248,37 +265,48 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         List<JmmNode> children = node.getChildren();
         JmmNode leftChild = children.get(0);
         JmmNode rightChild = children.get(1);
-        String ret;
+        StringBuilder ret;
         String type = "";
 
         if (rightChild.getKind().equals("Len")) {
             type = ".i32";
-            ret = "arraylength(" + this.getOpOllir(tabs, leftChild, true) + ")" + type;
+            ret = new StringBuilder("arraylength(" + this.getOpOllir(tabs, leftChild, true) + ")" + type);
         } else { // func call
             // invoquestatic on imports
             if (leftChild.getKind().equals("Literal") &&
                     leftChild.get("type").equals("identifier") &&
                     this.identIsImport(leftChild.get("name"))) {
-                ret = "invokestatic(";
+                ret = new StringBuilder("invokestatic(");
             } else {  // invoke virtual on class instances
-                ret = "invokevirtual(";
+                ret = new StringBuilder("invokevirtual(");
             }
 
             // method name and class instance
             String methodName = rightChild.get("methodName");
-            ret += this.getOpOllir(tabs, leftChild, true) + ", \"" + methodName + "\"";
+            ret.append(this.getOpOllir(tabs, leftChild, true))
+                    .append(", \"").append(methodName).append("\"");
 
             // func call args
-            for (JmmNode argNode : rightChild.getChildren())
-                ret += ", " + this.getOpOllir(tabs, argNode, true);
+            List<Type> paramTypes = new ArrayList<>();
+            if (rightChild.getNumChildren() > 0) {  // if the call has arguments
+                for (JmmNode argNode : rightChild.getChildren().get(0).getChildren()) {
+                    String opOllir = this.getOpOllir(tabs, argNode, true);
+                    ret.append(", ").append(opOllir);
+                    paramTypes.add(this.getTypeFromOllir(opOllir));
+                }
+            }
+            ret.append(")");
 
-            // TODO return type
-            ret += ").V";
+            Method callMethod = this.symbolTable.getMethodByCall(methodName, paramTypes);
+            if (callMethod == null)
+                ret.append(".V");
+            else
+                ret.append(this.getTypeOllir(callMethod.getReturnType()));
         }
 
         if (isAux)
-            return this.injectTempVar(tabs, type, ret);
-        return ret;
+            return this.injectTempVar(tabs, type, ret.toString());
+        return ret.toString();
     }
 
     private String getIndexOllir(String tabs, JmmNode node) {
@@ -385,7 +413,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getLiteralOllir(String tabs, JmmNode node, boolean isAux) {
         switch (node.get("type")) {
-            case "boolean":
+            case "bool":
                 return (node.get("value").equals("true") ? "1" : "0") + ".bool";
             case "int":
                 return node.get("value") + ".i32";

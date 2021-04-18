@@ -41,14 +41,14 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private boolean validateBooleanOp(JmmNode node, List<Report> reports) {
         JmmNode childLeft = node.getChildren().get(0);
-        if (!nodeIsOfType(childLeft, "boolean", reports)) {
+        if (!nodeIsOfType(childLeft, "bool", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + "  operator left operand is not a boolean."));
             return false;
         }
 
         JmmNode childRight = node.getChildren().get(1);
-        if (!nodeIsOfType(childRight, "boolean", reports)) {
+        if (!nodeIsOfType(childRight, "bool", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     node.getKind() + "  operator right operand is not a boolean."));
             return false;
@@ -107,7 +107,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             Type leftType = this.getNodeType(childLeft, reports);
             if (leftType == null) { // is something unknown => if is import
                 return symbolTable.hasImport(childLeft.get("name"));
-            } else if (leftType.getName().equals("int") || leftType.getName().equals("boolean")) {
+            } else if (leftType.getName().equals("int") || leftType.getName().equals("bool")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(dotNode.get("line")),
                         "Calling method in object that isn't callable."));
                 return false;
@@ -164,7 +164,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private Boolean visitUnary(JmmNode node, List<Report> reports) {
         // This is always the NOT operator
         JmmNode child = node.getChildren().get(0);
-        if (!this.nodeIsOfType(child, "boolean", reports)) {
+        if (!this.nodeIsOfType(child, "bool", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(child.get("line")),
                     "The NOT operator can only be applied to boolean values."));
             return false;
@@ -195,7 +195,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     }
 
     private boolean visitCond(JmmNode node, List<Report> reports) {
-        if (!nodeIsOfType(node.getChildren().get(0), "boolean", reports)) {
+        if (!nodeIsOfType(node.getChildren().get(0), "bool", reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
                     "Condition is not boolean."));
             return false;
@@ -287,11 +287,14 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     public Type getMethodCallType(JmmNode node, List<Report> reports) {
         JmmNode methodNode = node.getChildren().get(1);
-        List<JmmNode> children = methodNode.getChildren();
         List<Type> methodParams = new ArrayList<>();
-        for (int i = 1; i < methodNode.getNumChildren(); ++i) {
-            JmmNode paramNode = children.get(i);
-            methodParams.add(this.getNodeType(paramNode, reports));
+
+        // save all args types (if any)
+        if (methodNode.getNumChildren() > 0) {
+            JmmNode argsNode = methodNode.getChildren().get(0);
+            List<JmmNode> children = argsNode.getChildren();
+            for (JmmNode paramNode : children)
+                methodParams.add(this.getNodeType(paramNode, reports));
         }
 
         Method foundMethod = this.symbolTable.getMethodByCall(methodNode.get("methodName"), methodParams);
@@ -327,7 +330,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         switch (op) {
             case "AND":
             case "LESSTHAN":
-                return new Type("boolean", false);
+                return new Type("bool", false);
             case "ADD":
             case "SUB":
             case "MULT":
@@ -367,7 +370,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             case "Literal":
                 return this.getLiteralNodeType(node, reports);
             case "Unary":
-                return new Type("boolean", false);
+                return new Type("bool", false);
             case "New":
                 return this.getNewNodeType(node);
             default:

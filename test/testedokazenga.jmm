@@ -1,11 +1,11 @@
 import b;
 
 class C {
-    public int[] a() {
+    public int[] a(int a, int[] b, bool c, Classs d) {
         return new int [2];
     }
 
     public static void main(String[] args) {
-        this.a();
+        this.a(1, new int[2], false, new Classs());
     }
 }

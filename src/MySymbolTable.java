@@ -25,7 +25,7 @@ public class MySymbolTable implements SymbolTable {
     }
 
     public boolean hasImport(String methodName) {
-        for (String imp: imports) {
+        for (String imp : imports) {
             String[] parsed = imp.split("\\.");
             String lastImport = parsed[parsed.length - 1];
             if (lastImport.equals(methodName))
@@ -109,9 +109,11 @@ public class MySymbolTable implements SymbolTable {
             for (int i = 0; i < params.size(); ++i) {
                 Type paramType = params.get(i).getType();
                 Type paramToTest = paramsTypes.get(i);
-                if (paramType.getName().equals(paramToTest.getName()) &&
-                        paramType.isArray() == paramToTest.isArray())
+                if (!paramType.getName().equals(paramToTest.getName()) ||
+                        paramType.isArray() != paramToTest.isArray()) {
                     isEqual = false;
+                    break;
+                }
             }
             if (isEqual)
                 return method;

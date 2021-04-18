@@ -1,7 +1,6 @@
 options
 {
-    LOOKAHEAD = 1;
-    NODE_SCOPE_HOOK = true;
+    LOOKAHEAD=1;
     //NODE_DEFAULT_VOID = true; // don't generate nodes by default
 
     //CHOICE_AMBIGUITY_CHECK=5;
@@ -33,17 +32,6 @@ public class Jmm
 		SimpleNode root = jmm.Program(); // returns reference to root node
 
 		root.dump(""); // prints the tree on the screen
-    }
-
-    // hooks
-    private void jjtreeOpenNodeScope(Node n) {
-        SimpleNode sn = (SimpleNode) n;
-        Token t = getToken(1);
-        sn.put("line", Integer.toString(t.beginLine));
-        sn.put("col", Integer.toString(t.beginColumn));
-    }
-
-    private void jjtreeCloseNodeScope(Node n) {
     }
 }
 
@@ -127,7 +115,6 @@ TOKEN : {
     |   <ADD: "+"> | <SUB: "-"> | <MUL: "*"> | <DIV: "/">
 }
 
-// parsing
 SimpleNode Program() : {}
 {
     (ImportDeclaration())* #ImportDeclarations(>0)
@@ -179,6 +166,7 @@ void MethodDeclaration() : { Token methodName; Token t; }
         <STRING> <SBRAK> <EBRAK> t=<IDENTIFIER>
             {
                 jjtThis.put("paramName", t.image);
+                jjtThis.put("line", Integer.toString(t.beginLine));
             } #MainParameter
     <EPAR>
     <SCURL>
@@ -189,7 +177,9 @@ void MethodDeclaration() : { Token methodName; Token t; }
     <SPAR>
         // the parameters node isn't "optional" (#MethodParameters(>0)) because it is easier
         // to parse the semantics if it always exists.
-        [MethodParameter()  (<COMMA> MethodParameter())*] #MethodParameters
+        [MethodParameter()  (<COMMA> MethodParameter())*] #MethodParameters {
+            jjtThis.put("line", Integer.toString(methodName.beginLine));
+        }
     <EPAR>
     <SCURL>
         MethodBody()
@@ -197,6 +187,7 @@ void MethodDeclaration() : { Token methodName; Token t; }
     <ECURL>)
     {
         jjtThis.put("methodName", methodName.image);
+        jjtThis.put("line", Integer.toString(methodName.beginLine));
     }
 }
 
@@ -204,6 +195,7 @@ void MethodParameter() : { Token paramName; }
 {
     Type() paramName=<IDENTIFIER> {
         jjtThis.put("paramName", paramName.image);
+        jjtThis.put("line", Integer.toString(paramName.beginLine));
     }
 }
 
@@ -228,6 +220,7 @@ void Type() : { Token t; boolean isArray=false; }
     {
         jjtThis.put("dataType", t.image);
         jjtThis.put("isArray", isArray ? "yes" : "no");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     }
 }
 
@@ -241,20 +234,20 @@ void Statement() #void : {}
     // This restricts the grammar, but helps with performance (avoids infinite LOOKAHEAD).
 }
 
-void IfStatement() #If : {}
+void IfStatement() #If : { Token t; }
 {
-    <IF> <SPAR> Expression() #Cond(1) <EPAR>
+    t=<IF> <SPAR> Expression() { jjtThis.put("line", Integer.toString(t.beginLine)); } #Cond(1) <EPAR>
         Statement() #IfBody
     <ELSE>
         Statement() #ElseBody
 }
 
-void WhileLoop() : {}
+void WhileLoop() : { Token t; }
 {
-    <WHILE> <SPAR>
+    t=<WHILE> <SPAR>
 
     try {
-        Expression() #Cond(1)
+        Expression() { jjtThis.put("line", Integer.toString(t.beginLine)); } #Cond(1)
         <EPAR>
     } catch (ParseException e) {
         error_print(e, "couldn't parse expression starting at '" +
@@ -272,14 +265,16 @@ void Assignment() #Var : { Token varName; boolean isArrayAccess = false; }
     {
         jjtThis.put("name", varName.image);
         jjtThis.put("isArrayAccess", isArrayAccess ? "yes" : "no");
+        jjtThis.put("line", Integer.toString(varName.beginLine));
     }
 }
 
-void Expression() #void : {}
+void Expression() #void : { Token t; }
 {
     LessThanTerm()
-    (<AND> LessThanTerm() {
+    (t=<AND> LessThanTerm() {
         jjtThis.put("op", "AND");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 
     // this (and the other similar constructs) could also be written as (recursive form):
@@ -287,102 +282,124 @@ void Expression() #void : {}
     // [<AND> Expression()]
 }
 
-void LessThanTerm() #void : {}
+void LessThanTerm() #void : { Token t; }
 {
     AdditiveTerm()
-    (<LESSTHAN> AdditiveTerm() {
+    (t=<LESSTHAN> AdditiveTerm() {
         jjtThis.put("op", "LESSTHAN");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 }
 
-void AdditiveTerm() #void : {}
+void AdditiveTerm() #void : { Token t; }
 {
     MultiplicativeTerm()
-    (<ADD> MultiplicativeTerm() {
+    (t=<ADD> MultiplicativeTerm() {
         jjtThis.put("op", "ADD");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2)
-    |   <SUB> MultiplicativeTerm() {
+    |   t=<SUB> MultiplicativeTerm() {
         jjtThis.put("op", "SUB");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 }
 
-void MultiplicativeTerm() #void : {}
+void MultiplicativeTerm() #void : { Token t; }
 {
     UnaryTerm()
-    (<MUL> UnaryTerm() {
+    (t=<MUL> UnaryTerm() {
         jjtThis.put("op", "MULT");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2)
-    |   <DIV> UnaryTerm() {
+    |   t=<DIV> UnaryTerm() {
         jjtThis.put("op", "DIV");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 }
 
-void UnaryTerm() #void : {}
+void UnaryTerm() #void : { Token t; }
 {
-    <NOT> UnaryTerm() {
+    t=<NOT> UnaryTerm() {
         jjtThis.put("op", "NOT");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Unary(1)
     |   PostfixTerm()
 }
 
-void PostfixTerm() #void : {}
+void PostfixTerm() #void : { Token t; int ret; }
 {
     PrimaryTerm()
-    (<SBRAK> Expression() {
+    (t=<SBRAK> Expression() {
         jjtThis.put("op", "INDEX");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2) <EBRAK>
-    |   DotTerm() {
+    |   ret=DotTerm() {
         jjtThis.put("op", "DOT");
+        jjtThis.put("line", Integer.toString(ret));
     } #Binary(2))*
 }
 
-void DotTerm() #void : {}
+int DotTerm() #void : { Token t; int ret; }
 {
     // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
     // and match like so:
     // <LEN> | <DOT> DotExpansion()
 
-    <DOT> (<LEN> #Len | DotExpansion())
+    <DOT> (t=<LEN> {
+        ret = t.beginLine;
+        jjtThis.put("line", Integer.toString(t.beginLine));
+    } #Len | ret=DotExpansion())
+    { return ret; }
 }
 
-void DotExpansion() #FuncCall : { Token t; }
+int DotExpansion() #FuncCall : { Token t; }
 {
     t=<IDENTIFIER> {
         jjtThis.put("methodName", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
     }
     <SPAR>
         [(Expression() (<COMMA> Expression())*) #Args]
     <EPAR>
+
+    { return t.beginLine; }
 }
 
 void PrimaryTerm() #void : { Token t; }
 {
-    <TRUE> {
+    t=<TRUE> {
         jjtThis.put("type", "boolean"); jjtThis.put("value", "true");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
-    |   <FALSE> {
+    |   t=<FALSE> {
         jjtThis.put("type", "boolean"); jjtThis.put("value", "false");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
-    |   <THIS> {
+    |   t=<THIS> {
         jjtThis.put("type", "this");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
     |   <SPAR> Expression() <EPAR>
     |   <NEW> NewTerm()
     |   t=<INTEGER_LITERAL> {
         jjtThis.put("type", "int"); jjtThis.put("value", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
     |   t=<IDENTIFIER> {
         jjtThis.put("type", "identifier"); jjtThis.put("name", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
 }
 
 void NewTerm() #void : { Token t; }  // 04:14
 {
-    <INT> <SBRAK> Expression() <EBRAK> {
+    t=<INT> <SBRAK> Expression() <EBRAK> {
         jjtThis.put("type", "array");
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #New(1)  // array allocation
     |   t=<IDENTIFIER> <SPAR> <EPAR> {
         jjtThis.put("type", "class"); jjtThis.put("name", t.image);
+        jjtThis.put("line", Integer.toString(t.beginLine));
     } #New  // class constructor
 }
 

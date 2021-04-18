@@ -1,6 +1,7 @@
 options
 {
-    LOOKAHEAD=1;
+    LOOKAHEAD = 1;
+    NODE_SCOPE_HOOK = true;
     //NODE_DEFAULT_VOID = true; // don't generate nodes by default
 
     //CHOICE_AMBIGUITY_CHECK=5;
@@ -32,6 +33,17 @@ public class Jmm
 		SimpleNode root = jmm.Program(); // returns reference to root node
 
 		root.dump(""); // prints the tree on the screen
+    }
+
+    // hooks
+    private void jjtreeOpenNodeScope(Node n) {
+        SimpleNode sn = (SimpleNode) n;
+        Token t = getToken(1);
+        sn.put("line", Integer.toString(t.beginLine));
+        sn.put("col", Integer.toString(t.beginColumn));
+    }
+
+    private void jjtreeCloseNodeScope(Node n) {
     }
 }
 
@@ -115,6 +127,7 @@ TOKEN : {
     |   <ADD: "+"> | <SUB: "-"> | <MUL: "*"> | <DIV: "/">
 }
 
+// parsing
 SimpleNode Program() : {}
 {
     (ImportDeclaration())* #ImportDeclarations(>0)
@@ -166,7 +179,6 @@ void MethodDeclaration() : { Token methodName; Token t; }
         <STRING> <SBRAK> <EBRAK> t=<IDENTIFIER>
             {
                 jjtThis.put("paramName", t.image);
-                jjtThis.put("line", Integer.toString(t.beginLine));
             } #MainParameter
     <EPAR>
     <SCURL>
@@ -177,9 +189,7 @@ void MethodDeclaration() : { Token methodName; Token t; }
     <SPAR>
         // the parameters node isn't "optional" (#MethodParameters(>0)) because it is easier
         // to parse the semantics if it always exists.
-        [MethodParameter()  (<COMMA> MethodParameter())*] #MethodParameters {
-            jjtThis.put("line", Integer.toString(methodName.beginLine));
-        }
+        [MethodParameter()  (<COMMA> MethodParameter())*] #MethodParameters
     <EPAR>
     <SCURL>
         MethodBody()
@@ -187,7 +197,6 @@ void MethodDeclaration() : { Token methodName; Token t; }
     <ECURL>)
     {
         jjtThis.put("methodName", methodName.image);
-        jjtThis.put("line", Integer.toString(methodName.beginLine));
     }
 }
 
@@ -195,7 +204,6 @@ void MethodParameter() : { Token paramName; }
 {
     Type() paramName=<IDENTIFIER> {
         jjtThis.put("paramName", paramName.image);
-        jjtThis.put("line", Integer.toString(paramName.beginLine));
     }
 }
 
@@ -220,7 +228,6 @@ void Type() : { Token t; boolean isArray=false; }
     {
         jjtThis.put("dataType", t.image);
         jjtThis.put("isArray", isArray ? "yes" : "no");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     }
 }
 
@@ -234,20 +241,20 @@ void Statement() #void : {}
     // This restricts the grammar, but helps with performance (avoids infinite LOOKAHEAD).
 }
 
-void IfStatement() #If : { Token t; }
+void IfStatement() #If : {}
 {
-    t=<IF> <SPAR> Expression() { jjtThis.put("line", Integer.toString(t.beginLine)); } #Cond(1) <EPAR>
+    <IF> <SPAR> Expression() #Cond(1) <EPAR>
         Statement() #IfBody
     <ELSE>
         Statement() #ElseBody
 }
 
-void WhileLoop() : { Token t; }
+void WhileLoop() : {}
 {
-    t=<WHILE> <SPAR>
+    <WHILE> <SPAR>
 
     try {
-        Expression() { jjtThis.put("line", Integer.toString(t.beginLine)); } #Cond(1)
+        Expression() #Cond(1)
         <EPAR>
     } catch (ParseException e) {
         error_print(e, "couldn't parse expression starting at '" +
@@ -265,16 +272,14 @@ void Assignment() #Var : { Token varName; boolean isArrayAccess = false; }
     {
         jjtThis.put("name", varName.image);
         jjtThis.put("isArrayAccess", isArrayAccess ? "yes" : "no");
-        jjtThis.put("line", Integer.toString(varName.beginLine));
     }
 }
 
-void Expression() #void : { Token t; }
+void Expression() #void : {}
 {
     LessThanTerm()
-    (t=<AND> LessThanTerm() {
+    (<AND> LessThanTerm() {
         jjtThis.put("op", "AND");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 
     // this (and the other similar constructs) could also be written as (recursive form):
@@ -282,124 +287,102 @@ void Expression() #void : { Token t; }
     // [<AND> Expression()]
 }
 
-void LessThanTerm() #void : { Token t; }
+void LessThanTerm() #void : {}
 {
     AdditiveTerm()
-    (t=<LESSTHAN> AdditiveTerm() {
+    (<LESSTHAN> AdditiveTerm() {
         jjtThis.put("op", "LESSTHAN");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 }
 
-void AdditiveTerm() #void : { Token t; }
+void AdditiveTerm() #void : {}
 {
     MultiplicativeTerm()
-    (t=<ADD> MultiplicativeTerm() {
+    (<ADD> MultiplicativeTerm() {
         jjtThis.put("op", "ADD");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2)
-    |   t=<SUB> MultiplicativeTerm() {
+    |   <SUB> MultiplicativeTerm() {
         jjtThis.put("op", "SUB");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 }
 
-void MultiplicativeTerm() #void : { Token t; }
+void MultiplicativeTerm() #void : {}
 {
     UnaryTerm()
-    (t=<MUL> UnaryTerm() {
+    (<MUL> UnaryTerm() {
         jjtThis.put("op", "MULT");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2)
-    |   t=<DIV> UnaryTerm() {
+    |   <DIV> UnaryTerm() {
         jjtThis.put("op", "DIV");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2))*
 }
 
-void UnaryTerm() #void : { Token t; }
+void UnaryTerm() #void : {}
 {
-    t=<NOT> UnaryTerm() {
+    <NOT> UnaryTerm() {
         jjtThis.put("op", "NOT");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Unary(1)
     |   PostfixTerm()
 }
 
-void PostfixTerm() #void : { Token t; int ret; }
+void PostfixTerm() #void : {}
 {
     PrimaryTerm()
-    (t=<SBRAK> Expression() {
+    (<SBRAK> Expression() {
         jjtThis.put("op", "INDEX");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Binary(2) <EBRAK>
-    |   ret=DotTerm() {
+    |   DotTerm() {
         jjtThis.put("op", "DOT");
-        jjtThis.put("line", Integer.toString(ret));
     } #Binary(2))*
 }
 
-int DotTerm() #void : { Token t; int ret; }
+void DotTerm() #void : {}
 {
     // If we didn't want "length" to be a reserved word, we could store <LEN> as ".length"
     // and match like so:
     // <LEN> | <DOT> DotExpansion()
 
-    <DOT> (t=<LEN> {
-        ret = t.beginLine;
-        jjtThis.put("line", Integer.toString(t.beginLine));
-    } #Len | ret=DotExpansion())
-    { return ret; }
+    <DOT> (<LEN> #Len | DotExpansion())
 }
 
-int DotExpansion() #FuncCall : { Token t; }
+void DotExpansion() #FuncCall : { Token t; }
 {
     t=<IDENTIFIER> {
         jjtThis.put("methodName", t.image);
-        jjtThis.put("line", Integer.toString(t.beginLine));
     }
     <SPAR>
         [(Expression() (<COMMA> Expression())*) #Args]
     <EPAR>
-
-    { return t.beginLine; }
 }
 
 void PrimaryTerm() #void : { Token t; }
 {
-    t=<TRUE> {
+    <TRUE> {
         jjtThis.put("type", "boolean"); jjtThis.put("value", "true");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
-    |   t=<FALSE> {
+    |   <FALSE> {
         jjtThis.put("type", "boolean"); jjtThis.put("value", "false");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
-    |   t=<THIS> {
+    |   <THIS> {
         jjtThis.put("type", "this");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
     |   <SPAR> Expression() <EPAR>
     |   <NEW> NewTerm()
     |   t=<INTEGER_LITERAL> {
         jjtThis.put("type", "int"); jjtThis.put("value", t.image);
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
     |   t=<IDENTIFIER> {
         jjtThis.put("type", "identifier"); jjtThis.put("name", t.image);
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #Literal
 }
 
 void NewTerm() #void : { Token t; }  // 04:14
 {
-    t=<INT> <SBRAK> Expression() <EBRAK> {
+    <INT> <SBRAK> Expression() <EBRAK> {
         jjtThis.put("type", "array");
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #New(1)  // array allocation
     |   t=<IDENTIFIER> <SPAR> <EPAR> {
         jjtThis.put("type", "class"); jjtThis.put("name", t.image);
-        jjtThis.put("line", Integer.toString(t.beginLine));
     } #New  // class constructor
 }
 

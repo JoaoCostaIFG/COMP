@@ -5,6 +5,7 @@ import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private final MySymbolTable symbolTable;
@@ -12,6 +13,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private int labelCount;
     private Integer auxCount;
     private List<Symbol> localVars, parameters;
+    private final Stack<String> contextStack;
 
     public OllirEmitter(MySymbolTable symbolTable) {
         super();
@@ -21,6 +23,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.labelCount = 0;
         this.localVars = new ArrayList<>();
         this.parameters = new ArrayList<>();
+        this.contextStack = new Stack<>();
         this.addVisit("Program", this::visitRoot);
     }
 
@@ -91,7 +94,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private String visitRoot(JmmNode node, Boolean ignored) {
-        this.ollirCode.append("class ").append(this.symbolTable.getClassName()).append(" {\n");
+        this.ollirCode.append(this.symbolTable.getClassName()).append(" {\n");
         // TODO extends
 
         // class fields
@@ -185,9 +188,13 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         String endLabel = this.getNextLabel("EndLoop");
 
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
+        // condition
+        this.contextStack.push(".bool");
         String condOllir = this.getOpOllir(tabs + "\t", condNode.getChildren().get(0));
+        this.contextStack.pop();
         this.ollirCode.append(tabs).append("\t").append("if (").append(condOllir.trim())
                 .append(") goto ").append(endLabel).append(";\n");
+        // body
         this.getBodyOllir(tabs + "\t", body);
         this.ollirCode.append(tabs).append(endLabel).append(":\n");
     }
@@ -197,16 +204,19 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         JmmNode body = n.getChildren().get(1);
         JmmNode elseBody = n.getChildren().get(2);
 
+        this.contextStack.push(".bool");
         String condOllir = this.getOpOllir(tabs, condNode.getChildren().get(0));
-        String elseLabel = this.getNextLabel("else");
-        String endLabel = this.getNextLabel("endif");
+        this.contextStack.pop();
+        String elseLabel = this.getNextLabel("Else");
+        String endLabel = this.getNextLabel("Endif");
 
-        // If condition
-        this.ollirCode.append(tabs).append("if (").append(condOllir.trim()).append(") goto ").append(elseLabel).append(";\n");
-        // If BOdy
+        // if condition
+        this.ollirCode.append(tabs).append("if (").append(condOllir.trim()).append(") goto ")
+                .append(elseLabel).append(";\n");
+        // if body
         this.getBodyOllir(tabs + "\t", body);
         this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
-        // Else
+        // else
         this.ollirCode.append(tabs).append(elseLabel).append(":\n");
         this.getBodyOllir(tabs + "\t", elseBody);
         this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
@@ -221,11 +231,14 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getIntOpOllir(String tabs, JmmNode node, String op, boolean isAux) {
         final String type = ".i32";
+        this.contextStack.push(type);
+
         List<JmmNode> children = node.getChildren();
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
         String ret = childLeftOllir + " " + op + type + " " + childRightOllir;
 
+        this.contextStack.pop();
         if (isAux)
             return this.injectTempVar(tabs, type, ret);
         return ret;
@@ -233,11 +246,14 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getAndOllir(String tabs, JmmNode node, boolean isAux) {
         final String type = ".bool";
+        this.contextStack.push(type);
+
         List<JmmNode> children = node.getChildren();
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
         String ret = childLeftOllir + " &&" + type + " " + childRightOllir;
 
+        this.contextStack.pop();
         if (isAux)
             return this.injectTempVar(tabs, type, ret);
         return ret;
@@ -245,11 +261,14 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getLessThanOllir(String tabs, JmmNode node, boolean isAux) {
         final String retType = ".bool", type = ".i32";
+        this.contextStack.push(type);
+
         List<JmmNode> children = node.getChildren();
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
         String ret = childRightOllir + " >=" + type + " " + childLeftOllir;  // IMP operators have to be flipped
 
+        this.contextStack.pop();
         if (isAux)
             return this.injectTempVar(tabs, retType, ret);
         return ret;
@@ -283,8 +302,8 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
             // method name and class instance
             String methodName = rightChild.get("methodName");
-            ret.append(this.getOpOllir(tabs, leftChild, true))
-                    .append(", \"").append(methodName).append("\"");
+            String leftChildOllir = this.getOpOllir(tabs, leftChild, true);
+            ret.append(leftChildOllir).append(", \"").append(methodName).append("\"");
 
             // func call args
             List<Type> paramTypes = new ArrayList<>();
@@ -297,11 +316,20 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
             }
             ret.append(")");
 
-            Method callMethod = this.symbolTable.getMethodByCall(methodName, paramTypes);
-            if (callMethod == null)
-                ret.append(".V");
-            else
+            Method callMethod = null;
+            if (leftChildOllir.equals("this") ||
+                    this.getTypeFromOllir(leftChildOllir).getName().equals(this.symbolTable.getClassName())) {
+                // only search for methods when the class is the target
+                callMethod = this.symbolTable.getMethodByCall(methodName, paramTypes);
+            }
+            if (callMethod == null) {  // infer return type
+                if (this.contextStack.empty())
+                    ret.append(".V");
+                else
+                    ret.append(this.contextStack.peek());
+            } else {  // found the method
                 ret.append(this.getTypeOllir(callMethod.getReturnType()));
+            }
         }
 
         if (isAux)
@@ -312,8 +340,13 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     private String getIndexOllir(String tabs, JmmNode node) {
         final String type = ".i32";
         List<JmmNode> children = node.getChildren();
+
+        this.contextStack.push(".array.i32");
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
+        this.contextStack.pop();
+        this.contextStack.push(".i32");
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
+        this.contextStack.pop();
 
         // IMP array access have always to be stored in a temporary variable before usage
         // we are splitting the left child by "." on the left because we don't want the type to show
@@ -346,10 +379,13 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
     private String getUnaryOllir(String tabs, JmmNode node, boolean isAux) {
         final String type = ".bool";
+        this.contextStack.push(".bool");
+
         JmmNode child = node.getChildren().get(0);
         String childOllir = this.getOpOllir(tabs, child, true);
         String ret = childOllir + " !" + type + " " + childOllir;
 
+        this.contextStack.pop();
         if (isAux)
             return this.injectTempVar(tabs, type, ret);
         return ret;
@@ -432,7 +468,9 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
 
         if (node.get("type").equals("array")) {
             type = ".array.i32";
+            this.contextStack.push(".array.i32");
             ret += "array, " + this.getOpOllir(tabs, node.getChildren().get(0), true) + ")" + type;
+            this.contextStack.pop();
 
             if (isAux) {
                 ret = this.injectTempVar(tabs, type, ret);

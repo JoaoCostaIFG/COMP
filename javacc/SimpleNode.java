@@ -19,7 +19,7 @@ class SimpleNode implements Node, JmmNode {
     protected Jmm parser;
 
     // added
-    private final Map<String, String> attributes; // TODO String -> Object
+    private final Map<String, String> attributes;
 
     public SimpleNode(int i) {
         this.attributes = new HashMap<>();

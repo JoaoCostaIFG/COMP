@@ -1,12 +1,16 @@
 import b;
 
-class C {
+class C extends sexo {
     public int[] a(int a, int[] b, boolean c, Classs d) {
         return new int [2];
     }
 
     public static void main(String[] args) {
         // this.a(1, new int[2], false, new Classs());
-        true && !false;
+        if (b.b()) {
+            1;
+        } else {
+            2;
+        }
     }
 }

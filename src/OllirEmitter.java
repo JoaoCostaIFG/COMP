@@ -180,6 +180,15 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         }
     }
 
+    public String getCondOllir(String tabs, JmmNode n) {
+        boolean isBinOp = n.getKind().equals("Binary");
+        String nodeOllir = this.getOpOllir(tabs, n, !isBinOp).trim();
+        if (!isBinOp) {
+            return nodeOllir + " && 1.bool";
+        }
+        return nodeOllir;
+    }
+
     private void getWhileOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
@@ -190,12 +199,16 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
         // condition
         this.contextStack.push(".bool");
-        String condOllir = this.getOpOllir(tabs + "\t", condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
         this.contextStack.pop();
-        this.ollirCode.append(tabs).append("\t").append("if (").append(condOllir.trim())
-                .append(") goto ").append(endLabel).append(";\n");
+        this.ollirCode.append(tabs).append("\t")
+                .append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
         // body
         this.getBodyOllir(tabs + "\t", body);
+        // make it loopar
+        this.ollirCode.append(tabs).append("\t")
+                .append("goto ").append(loopLabel).append(";\n");
+        // end loop
         this.ollirCode.append(tabs).append(endLabel).append(":\n");
     }
 
@@ -205,20 +218,20 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         JmmNode elseBody = n.getChildren().get(2);
 
         this.contextStack.push(".bool");
-        String condOllir = this.getOpOllir(tabs, condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
         this.contextStack.pop();
-        String elseLabel = this.getNextLabel("Else");
+        String bodyLabel = this.getNextLabel("Body");
         String endLabel = this.getNextLabel("Endif");
 
         // if condition
-        this.ollirCode.append(tabs).append("if (").append(condOllir.trim()).append(") goto ")
-                .append(elseLabel).append(";\n");
-        // if body
-        this.getBodyOllir(tabs + "\t", body);
-        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+        this.ollirCode.append(tabs).append("if (").append(condOllir.trim())
+                .append(") goto ").append(bodyLabel).append(";\n");
         // else
-        this.ollirCode.append(tabs).append(elseLabel).append(":\n");
         this.getBodyOllir(tabs + "\t", elseBody);
+        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+        // if body
+        this.ollirCode.append(tabs).append(bodyLabel).append(":\n");
+        this.getBodyOllir(tabs + "\t", body);
         this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
     }
 
@@ -266,7 +279,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         List<JmmNode> children = node.getChildren();
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
-        String ret = childRightOllir + " >=" + type + " " + childLeftOllir;  // IMP operators have to be flipped
+        String ret = childLeftOllir + " <" + type + " " + childRightOllir;
 
         this.contextStack.pop();
         if (isAux)

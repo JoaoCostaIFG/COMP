@@ -97,7 +97,7 @@ public class OllirEmitter {
     public String visit(JmmNode node) {
         this.ollirCode.setLength(0);  // clear length to allow reuse
 
-        this.ollirCode.append(this.symbolTable.getClassName()).append(" {\n");
+        this.ollirCode.append(this.encode(this.symbolTable.getClassName())).append(" {\n");
         // TODO extends
 
         // class fields
@@ -516,12 +516,12 @@ public class OllirEmitter {
     private String getAssignOllir(String tabs, JmmNode node) {
         JmmNode leftChild = node.getChildren().get(0),
                 rightChild = node.getChildren().get(1);
-        String assigneeNome = leftChild.get("name");
-        boolean isField = this.varIsClassField(assigneeNome);
-        String type = this.getVarType(assigneeNome);
+        String assigneeName = leftChild.get("name");
+        boolean isField = this.varIsClassField(assigneeName);
+        String type = this.getVarType(assigneeName);
 
         // assignee
-        String assignee = assigneeNome;
+        String assignee = this.encode(assigneeName);
         // if is array access
         if (leftChild.get("isArrayAccess").equals("yes")) {
             assignee += "[" + this.getOpOllir(tabs, leftChild.getChildren().get(0), true) + "]";
@@ -542,7 +542,7 @@ public class OllirEmitter {
 
         // classes need to be instantiated
         if (rightChild.getKind().equals("New") && rightChild.get("type").equals("class"))
-            ret += ";\n" + tabs + "invokespecial(" + assigneeNome + type + ", \"<init>\").V";
+            ret += ";\n" + tabs + "invokespecial(" + this.encode(assigneeName) + type + ", \"<init>\").V";
 
         return ret;
     }

@@ -1,17 +1,16 @@
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
-import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
+public class OllirEmitter {
     private final MySymbolTable symbolTable;
     private final StringBuilder ollirCode;
     private int labelCount;
-    private Integer auxCount;
+    private int auxCount;
     private List<Symbol> localVars, parameters;
     private final Stack<String> contextStack;
 
@@ -24,17 +23,19 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         this.localVars = new ArrayList<>();
         this.parameters = new ArrayList<>();
         this.contextStack = new Stack<>();
-        this.addVisit("Program", this::visitRoot);
     }
 
     public String getOllirCode() {
         return this.ollirCode.toString();
     }
 
+    private String encode(String in) {
+        String out = in.replace("d", "dd");
+        return out.replace("$", "d");
+    }
+
     private String getNextAuxVar() {
-        String auxVarName = "aux" + this.auxCount.toString();
-        ++this.auxCount;
-        return auxVarName;
+        return "aux" + (this.auxCount++);
     }
 
     private String getNextLabel(String pre) {
@@ -93,7 +94,9 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         return var.getName() + this.getTypeOllir(var.getType());
     }
 
-    private String visitRoot(JmmNode node, Boolean ignored) {
+    public String visit(JmmNode node) {
+        this.ollirCode.setLength(0);  // clear length to allow reuse
+
         this.ollirCode.append(this.symbolTable.getClassName()).append(" {\n");
         // TODO extends
 
@@ -112,7 +115,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         }
 
         this.ollirCode.append("}");
-        return this.ollirCode.toString();
+        return this.getOllirCode();
     }
 
     private void getMethodOllir(String methodId) {
@@ -391,6 +394,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
     }
 
     private String getUnaryOllir(String tabs, JmmNode node, boolean isAux) {
+        // TODO invert expressions
         final String type = ".bool";
         this.contextStack.push(".bool");
 
@@ -433,14 +437,14 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
         // local variable
         for (Symbol s : this.localVars) {
             if (s.getName().equals(name)) {
-                return this.getSymbolOllir(s);
+                return this.encode(this.getSymbolOllir(s));
             }
         }
         // method parameter
         for (int i = 0; i < this.parameters.size(); ++i) {
             Symbol s = this.parameters.get(i);
             if (s.getName().equals(name)) {
-                return "$" + i + "." + this.getSymbolOllir(s);
+                return "$" + i + "." + this.encode(this.getSymbolOllir(s));
             }
         }
         // class field
@@ -449,7 +453,7 @@ public class OllirEmitter extends PreorderJmmVisitor<Boolean, String> {
                 // ganhamos! A angola e nossa!
                 // if is aux, getfield needs to be stored on temp var
                 String typeOllir = this.getTypeOllir(s.getType());
-                String ret = "getfield(this, " + this.getSymbolOllir(s) + ")" + typeOllir;
+                String ret = "getfield(this, " + this.encode(this.getSymbolOllir(s)) + ")" + typeOllir;
                 if (isAux)
                     return this.injectTempVar(tabs, typeOllir, ret);
                 return ret;

@@ -15,7 +15,6 @@ public class OllirEmitter {
     private final Stack<String> contextStack;
 
     public OllirEmitter(MySymbolTable symbolTable) {
-        super();
         this.symbolTable = symbolTable;
         this.ollirCode = new StringBuilder();
         this.auxCount = 0;
@@ -29,6 +28,7 @@ public class OllirEmitter {
         return this.ollirCode.toString();
     }
 
+    // TODO do more
     private String encode(String in) {
         String out = in.replace("d", "dd");
         return out.replace("$", "d");
@@ -97,7 +97,8 @@ public class OllirEmitter {
     public String visit(JmmNode node) {
         this.ollirCode.setLength(0);  // clear length to allow reuse
 
-        this.ollirCode.append(this.encode(this.symbolTable.getClassName())).append(" {\n");
+        String className = this.encode(this.symbolTable.getClassName());
+        this.ollirCode.append(className).append(" {\n");
         // TODO extends
 
         // class fields
@@ -106,7 +107,7 @@ public class OllirEmitter {
         }
 
         // constructor
-        this.ollirCode.append("\t.construct ").append(this.symbolTable.getClassName()).append("().V {\n");
+        this.ollirCode.append("\t.construct ").append(className).append("().V {\n");
         this.ollirCode.append("\t\tinvokespecial(this, \"<init>\").V;\n");
         this.ollirCode.append("\t}\n");
 
@@ -186,7 +187,7 @@ public class OllirEmitter {
     public String getCondOllir(String tabs, JmmNode n) {
         boolean isBinOp = n.getKind().equals("Binary");
         String nodeOllir = this.getOpOllir(tabs, n, !isBinOp).trim();
-        if (!isBinOp) {
+        if (!isBinOp) {  // conditions have to be operations (binary)
             return nodeOllir + " && 1.bool";
         }
         return nodeOllir;
@@ -394,7 +395,7 @@ public class OllirEmitter {
     }
 
     private String getUnaryOllir(String tabs, JmmNode node, boolean isAux) {
-        // TODO invert expressions
+        // TODO invert expressions, e.g.: < --> >=
         final String type = ".bool";
         this.contextStack.push(".bool");
 

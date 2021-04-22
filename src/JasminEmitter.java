@@ -1,5 +1,6 @@
-import org.specs.comp.ollir.*;
 import org.specs.comp.ollir.Method;
+import org.specs.comp.ollir.*;
+import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
 public class JasminEmitter {
     private final MySymbolTable symbolTable;
@@ -26,14 +27,38 @@ public class JasminEmitter {
     }
 
     // TODO complete this
-    public String elemTypeJasmin(Type type) {
-        switch (type.getTypeOfElement()) {
+    public String elemTypeJasmin(ElementType type) {
+        switch (type) {
             case INT32:
                 return "I";
+            case BOOLEAN:
+                return "Z";
+            case STRING:
+                return "Ljava/lang/String;";
             case VOID:
                 return "V";
             default:
                 return type.toString();
+        }
+    }
+
+    public String elemTypeJasmin(Type type) {
+        switch (type.getTypeOfElement()) {
+            case ARRAYREF:
+                ArrayType aType = (ArrayType) type;
+                StringBuilder ret = new StringBuilder();
+                if (aType.getNumDimensions() > 0) ret.append("[");
+                ret.append(this.elemTypeJasmin(aType.getTypeOfElements()));
+                return ret.toString();
+            case OBJECTREF:
+                return "";
+            case CLASS:
+                ClassType cType = (ClassType) type;
+                return "L" + cType.getName() + ";";
+            case THIS:
+                return "";
+            default:
+                return this.elemTypeJasmin(type.getTypeOfElement());
         }
     }
 
@@ -84,9 +109,64 @@ public class JasminEmitter {
         this.jasminCode.append(")").append(this.elemTypeJasmin(retType)).append("\n");
 
         String tabs = "\t";
+        for (Instruction i : method.getInstructions()) {
+            this.instructionJasmin(tabs, i);
+        }
 
         // return
         this.jasminCode.append(tabs).append(this.instrPreJasmin(retType)).append("return\n");
         this.jasminCode.append(".end method\n\n");
+    }
+
+    public void instructionJasmin(String tabs, Instruction instr) {
+        switch (instr.getInstType()) {
+            case ASSIGN:
+                break;
+            case CALL:
+                this.callInstructionJasmin(tabs, (CallInstruction) instr);
+                break;
+            case GOTO:
+                break;
+            case BRANCH:
+                break;
+            case RETURN:
+                break;
+            case PUTFIELD:
+                break;
+            case GETFIELD:
+                break;
+            case UNARYOPER:
+                break;
+            case BINARYOPER:
+                break;
+            case NOPER:
+                break;
+        }
+    }
+
+    private void callInstructionJasmin(String tabs, CallInstruction instr) {
+        CallType type = OllirUtils.getCallInvocationType(instr);
+        switch (type) {
+            case invokevirtual:
+                break;
+            case invokeinterface:
+                break;
+            case invokespecial:
+                break;
+            case invokestatic:
+                this.jasminCode.append(tabs).append("invokestatic ")
+                        .append(this.elemTypeJasmin(instr.getFirstArg().getType())).append(".")
+                        .append(this.elemTypeJasmin(instr.getSecondArg().getType()))
+                        .append("()") // TODO args
+                        .append(this.elemTypeJasmin(instr.getReturnType()))
+                        .append("\n");
+                break;
+            case NEW:
+                break;
+            case arraylength:
+                break;
+            case ldc:
+                break;
+        }
     }
 }

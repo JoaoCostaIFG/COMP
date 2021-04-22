@@ -29,4 +29,14 @@ public class BackendTest {
         var output = result.run();
         assertEquals("Hello, World!", output.trim());
     }
+
+
+    @Test
+    public void KazengaTest() {
+        var result = TestUtils.backend(SpecsIo.read("test/testedokazenga.jmm"));
+        TestUtils.noErrors(result.getReports());
+
+        var output = result.run();
+        assertEquals("3", output.trim());
+    }
 }

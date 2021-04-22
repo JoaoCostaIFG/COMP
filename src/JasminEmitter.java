@@ -77,8 +77,6 @@ public class JasminEmitter {
         this.jasminCode.append("; Class accepted by Jasmin2.3\n");
         this.jasminCode.append(".class public ").append(this.ollirClass.getClassName()).append("\n");
         this.jasminCode.append(".super java/lang/Object\n\n");
-        // always produce standard initializer
-        this.standardInitializerJasmin();
 
         for (Method method : this.ollirClass.getMethods()) {
             this.methodJasmin(method);
@@ -91,22 +89,31 @@ public class JasminEmitter {
         this.jasminCode.append("; standard initializer\n")
                 .append(".method public <init>()V\n")
                 .append("\taload_0\n")
-                .append("\tinvokenonvirtual java/lang/Object/<init>()V\n")
+                .append("\tinvokespecial java/lang/Object.<init>()V\n")
                 .append("\treturn\n")
-                .append(".end method\n\n");
+                .append(".end method\n");
     }
 
     public void methodJasmin(Method method) {
+        if (method.isConstructMethod()) {
+            // TODO this is a hack
+            this.standardInitializerJasmin();
+            return;
+        }
+
         this.jasminCode.append(".method public ");
         if (method.isStaticMethod()) this.jasminCode.append("static ");
-        this.jasminCode.append(method.getMethodName()).append("(");
+        this.jasminCode.append(method.getMethodName());
 
+        // method signature (args)
+        this.jasminCode.append("(");
         for (Element e : method.getParams()) {
             this.jasminCode.append(this.elemTypeJasmin(e.getType()));
         }
+        this.jasminCode.append(")");
 
         Type retType = method.getReturnType();
-        this.jasminCode.append(")").append(this.elemTypeJasmin(retType)).append("\n");
+        this.jasminCode.append(this.elemTypeJasmin(retType)).append("\n");
 
         String tabs = "\t";
         for (Instruction i : method.getInstructions()) {
@@ -115,7 +122,7 @@ public class JasminEmitter {
 
         // return
         this.jasminCode.append(tabs).append(this.instrPreJasmin(retType)).append("return\n");
-        this.jasminCode.append(".end method\n\n");
+        this.jasminCode.append(".end method\n");
     }
 
     public void instructionJasmin(String tabs, Instruction instr) {
@@ -144,9 +151,21 @@ public class JasminEmitter {
         }
     }
 
+    private String callArg(Element e) {
+        if (e.isLiteral()) { // if the e is not a literal, then it is a variable
+            return ((LiteralElement) e).getLiteral().replace("\"", "");
+        } else {
+            Operand o = (Operand) e;
+            // o1.getType()
+            return o.getName();
+        }
+    }
+
     private void callInstructionJasmin(String tabs, CallInstruction instr) {
-        CallType type = OllirUtils.getCallInvocationType(instr);
-        switch (type) {
+        this.jasminCode.append(tabs);
+
+        CallType invType = OllirUtils.getCallInvocationType(instr);
+        switch (invType) {
             case invokevirtual:
                 break;
             case invokeinterface:
@@ -154,12 +173,7 @@ public class JasminEmitter {
             case invokespecial:
                 break;
             case invokestatic:
-                this.jasminCode.append(tabs).append("invokestatic ")
-                        .append(this.elemTypeJasmin(instr.getFirstArg().getType())).append(".")
-                        .append(this.elemTypeJasmin(instr.getSecondArg().getType()))
-                        .append("()") // TODO args
-                        .append(this.elemTypeJasmin(instr.getReturnType()))
-                        .append("\n");
+                this.jasminCode.append("invokestatic ");
                 break;
             case NEW:
                 break;
@@ -168,5 +182,22 @@ public class JasminEmitter {
             case ldc:
                 break;
         }
+
+        this.jasminCode.append(this.callArg(instr.getFirstArg()));
+
+        if (instr.getNumOperands() > 1) {
+            if (invType != CallType.NEW) { // only new type instructions do not have a field with second arg
+                this.jasminCode.append(".").append(this.callArg(instr.getSecondArg()));
+            }
+
+            // args
+            this.jasminCode.append("(");
+            for (Element arg : instr.getListOfOperands()) {
+                this.jasminCode.append(this.callArg(arg));
+            }
+            this.jasminCode.append(")");
+        }
+
+        this.jasminCode.append(this.elemTypeJasmin(instr.getReturnType())).append("\n");
     }
 }

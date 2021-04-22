@@ -1,13 +1,7 @@
-import b;
+import io;
 
-class $C$ extends ext {
-    //public int[] a(int a, int[] b, boolean c, Classs d) {
-    //    return new int [2];
-    //}
-
+class C {
     public static void main(String[] args) {
-        // this.a(1, new int[2], false, new Classs());
-        int a$;
-        a$ = 1;
+        io.print(3);
     }
 }

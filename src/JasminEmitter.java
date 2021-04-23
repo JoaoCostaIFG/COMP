@@ -2,11 +2,13 @@ import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
+import java.util.HashMap;
+
 public class JasminEmitter {
     private final MySymbolTable symbolTable;
     private final ClassUnit ollirClass;
     private final StringBuilder jasminCode;
-    private Method method;
+    private HashMap<String, Descriptor> methodVarTable;
 
     // TODO arithmetic
 
@@ -22,7 +24,7 @@ public class JasminEmitter {
         this.symbolTable = symbolTable;
         this.ollirClass = ollirClass;
         this.jasminCode = new StringBuilder();
-        this.method = null;
+        this.methodVarTable = new HashMap<>();
     }
 
     public String getJasminCode() {
@@ -59,7 +61,7 @@ public class JasminEmitter {
                 ClassType cType = (ClassType) type;
                 return "L" + cType.getName() + ";";
             case THIS:
-                return "";
+                return this.ollirClass.getClassName();
             default:
                 return this.elemTypeJasmin(type.getTypeOfElement());
         }
@@ -83,7 +85,7 @@ public class JasminEmitter {
         this.jasminCode.append(".super java/lang/Object\n");
 
         for (Method method : this.ollirClass.getMethods()) {
-            this.method = method;
+            this.methodVarTable = OllirAccesser.getVarTable(method);
             this.methodJasmin(method);
         }
 
@@ -121,6 +123,11 @@ public class JasminEmitter {
         this.jasminCode.append(this.elemTypeJasmin(retType)).append("\n");
 
         String tabs = "\t";
+        // stack and locals size
+        this.jasminCode.append(tabs).append(".limit stack 2\n")
+                .append(tabs).append(".limit locals 99\n\n");
+
+        // body
         for (Instruction i : method.getInstructions()) {
             this.instructionJasmin(tabs, i);
         }
@@ -131,12 +138,13 @@ public class JasminEmitter {
     public void instructionJasmin(String tabs, Instruction instr) {
         switch (instr.getInstType()) {
             case ASSIGN:
+                this.assignInstructionJasmin(tabs, (AssignInstruction) instr);
                 break;
             case CALL:
                 this.callInstructionJasmin(tabs, (CallInstruction) instr);
                 break;
             case GOTO:
-                ((GotoInstruction) instr).show();
+                // this.gotoInstructionJasmin(tabs, (GotoInstruction) instr.;
                 break;
             case BRANCH:
                 break;
@@ -150,6 +158,7 @@ public class JasminEmitter {
             case UNARYOPER:
                 break;
             case BINARYOPER:
+                this.binOpInstructionJasmin(tabs, (BinaryOpInstruction) instr);
                 break;
             case NOPER:
             default:
@@ -157,43 +166,81 @@ public class JasminEmitter {
         }
     }
 
-    private void loadCallArg(String tabs, Element arg) {
-        String callArg = this.callArg(arg);
-        String argStr = "";
+    private String intLiteralPush(int i) {
+        if (i <= 5) {
+            return "iconst_" + i;
+        } else if (i <= 127) {
+            return "bipush " + i;
+        } else {
+            return "ldc " + i;
+        }
+    }
+
+    private String loadCallArgLiteral(LiteralElement arg) {
+        String literal = arg.getLiteral();
+        String argStr;
         switch (arg.getType().getTypeOfElement()) {
             case INT32:
-                if (Integer.parseInt(callArg) <= 5) {
-                    argStr = "iconst_" + callArg;
-                } else if (Integer.parseInt(callArg) <= 127) {
-                    argStr = "bipush " + callArg;
-                } else {
-                    argStr = "ldc " + callArg;
-                }
+                argStr = this.intLiteralPush(Integer.parseInt(literal));
                 break;
             case BOOLEAN:
-                if (callArg.equals("1"))
+                if (literal.equals("1"))
                     argStr = "iconst_1";
                 else
                     argStr = "iconst_0";
                 break;
+            case OBJECTREF:
+                Descriptor d = this.methodVarTable.get(literal);
+                argStr = "aload_" + d.getVirtualReg();
+                break;
+            case STRING:
+                argStr = "ldc " + literal;
+                break;
+            case THIS:
             case ARRAYREF:
+            case CLASS:
+            default:
+                // pls
+                return null;
+        }
+
+        return argStr;
+    }
+
+    private String loadCallArgOperand(Operand arg) {
+        String name = arg.getName();
+        String argStr;
+        switch (arg.getType().getTypeOfElement()) {
+            case INT32:
+            case BOOLEAN:
+                argStr = "iload_" + this.methodVarTable.get(name).getVirtualReg();
                 break;
             case OBJECTREF:
-                System.out.println(callArg);
-                break;
             case THIS:
                 argStr = "aload_0";
                 break;
             case STRING:
-                argStr = "ldc " + callArg;
-                break;
+            case ARRAYREF:
             case CLASS:
             default:
                 // pls
-                return;
+                return null;
         }
 
-        this.jasminCode.append(tabs).append(argStr).append("\n");
+        return argStr;
+    }
+
+    private String loadCallArg(Element arg) {
+        if (arg.isLiteral())
+            return this.loadCallArgLiteral((LiteralElement) arg);
+        else
+            return this.loadCallArgOperand((Operand) arg);
+    }
+
+    private void loadCallArg(String tabs, Element arg) {
+        String argStr = this.loadCallArg(arg);
+        if (argStr != null)
+            this.jasminCode.append(tabs).append(argStr).append("\n");
     }
 
     private String callArg(Element e) {
@@ -201,10 +248,15 @@ public class JasminEmitter {
             return ((LiteralElement) e).getLiteral().replace("\"", "");
         } else {
             Operand o = (Operand) e;
-            // o1.getType()
-            if (o.getName().equals("this"))
-                return this.ollirClass.getClassName();
-            return o.getName();
+            Type t = o.getType();
+            switch (t.getTypeOfElement()) {
+                case OBJECTREF:
+                    return ((ClassType) t).getName();
+                case THIS:
+                    return this.ollirClass.getClassName();
+                default:
+                    return o.getName();
+            }
         }
     }
 
@@ -256,12 +308,64 @@ public class JasminEmitter {
     private void retInstructionJasmin(String tabs, ReturnInstruction instr) {
         this.jasminCode.append(tabs);
 
-        Element opnd = instr.getOperand();
-        if (opnd != null) {
-            this.loadCallArg(tabs, opnd);
+        if (instr.hasReturnValue()) {
+            this.loadCallArg(tabs, instr.getOperand());
+            this.jasminCode.append(this.instrPreJasmin(instr.getOperand().getType()));
         }
 
-        this.jasminCode.append(this.instrPreJasmin(this.method.getReturnType()))
-                .append("return\n");
+        this.jasminCode.append("return\n");
+    }
+
+    private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {
+        Element leftElem = instr.getLeftOperand();
+        String lhs = this.callArg(leftElem);
+        Element rightElem = instr.getRightOperand();
+        String rhs = this.callArg(rightElem);
+
+        Operation op = instr.getUnaryOperation();
+        switch (op.getOpType()) {
+            case ADD:
+                this.jasminCode.append(tabs)
+                        .append(this.intLiteralPush(Integer.parseInt(lhs) + Integer.parseInt(rhs)))
+                        .append("\n");
+                break;
+            case SUB:
+                this.jasminCode.append(tabs)
+                        .append(this.intLiteralPush(Integer.parseInt(lhs) - Integer.parseInt(rhs)))
+                        .append("\n");
+                break;
+            case MUL:
+                this.jasminCode.append(tabs)
+                        .append(this.intLiteralPush(Integer.parseInt(lhs) * Integer.parseInt(rhs)))
+                        .append("\n");
+                break;
+            case DIV:
+                this.jasminCode.append(tabs)
+                        .append(this.intLiteralPush(Integer.parseInt(lhs) / Integer.parseInt(rhs)))
+                        .append("\n");
+                break;
+            default:
+                // TODO the other operations
+                break;
+        }
+    }
+
+    private void assignInstructionJasmin(String tabs, AssignInstruction instr) {
+        this.instructionJasmin(tabs, instr.getRhs());
+
+        Element dest = instr.getDest();
+        Descriptor d = this.methodVarTable.get(((Operand) dest).getName());
+        switch (dest.getType().getTypeOfElement()) {
+            case INT32:
+                this.jasminCode.append(tabs)
+                        .append("istore_").append(d.getVirtualReg())
+                        .append("\n");
+                break;
+            case BOOLEAN:
+                break;
+            default:
+                // assume a
+                break;
+        }
     }
 }

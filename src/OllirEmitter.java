@@ -50,8 +50,14 @@ public class OllirEmitter {
         this.labelCount = 0;
     }
 
+    private String ollirNameTrim(String typeOllir) {
+        return typeOllir.replaceFirst("(.*?)\\." +
+                ((typeOllir.charAt(0) == '$') ? "(.*?)\\." : ""), "");
+    }
+
     private Type getTypeFromOllir(String typeOllir) {
-        String ollirNameTrim = typeOllir.replaceFirst("(.*?)\\.", "");
+        String ollirNameTrim = this.ollirNameTrim(typeOllir);
+
         String[] split = ollirNameTrim.split("\\.");
         switch (split[split.length - 1]) {
             case "i32":
@@ -59,7 +65,7 @@ public class OllirEmitter {
             case "bool":
                 return new Type("boolean", split.length >= 2);
             default:
-                return new Type(split[0], split.length >= 2);
+                return new Type(split[split.length - 1], split.length >= 2);
         }
     }
 
@@ -153,7 +159,8 @@ public class OllirEmitter {
             this.getBodyOllir(tabs + "\t", methodBodyNode);
 
         if (methodRetNode == null) { // no return statement (void method)
-            this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
+            // TODO ?
+            // this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0));
             this.ollirCode.append(tabs).append("\t")
@@ -354,11 +361,12 @@ public class OllirEmitter {
         return ret.toString();
     }
 
-    private String getIndexOllir(String tabs, JmmNode node) {
+    private String getIndexOllir(String tabs, JmmNode node, boolean isAux) {
         final String type = ".i32";
+        // final String type = "." + this.getTypeFromOllir(this.getOpOllir(tabs, children.get(0)).trim()).getName();
         List<JmmNode> children = node.getChildren();
 
-        this.contextStack.push(".array.i32");
+        this.contextStack.push(".array" + type);
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
         this.contextStack.pop();
         this.contextStack.push(".i32");
@@ -367,8 +375,14 @@ public class OllirEmitter {
 
         // IMP array access have always to be stored in a temporary variable before usage
         // we are splitting the left child by "." on the left because we don't want the type to show
-        String ret = childLeftOllir.split("\\.")[0] + "[" + childRightOllir + "]" + type;
-        return this.injectTempVar(tabs, type, ret);
+        String[] loSplit = childLeftOllir.split("\\.");
+        String ret = loSplit[0];
+        if (childLeftOllir.charAt(0) == '$')
+            ret += "." + loSplit[1];
+        ret += "[" + childRightOllir + "]" + type;
+        if (isAux)
+            return this.injectTempVar(tabs, type, ret);
+        return ret;
     }
 
     private String getBinaryOllir(String tabs, JmmNode node, boolean isAux) {
@@ -388,7 +402,7 @@ public class OllirEmitter {
             case "DOT":
                 return this.getDotOllir(tabs, node, isAux);
             case "INDEX":
-                return this.getIndexOllir(tabs, node);
+                return this.getIndexOllir(tabs, node, isAux);
             default:
                 return "";
         }

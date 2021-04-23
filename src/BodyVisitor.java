@@ -20,7 +20,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final Set<String> assignedVariables;
     private boolean isMain = false;
 
-    private static final Type everythingType = new Type("", false);
+    private static final Type everythingType = new Type("", true);
     private static final Symbol everythingSymbol = new Symbol(everythingType, "");
 
     public BodyVisitor(MySymbolTable symbolTable, Method method, String methodName) {
@@ -93,7 +93,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
     private boolean validateIndexOp(JmmNode indNode, List<Report> reports) {
         JmmNode childLeft = indNode.getChildren().get(0);
-        if (!this.nodeIsOfType(childLeft, "int", true, reports)) {
+        Type type = this.getNodeType(childLeft, reports);
+        if (!type.isArray()) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(childLeft.get("line")), parseInt(childLeft.get("col")),
                     "Index operator can only be used in arrays."));
@@ -133,8 +134,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 return false;
             }
 
+            // is instance of own class
             if (leftType.getName().equals("this") || leftType.getName().equals(this.symbolTable.getClassName())) {
-                if (this.isMain) {
+                if (this.isMain && leftType.getName().equals("this")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                             parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                             "This cannot be referenced from a static context."));
@@ -349,7 +351,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             return new Type("int", false);
         } else { // FuncCall
             // Right Child -> FuncCall
-            if (childLeft.getKind().equals("Literal") && childLeft.get("type").equals("this")) {
+            Type leftType = this.getNodeType(childLeft, reports);
+            if (childLeft.getKind().equals("Literal") &&
+                    (childLeft.get("type").equals("this") || leftType.getName().equals(this.symbolTable.getClassName()))) {
                 Type retType = getMethodCallType(node, reports);
                 if (retType == null)
                     return BodyVisitor.everythingType;

@@ -2,6 +2,14 @@ import io;
 
 class C {
     public static void main(String[] args) {
-        io.print(3);
+        //if (1 < 2) {
+        //    io.print(3);
+        //} else {
+        //    io.print(4);
+        //}
+        int[] arr;
+        int i;
+        arr = new int[2];
+        i = arr[i] + i;
     }
 }

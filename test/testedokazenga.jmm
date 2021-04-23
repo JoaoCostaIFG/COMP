@@ -10,6 +10,6 @@ class C {
         int[] arr;
         int i;
         arr = new int[2];
-        i = arr[i] + i;
+        i = arr[0];
     }
 }

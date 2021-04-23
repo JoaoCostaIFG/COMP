@@ -353,7 +353,8 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             // Right Child -> FuncCall
             Type leftType = this.getNodeType(childLeft, reports);
             if (childLeft.getKind().equals("Literal") &&
-                    (childLeft.get("type").equals("this") || leftType.getName().equals(this.symbolTable.getClassName()))) {
+                    (childLeft.get("type").equals("this") ||
+                            (leftType != null && leftType.getName().equals(this.symbolTable.getClassName())))) {
                 Type retType = getMethodCallType(node, reports);
                 if (retType == null)
                     return BodyVisitor.everythingType;

@@ -162,7 +162,7 @@ public class OllirEmitter {
             // TODO ?
             // this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
-            String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0));
+            String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0), true);
             this.ollirCode.append(tabs).append("\t")
                     .append("ret").append(this.getTypeOllir(method.getReturnType()))
                     .append(" ").append(retOllir.trim()).append(";\n");
@@ -192,7 +192,8 @@ public class OllirEmitter {
     }
 
     public String getCondOllir(String tabs, JmmNode n) {
-        boolean isBinOp = n.getKind().equals("Binary");
+        boolean isBinOp = n.getKind().equals("Binary") && !n.get("op").equals("DOT");
+
         String nodeOllir = this.getOpOllir(tabs, n, !isBinOp).trim();
         if (!isBinOp) {  // conditions have to be operations (binary)
             return nodeOllir + " &&.bool 1.bool";
@@ -348,12 +349,13 @@ public class OllirEmitter {
             }
             if (callMethod == null) {  // infer return type
                 if (this.contextStack.empty())
-                    ret.append(".V");
+                    type = ".V";
                 else
-                    ret.append(this.contextStack.peek());
+                    type = this.contextStack.peek();
             } else {  // found the method
-                ret.append(this.getTypeOllir(callMethod.getReturnType()));
+                type = this.getTypeOllir(callMethod.getReturnType());
             }
+            ret.append(type);
         }
 
         if (isAux)
@@ -514,7 +516,7 @@ public class OllirEmitter {
 
             if (isAux) {
                 ret = this.injectTempVar(tabs, type, ret);
-                this.ollirCode.append(tabs).append("invokespecial(").append(ret).append(", \"<init>\").V\n");
+                this.ollirCode.append(tabs).append("invokespecial(").append(ret).append(", \"<init>\").V;\n");
             }
         }
 
@@ -550,7 +552,7 @@ public class OllirEmitter {
 
         String ret;
         if (isField) {
-            ret = "putfield(this, " + assignee + ", " + content + ")";
+            ret = "putfield(this, " + assignee + ", " + content + ").V";
         } else {
             ret = assignee + " :=" + type + " " + content;
         }

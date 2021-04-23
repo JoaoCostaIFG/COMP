@@ -2,11 +2,13 @@ import io;
 
 class C {
     public static void main(String[] args) {
+        // IFS QUE CHEGAM AO FIM DA FUNC (RELATED TO NO RETURN VOID)
         //if (1 < 2) {
         //    io.print(3);
         //} else {
         //    io.print(4);
         //}
+        // CONSTANT ARRAYS
         int[] arr;
         int i;
         arr = new int[2];

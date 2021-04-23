@@ -4,11 +4,8 @@ class C {
 	//int[] test_arr;
 
     public static void main(String[] args) {
-		//test_arr[3] = 1;
-
-		// int i;
-		// i = 1 + 2;
-
 		io.println(1 + 2);
+
+		//test_arr[3] = 1;
     }
 }

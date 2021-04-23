@@ -28,12 +28,6 @@ public class OllirEmitter {
         return this.ollirCode.toString();
     }
 
-    // TODO do more
-    private String encode(String in) {
-        String out = in.replace("d", "dd");
-        return out.replace("$", "d");
-    }
-
     private String getNextAuxVar() {
         // TODO verificar se existe
         return "aux" + (this.auxCount++);
@@ -460,14 +454,14 @@ public class OllirEmitter {
         // local variable
         for (Symbol s : this.localVars) {
             if (s.getName().equals(name)) {
-                return this.encode(this.getSymbolOllir(s));
+                return this.getSymbolOllir(s);
             }
         }
         // method parameter
         for (int i = 0; i < this.parameters.size(); ++i) {
             Symbol s = this.parameters.get(i);
             if (s.getName().equals(name)) {
-                return "$" + i + "." + this.encode(this.getSymbolOllir(s));
+                return "$" + i + "." + this.getSymbolOllir(s);
             }
         }
         // class field
@@ -476,7 +470,7 @@ public class OllirEmitter {
                 // ganhamos! A angola e nossa!
                 // if is aux, getfield needs to be stored on temp var
                 String typeOllir = this.getTypeOllir(s.getType());
-                String ret = "getfield(this, " + this.encode(this.getSymbolOllir(s)) + ")" + typeOllir;
+                String ret = "getfield(this, " + this.getSymbolOllir(s) + ")" + typeOllir;
                 if (isAux)
                     return this.injectTempVar(tabs, typeOllir, ret);
                 return ret;
@@ -545,11 +539,11 @@ public class OllirEmitter {
         String type = this.getVarType(assigneeName);
 
         // assignee
-        String assignee = this.encode(assigneeName);
+        String assignee = assigneeName;
 
         // if is array access
-        if (leftChild.get("isArrayAccess").equals("yes")) {
-            // TODO tamos a ser trollados?
+        boolean isArray = leftChild.get("isArrayAccess").equals("yes");
+        if (isArray) {
             // load array reference is needed
             if (isField) {
                 String content = "getfield(this, " + assignee + type + ")" + type;
@@ -573,7 +567,7 @@ public class OllirEmitter {
         String content = this.getOpOllir(tabs, rightChild, isField).trim();
 
         String ret;
-        if (isField) {
+        if (isField && !isArray) {
             ret = "putfield(this, " + assignee + ", " + content + ").V";
         } else {
             ret = assignee + " :=" + type + " " + content;
@@ -581,7 +575,7 @@ public class OllirEmitter {
 
         // classes need to be instantiated
         if (rightChild.getKind().equals("New") && rightChild.get("type").equals("class"))
-            ret += ";\n" + tabs + "invokespecial(" + this.encode(assigneeName) + type + ", \"<init>\").V";
+            ret += ";\n" + tabs + "invokespecial(" + assigneeName + type + ", \"<init>\").V";
 
         return ret;
     }

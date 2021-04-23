@@ -36,8 +36,9 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         addVisit("MethodDeclaration", this::visitMethodRoot);
         addVisit("New", this::visitNew);
         addVisit("Assign", this::visitAssign);
-        addVisit("Unary", this::visitUnary);
         addVisit("Binary", this::visitBinary);
+        addVisit("Unary", this::visitUnary);
+        addVisit("Literal", this::visitLiteral);
         addVisit("Cond", this::visitCond);
         addVisit("Return", this::visitReturn);
     }
@@ -209,6 +210,10 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")),
                 "Unknown operation: " + node.getKind() + "."));
         return false;
+    }
+
+    private Boolean visitLiteral(JmmNode node, List<Report> reports) {
+        return this.checkNotAStatement(node, reports);
     }
 
     private Boolean visitUnary(JmmNode node, List<Report> reports) {

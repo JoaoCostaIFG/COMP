@@ -304,11 +304,12 @@ public class JasminEmitter {
     }
 
     private void retInstructionJasmin(String tabs, ReturnInstruction instr) {
-        this.jasminCode.append(tabs);
 
         if (instr.hasReturnValue()) {
             this.loadCallArg(tabs, instr.getOperand());
-            this.jasminCode.append(this.instrPreJasmin(instr.getOperand().getType()));
+            this.jasminCode.append(tabs).append(this.instrPreJasmin(instr.getOperand().getType()));
+        } else {
+            this.jasminCode.append(tabs);
         }
 
         this.jasminCode.append("return\n");

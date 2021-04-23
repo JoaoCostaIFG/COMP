@@ -9,15 +9,12 @@ class Nachos extends Cute {
     bool field2;
     int[] field3;
 
-    public static void main(String[] a) {
+    //public static void main(String[] a) {
+    //}
 
-    }
-
-    /*
-	public int metodo(int param1, ABC param2) {
-	    return 0;
-	}
-	*/
+	//public int metodo(int param1, ABC param2) {
+	//    return 0;
+	//}
 
 	public int metodo(int param1, ABC param2) {
 	    int EOF;
@@ -28,7 +25,7 @@ class Nachos extends Cute {
 	    int sim;
 	    int cats;
 
-        cats = 99999999999;
+        cats = 99999;
 	    boots = new int[2];
 	    EOF = 0xa8192;
         boots[0] = 10l + 9l * 8l;
@@ -36,18 +33,12 @@ class Nachos extends Cute {
 
         numero = 129_2312_23_12l;  // not integer (too >)
 
-        this.a(1,2)[1];
-
-        new int[0][1]; // TODO
-
-        1 < 2;
-        // !false < true;
+        // new int[0][1]; // TODO
         // true.break(1.length);
         // false.$(9999l - 10000L) < false;
         // false[true] < $$$$$$$$$$$$$$$$$;
         // a.length.length.length;
 
-        true && true && false;
         this.asd(this.asd(true), false);
 
 	    asj$d7as_211d$sa = 1;

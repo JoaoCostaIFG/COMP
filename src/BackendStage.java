@@ -37,7 +37,7 @@ public class BackendStage implements JasminBackend {
             // ollirClass.show(); // print to console main information about the input OLLIR
 
             // Convert the OLLIR to a String containing the equivalent Jasmin code
-            JasminEmitter jasminEmitter = new JasminEmitter((MySymbolTable) ollirResult.getSymbolTable(), ollirClass);
+            JasminEmitter jasminEmitter = new JasminEmitter(ollirClass);
             String jasminCode = jasminEmitter.parse();
             System.err.println(jasminCode);
 

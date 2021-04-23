@@ -505,7 +505,11 @@ public class OllirEmitter {
             case "boolean":
                 return (node.get("value").equals("true") ? "1" : "0") + ".bool";
             case "int":
-                return node.get("value") + ".i32";
+                String value = node.get("value")
+                        .replace("_", "")
+                        .replace("l", "")
+                        .replace("L", "");
+                return Integer.decode(value) + ".i32";
             case "this":
                 return "this";
             case "identifier":

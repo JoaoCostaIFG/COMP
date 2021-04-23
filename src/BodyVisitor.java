@@ -169,29 +169,52 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return true;
     }
 
+    private boolean checkNotAStatement(JmmNode node, List<Report> reports) {
+        JmmNode parent = node.getParent();
+        String kind = parent.getKind();
+        // if the parent is the method body or if body or while body, we are not a statement
+        // (if we are AND, ADD, SUB, MULT, DIV, LESSTHAN, INDEX, or NOT)
+        if (kind.equals("MethodBody") || kind.equals("IfBody") || kind.equals("Body")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                    parseInt(node.get("line")), parseInt(node.get("col")),
+                    "Not a statement."));
+            return false;
+        }
+        return true;
+    }
+
     private Boolean visitBinary(JmmNode node, List<Report> reports) {
         String op = node.get("op");
         switch (op) {
             case "AND":
+                if (!this.checkNotAStatement(node, reports))
+                    return false;
                 return this.validateBooleanOp(node, reports);
             case "ADD":
             case "SUB":
             case "MULT":
             case "DIV":
             case "LESSTHAN":
+                if (!this.checkNotAStatement(node, reports))
+                    return false;
                 return this.validateArithmeticOp(node, reports);
             case "INDEX":
+                if (!this.checkNotAStatement(node, reports))
+                    return false;
                 return this.validateIndexOp(node, reports);
             case "DOT":
                 return this.validateDotOp(node, reports);
         }
 
-        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1,
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")),
                 "Unknown operation: " + node.getKind() + "."));
         return false;
     }
 
     private Boolean visitUnary(JmmNode node, List<Report> reports) {
+        if (!this.checkNotAStatement(node, reports))
+            return false;
+
         // This is always the NOT operator
         JmmNode child = node.getChildren().get(0);
         if (!this.nodeIsOfType(child, "boolean", reports)) {

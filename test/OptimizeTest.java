@@ -59,7 +59,6 @@ public class OptimizeTest {
 
     @Test
     public void testLife() {
-        // TODO var chamada array
         optimizeTest(SpecsIo.getResource("fixtures/public/Life.jmm"));
     }
 
@@ -80,7 +79,6 @@ public class OptimizeTest {
 
     @Test
     public void testTicTacToe() {
-        // TODO arrays como membros dado
         optimizeTest(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
     }
 

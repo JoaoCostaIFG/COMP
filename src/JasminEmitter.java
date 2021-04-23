@@ -5,7 +5,6 @@ import pt.up.fe.comp.jmm.ollir.OllirUtils;
 import java.util.HashMap;
 
 public class JasminEmitter {
-    private final MySymbolTable symbolTable;
     private final ClassUnit ollirClass;
     private final StringBuilder jasminCode;
     private HashMap<String, Descriptor> methodVarTable;
@@ -20,8 +19,7 @@ public class JasminEmitter {
     // TODO while
     // TODO comps
 
-    public JasminEmitter(MySymbolTable symbolTable, ClassUnit ollirClass) {
-        this.symbolTable = symbolTable;
+    public JasminEmitter(ClassUnit ollirClass) {
         this.ollirClass = ollirClass;
         this.jasminCode = new StringBuilder();
         this.methodVarTable = new HashMap<>();

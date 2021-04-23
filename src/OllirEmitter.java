@@ -2,9 +2,7 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 public class OllirEmitter {
     private final MySymbolTable symbolTable;
@@ -12,7 +10,8 @@ public class OllirEmitter {
     private int labelCount;
     private int auxCount;
     private List<Symbol> localVars, parameters;
-    private final Stack<String> contextStack;
+    private final Map<String, String> sanitizationMap;
+    private final Stack<String> contextStack; // used to infer functions types (that aren't part of our class)
 
     public OllirEmitter(MySymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -21,6 +20,7 @@ public class OllirEmitter {
         this.labelCount = 0;
         this.localVars = new ArrayList<>();
         this.parameters = new ArrayList<>();
+        this.sanitizationMap = new HashMap<>();
         this.contextStack = new Stack<>();
     }
 
@@ -29,12 +29,26 @@ public class OllirEmitter {
     }
 
     private String getNextAuxVar() {
-        // TODO verificar se existe
         return "aux" + (this.auxCount++);
+    }
+
+    private String sanitizeSymbol(String varName) {
+        if (this.sanitizationMap.containsKey(varName))
+            return this.sanitizationMap.get(varName);
+        this.sanitizationMap.put(varName, this.getNextAuxVar());
+        return this.sanitizationMap.get(varName);
     }
 
     private String getNextLabel(String pre) {
         return pre + (this.labelCount++);
+    }
+
+    private String[] getLabelPair(String... pres) {
+        String[] ret = new String[pres.length];
+        for (int i = 0; i < pres.length; ++i)
+            ret[i] = pres[i] + this.labelCount;
+        ++this.labelCount;
+        return ret;
     }
 
     private void loadMethod(Method method) {
@@ -43,6 +57,10 @@ public class OllirEmitter {
         // reset label and auxiliar variables counters
         this.auxCount = 0;
         this.labelCount = 0;
+        // reset sanitization fields
+        this.sanitizationMap.clear();
+        for (Symbol s : this.parameters)
+            this.sanitizationMap.put(s.getName(), this.getNextAuxVar());
     }
 
     private String ollirNameTrim(String typeOllir) {
@@ -92,7 +110,7 @@ public class OllirEmitter {
     }
 
     private String getSymbolOllir(Symbol var) {
-        return var.getName() + this.getTypeOllir(var.getType());
+        return this.sanitizeSymbol(var.getName()) + this.getTypeOllir(var.getType());
     }
 
     public String visit(JmmNode node) {
@@ -154,7 +172,6 @@ public class OllirEmitter {
             this.getBodyOllir(tabs + "\t", methodBodyNode);
 
         if (methodRetNode == null) { // no return statement (void method)
-            // TODO ?
             this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0), true);
@@ -200,8 +217,9 @@ public class OllirEmitter {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
 
-        String loopLabel = this.getNextLabel("Loop");
-        String endLabel = this.getNextLabel("EndLoop");
+        String[] labels = this.getLabelPair("Loop", "EndLoop");
+        String loopLabel = labels[0];
+        String endLabel = labels[1];
 
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
         // condition
@@ -227,8 +245,9 @@ public class OllirEmitter {
         this.contextStack.push(".bool");
         String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
         this.contextStack.pop();
-        String bodyLabel = this.getNextLabel("Body");
-        String endLabel = this.getNextLabel("Endif");
+        String[] labels = this.getLabelPair("Body", "Endif");
+        String bodyLabel = labels[0];
+        String endLabel = labels[1];
 
         // if condition
         this.ollirCode.append(tabs).append("if (").append(condOllir.trim())
@@ -539,7 +558,7 @@ public class OllirEmitter {
         String type = this.getVarType(assigneeName);
 
         // assignee
-        String assignee = assigneeName;
+        String assignee = this.sanitizeSymbol(assigneeName);
 
         // if is array access
         boolean isArray = leftChild.get("isArrayAccess").equals("yes");

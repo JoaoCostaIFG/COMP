@@ -3,7 +3,18 @@ import io;
 class C {
 	//int[] test_arr;
 
+	public int f1(int a, int b) {
+	    return 0;
+	}
+
     public static void main(String[] args) {
+        int[] array;
+        int i;
+        i = new C().f1(4, 5);
+
+        array = new int[2];
+        array[0] = 1;
+
 		io.println(1 + 2);
 
 		//test_arr[3] = 1;

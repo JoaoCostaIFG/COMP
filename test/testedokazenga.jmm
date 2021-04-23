@@ -1,17 +1,16 @@
 import io;
 
 class C {
+	int[] test_arr;
+
     public static void main(String[] args) {
         // IFS QUE CHEGAM AO FIM DA FUNC (RELATED TO NO RETURN VOID)
-        //if (1 < 2) {
-        //    io.print(3);
-        //} else {
-        //    io.print(4);
-        //}
-        // CONSTANT ARRAYS
-        int[] arr;
-        int i;
-        arr = new int[2];
-        i = arr[0];
+        // if (1 < 2) {
+        //     io.print(3);
+        // } else {
+        //     io.print(4);
+        // }
+
+		test_arr[3] = 1;
     }
 }

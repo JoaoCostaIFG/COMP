@@ -35,6 +35,7 @@ public class OllirEmitter {
     }
 
     private String getNextAuxVar() {
+        // TODO verificar se existe
         return "aux" + (this.auxCount++);
     }
 
@@ -160,7 +161,7 @@ public class OllirEmitter {
 
         if (methodRetNode == null) { // no return statement (void method)
             // TODO ?
-            // this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
+            this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0), true);
             this.ollirCode.append(tabs).append("\t")
@@ -310,7 +311,7 @@ public class OllirEmitter {
         JmmNode leftChild = children.get(0);
         JmmNode rightChild = children.get(1);
         StringBuilder ret;
-        String type = "";
+        String type;
 
         if (rightChild.getKind().equals("Len")) {
             type = ".i32";
@@ -374,6 +375,11 @@ public class OllirEmitter {
         this.contextStack.push(".i32");
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
         this.contextStack.pop();
+
+        // TODO
+        // IMP this is a hack to prevent the use of constants as array indexes. They need to be stored in variables
+        if (children.get(1).getKind().equals("Literal") && children.get(1).get("type").equals("int"))
+            childRightOllir = this.injectTempVar(tabs, type, childRightOllir);
 
         // IMP array access have always to be stored in a temporary variable before usage
         // we are splitting the left child by "." on the left because we don't want the type to show
@@ -530,6 +536,7 @@ public class OllirEmitter {
                 this.symbolTable.getFields().stream().anyMatch(v -> v.getName().equals(name));
     }
 
+    // TODO resuse registers, e.g.: map of varName -> register
     private String getAssignOllir(String tabs, JmmNode node) {
         JmmNode leftChild = node.getChildren().get(0),
                 rightChild = node.getChildren().get(1);
@@ -539,11 +546,26 @@ public class OllirEmitter {
 
         // assignee
         String assignee = this.encode(assigneeName);
+
         // if is array access
         if (leftChild.get("isArrayAccess").equals("yes")) {
-            assignee += "[" + this.getOpOllir(tabs, leftChild.getChildren().get(0), true) + "]";
+            // TODO tamos a ser trollados?
+            // load array reference is needed
+            if (isField) {
+                String content = "getfield(this, " + assignee + type + ")" + type;
+                assignee = this.injectTempVar(tabs, type, content).split("\\.")[0];
+            }
+
             // remove the array part of the type (.array.i32 -> .i32)
             type = "." + type.split("\\.")[2];
+
+            JmmNode indexChild = leftChild.getChildren().get(0);
+            String indexOllir = this.getOpOllir(tabs, indexChild, true);
+            // IMP this is a hack to prevent the use of constants as array indexes. They need to be stored in variables
+            if (indexChild.getKind().equals("Literal") && indexChild.get("type").equals("int"))
+                indexOllir = this.injectTempVar(tabs, type, indexOllir);
+
+            assignee += "[" + indexOllir + "]";
         }
         assignee += type;
 

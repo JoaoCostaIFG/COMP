@@ -125,10 +125,6 @@ public class JasminEmitter {
             this.instructionJasmin(tabs, i);
         }
 
-        // return special case (if void)
-        if (retType.getTypeOfElement().equals(ElementType.VOID))
-            this.jasminCode.append(tabs).append("return\n");
-
         this.jasminCode.append(".end method\n");
     }
 
@@ -258,14 +254,14 @@ public class JasminEmitter {
     }
 
     private void retInstructionJasmin(String tabs, ReturnInstruction instr) {
-        if (instr.hasReturnValue()) {
-            // TODO wtf?
-        } else {
-            this.loadCallArg(tabs, instr.getOperand());
+        this.jasminCode.append(tabs);
+
+        Element opnd = instr.getOperand();
+        if (opnd != null) {
+            this.loadCallArg(tabs, opnd);
         }
 
-        this.jasminCode.append(tabs)
-                .append(this.instrPreJasmin(this.method.getReturnType()))
+        this.jasminCode.append(this.instrPreJasmin(this.method.getReturnType()))
                 .append("return\n");
     }
 }

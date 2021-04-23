@@ -98,7 +98,7 @@ public class OllirEmitter {
     public String visit(JmmNode node) {
         this.ollirCode.setLength(0);  // clear length to allow reuse
 
-        String className = this.encode(this.symbolTable.getClassName());
+        String className = this.symbolTable.getClassName();
         this.ollirCode.append(className).append(" {\n");
         // TODO extends
 

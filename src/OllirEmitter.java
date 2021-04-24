@@ -204,7 +204,9 @@ public class OllirEmitter {
     }
 
     public String getCondOllir(String tabs, JmmNode n) {
-        boolean isBinOp = n.getKind().equals("Binary") && !n.get("op").equals("DOT");
+        String opKind = n.getKind();
+        boolean isBinOp = (opKind.equals("Binary") && !n.get("op").equals("DOT")) ||
+                opKind.equals("Unary");
 
         String nodeOllir = this.getOpOllir(tabs, n, !isBinOp).trim();
         if (!isBinOp) {  // conditions have to be operations (binary)

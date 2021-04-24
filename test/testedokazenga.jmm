@@ -3,22 +3,31 @@ import io;
 class C {
 	//int[] test_arr;
 
-	public int f2(int b) {
-        int a;
-        a = 5 - b;
-		io.println(a);
-	    return 0;
-	}
+	//public int f2(int b) {
+    //    int a;
+    //    a = 5 - b;
+	//	io.println(a);
+	//    return 0;
+	//}
 
-	public int f1() {
-	    this.f2(2);
-	    return 0;
-	}
+	//public int f1() {
+	//    this.f2(2);
+	//    return 0;
+	//}
 
     public static void main(String[] args) {
-        C c;
-        c = new C();
-        c.f1();
+        //C c;
+        //c = new C();
+        //c.f1();
+        boolean bb;
+        bb = !false;
+
+        // if (!false) {
+        //     io.println(3);
+        // } else {
+        //     io.println(4);
+        // }
+
         //new C(); // TODO
     }
 }

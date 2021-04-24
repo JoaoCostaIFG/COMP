@@ -13,7 +13,6 @@ public class JasminEmitter {
 
     // TODO super
     // TODO class fields
-    // TODO assign
     // TODO arrays
     // TODO if
     // TODO while
@@ -158,6 +157,7 @@ public class JasminEmitter {
             case GETFIELD:
                 break;
             case UNARYOPER:
+                this.unOpInstructionJasmin(tabs, (UnaryOpInstruction) instr);
                 break;
             case BINARYOPER:
                 this.binOpInstructionJasmin(tabs, (BinaryOpInstruction) instr);
@@ -335,6 +335,18 @@ public class JasminEmitter {
         }
 
         this.jasminCode.append("return\n");
+    }
+
+    private void unOpInstructionJasmin(String tabs, UnaryOpInstruction instr) {
+        Element operand = instr.getRightOperand();
+
+        Operation op = instr.getUnaryOperation();
+        switch (op.getOpType()) {
+            case NOT:
+                break;
+            default:
+                break;
+        }
     }
 
     private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {

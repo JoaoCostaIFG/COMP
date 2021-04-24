@@ -135,7 +135,7 @@ public class JasminEmitter {
 
     public void instructionJasmin(String tabs, Instruction instr) {
         // TODO for DEBUG
-        this.jasminCode.append(tabs).append("; ").append(instr.getInstType().toString()).append("\n");
+        //this.jasminCode.append(tabs).append("; ").append(instr.getInstType().toString()).append("\n");
 
         switch (instr.getInstType()) {
             case ASSIGN:
@@ -329,9 +329,14 @@ public class JasminEmitter {
             ret.append(")");
         }
 
-        this.jasminCode.append(ret).append(this.elemTypeJasmin(instr.getReturnType())).append("\n");
+        String returnStr = this.elemTypeJasmin(instr.getReturnType());
+        this.jasminCode.append(ret).append(returnStr).append("\n");
 
         // post processing
+        // TODO
+        if (!returnStr.isEmpty() && !returnStr.equals("V"))
+            this.jasminCode.append(tabs).append("pop\n");
+
         if (invType == CallType.NEW) {
             this.jasminCode.append(tabs).append("dup\n");
         }

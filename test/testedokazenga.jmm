@@ -1,7 +1,6 @@
 import io;
 
 class C {
-	//int[] test_arr;
 
 	//public int f2(int b) {
     //    int a;
@@ -21,17 +20,6 @@ class C {
         C c;
         c = new C();
         i = c.f1();
-        io.println(i);
-
-        // boolean bb;
-        // bb = !false;
-
-        // if (!false) {
-        //     io.println(3);
-        // } else {
-        //     io.println(4);
-        // }
-
         //new C(); // TODO
     }
 }

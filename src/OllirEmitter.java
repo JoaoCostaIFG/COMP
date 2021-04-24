@@ -172,6 +172,7 @@ public class OllirEmitter {
             this.getBodyOllir(tabs + "\t", methodBodyNode);
 
         if (methodRetNode == null) { // no return statement (void method)
+            // TODO a serio por favor para
             this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0), true);
@@ -568,7 +569,8 @@ public class OllirEmitter {
         String type = this.getVarType(assigneeName);
 
         // assignee
-        String assignee = this.sanitizeSymbol(assigneeName);
+        assigneeName = this.sanitizeSymbol(assigneeName);
+        String assignee = assigneeName;
 
         // if is array access
         boolean isArray = leftChild.get("isArrayAccess").equals("yes");
@@ -602,6 +604,7 @@ public class OllirEmitter {
             ret = assignee + " :=" + type + " " + content;
         }
 
+        // obrigado gabide, es o maior <3
         // classes need to be instantiated
         if (rightChild.getKind().equals("New") && rightChild.get("type").equals("class"))
             ret += ";\n" + tabs + "invokespecial(" + assigneeName + type + ", \"<init>\").V";

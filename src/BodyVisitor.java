@@ -175,7 +175,7 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         String kind = parent.getKind();
         // if the parent is the method body or if body or while body, we are not a statement
         // (if we are AND, ADD, SUB, MULT, DIV, LESSTHAN, INDEX, or NOT)
-        if (kind.equals("MethodBody") || kind.equals("IfBody") || kind.equals("Body")) {
+        if (kind.equals("MethodBody") || kind.equals("IfBody") || kind.equals("ElseBody") || kind.equals("Body")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(node.get("line")), parseInt(node.get("col")),
                     "Not a statement."));

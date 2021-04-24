@@ -31,7 +31,7 @@ class Nachos extends Cute {
         boots[0] = 10l + 9l * 8l;
         boots[0L] = 7l * 6l + 5l;
 
-        numero = 129_2312_23_12l;  // not integer (too >)
+        numero = 129_23_12l;  // not integer (too >)
 
         // new int[0][1]; // TODO
         // true.break(1.length);
@@ -48,7 +48,7 @@ class Nachos extends Cute {
                 boots[2] = cats;
             }
             else {
-                true;
+                boots[3] = cats;
             }
 	    }
 

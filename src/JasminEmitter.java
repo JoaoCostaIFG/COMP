@@ -184,6 +184,17 @@ public class JasminEmitter {
         }
     }
 
+    private String boolLiteralPush(boolean b) {
+        if (b)
+            return "iconst_1";
+        else
+            return "iconst_0";
+    }
+
+    private String boolLiteralPush(int i) {
+        return this.boolLiteralPush(i == 1);
+    }
+
     private String loadCallArgLiteral(LiteralElement arg) {
         String literal = arg.getLiteral();
         String argStr;
@@ -338,11 +349,19 @@ public class JasminEmitter {
     }
 
     private void unOpInstructionJasmin(String tabs, UnaryOpInstruction instr) {
-        Element operand = instr.getRightOperand();
+        Element elem = instr.getRightOperand();
 
         Operation op = instr.getUnaryOperation();
         switch (op.getOpType()) {
             case NOT:
+                if (elem.isLiteral()) {
+                    String boolLiteral = this.callArg(elem);
+                    this.jasminCode.append(tabs)
+                            .append(this.boolLiteralPush(Integer.parseInt(boolLiteral)))
+                            .append("\n");
+                } else {
+                    // TODO
+                }
                 break;
             default:
                 break;
@@ -355,6 +374,7 @@ public class JasminEmitter {
         boolean bothLiteral = leftElem.isLiteral() && rightElem.isLiteral();
 
         Operation op = instr.getUnaryOperation();
+        this.jasminCode.append("; ").append(op.getOpType()).append("\n");
         switch (op.getOpType()) {
             case ADD:
                 if (bothLiteral) {
@@ -407,6 +427,8 @@ public class JasminEmitter {
                     this.loadCallArg(tabs, rightElem);
                     this.jasminCode.append(tabs).append("idiv\n");
                 }
+                break;
+            case NOT:
                 break;
             default:
                 // TODO the other operations

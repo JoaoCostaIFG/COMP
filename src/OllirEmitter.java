@@ -205,8 +205,10 @@ public class OllirEmitter {
 
     public String getCondOllir(String tabs, JmmNode n) {
         String opKind = n.getKind();
-        boolean isBinOp = (opKind.equals("Binary") && !n.get("op").equals("DOT")) ||
-                opKind.equals("Unary");
+        // TODO not
+        // boolean isBinOp = (opKind.equals("Binary") && !n.get("op").equals("DOT")) ||
+        //         opKind.equals("Unary");
+        boolean isBinOp = opKind.equals("Binary") && !n.get("op").equals("DOT");
 
         String nodeOllir = this.getOpOllir(tabs, n, !isBinOp).trim();
         if (!isBinOp) {  // conditions have to be operations (binary)
@@ -226,7 +228,7 @@ public class OllirEmitter {
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
         // condition
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
         this.contextStack.pop();
         this.ollirCode.append(tabs).append("\t")
                 .append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
@@ -245,7 +247,7 @@ public class OllirEmitter {
         JmmNode elseBody = n.getChildren().get(2);
 
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
         this.contextStack.pop();
         String[] labels = this.getLabelPair("Body", "Endif");
         String bodyLabel = labels[0];
@@ -438,7 +440,9 @@ public class OllirEmitter {
 
         JmmNode child = node.getChildren().get(0);
         String childOllir = this.getOpOllir(tabs, child, true);
-        String ret = childOllir + " !" + type + " " + childOllir;
+        //String ret = childOllir + " !" + type + " " + childOllir;
+        // TODO not
+        String ret = "!" + type + " " + childOllir;
 
         this.contextStack.pop();
         if (isAux)

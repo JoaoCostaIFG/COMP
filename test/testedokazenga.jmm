@@ -7,20 +7,24 @@ class C {
     //    int a;
     //    a = 5 - b;
 	//	io.println(a);
-	//    return 0;
+	//    return 2;
 	//}
 
-	//public int f1() {
-	//    this.f2(2);
-	//    return 0;
-	//}
+	public int f1() {
+	    //this.f2(2);
+	    return 1;
+	}
 
+    // TODO String array
     public static void main(String[] args) {
-        //C c;
-        //c = new C();
-        //c.f1();
-        boolean bb;
-        bb = !false;
+        int i;
+        C c;
+        c = new C();
+        i = c.f1();
+        io.println(i);
+
+        // boolean bb;
+        // bb = !false;
 
         // if (!false) {
         //     io.println(3);

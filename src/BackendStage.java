@@ -32,7 +32,7 @@ public class BackendStage implements JasminBackend {
             // Example of what you can do with the OLLIR class
             ollirClass.checkMethodLabels(); // check the use of labels in the OLLIR loaded
             ollirClass.buildCFGs(); // build the CFG of each method
-            ollirClass.outputCFGs(); // output to .dot files the CFGs, one per method
+            // ollirClass.outputCFGs(); // output to .dot files the CFGs, one per method
             ollirClass.buildVarTables(); // build the table of variables for each method
             // ollirClass.show(); // print to console main information about the input OLLIR
 

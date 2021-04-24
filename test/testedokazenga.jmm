@@ -3,13 +3,22 @@ import io;
 class C {
 	//int[] test_arr;
 
-	public int f1(int a, int b) {
+	public int f2(int b) {
+        int a;
+        a = 5 - b;
+		io.println(a);
+	    return 0;
+	}
+
+	public int f1() {
+	    this.f2(2);
 	    return 0;
 	}
 
     public static void main(String[] args) {
-        //new C().f1(4, 5);
-
-		io.println(1 + 2);
+        C c;
+        c = new C();
+        c.f1();
+        //new C(); // TODO
     }
 }

@@ -3,11 +3,13 @@ import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
 import java.util.HashMap;
+import java.util.Stack;
 
 public class JasminEmitter {
     private final ClassUnit ollirClass;
     private final StringBuilder jasminCode;
     private HashMap<String, Descriptor> methodVarTable;
+    private final Stack<Instruction> contextStack;
 
     // TODO arithmetic
 
@@ -22,10 +24,18 @@ public class JasminEmitter {
         this.ollirClass = ollirClass;
         this.jasminCode = new StringBuilder();
         this.methodVarTable = new HashMap<>();
+        this.contextStack = new Stack<>();
     }
 
     public String getJasminCode() {
         return this.jasminCode.toString();
+    }
+
+    public void injectComment(String tabs, String... comments) {
+        this.jasminCode.append(tabs).append(";");
+        for (String c : comments)
+            this.jasminCode.append(" ").append(c);
+        this.jasminCode.append("\n");
     }
 
     // TODO complete this
@@ -134,8 +144,8 @@ public class JasminEmitter {
     }
 
     public void instructionJasmin(String tabs, Instruction instr) {
-        // TODO for DEBUG
-        //this.jasminCode.append(tabs).append("; ").append(instr.getInstType().toString()).append("\n");
+        // for DEBUG
+        //this.injectComment(tabs, instr.getInstType().toString());
 
         switch (instr.getInstType()) {
             case ASSIGN:
@@ -321,25 +331,26 @@ public class JasminEmitter {
             }
 
             // args
+            this.contextStack.push(instr);
             ret.append("(");
             for (Element arg : instr.getListOfOperands()) {
                 this.loadCallArg(tabs, arg);
                 ret.append(this.elemTypeJasmin(arg.getType()));
             }
             ret.append(")");
+            this.contextStack.pop();
         }
 
         String returnStr = this.elemTypeJasmin(instr.getReturnType());
         this.jasminCode.append(ret).append(returnStr).append("\n");
 
         // post processing
-        // TODO
-        if (!returnStr.isEmpty() && !returnStr.equals("V"))
+        // call pop when the method return value should be ignored (not assign/calc and not void)
+        if (this.contextStack.empty() && !returnStr.isEmpty() && !returnStr.equals("V"))
             this.jasminCode.append(tabs).append("pop\n");
 
-        if (invType == CallType.NEW) {
+        if (invType == CallType.NEW)
             this.jasminCode.append(tabs).append("dup\n");
-        }
     }
 
     private void retInstructionJasmin(String tabs, ReturnInstruction instr) {
@@ -354,6 +365,7 @@ public class JasminEmitter {
     }
 
     private void unOpInstructionJasmin(String tabs, UnaryOpInstruction instr) {
+        this.contextStack.push(instr);
         Element elem = instr.getRightOperand();
 
         Operation op = instr.getUnaryOperation();
@@ -371,15 +383,19 @@ public class JasminEmitter {
             default:
                 break;
         }
+        this.contextStack.pop();
     }
 
     private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {
+        this.contextStack.push(instr);
+
         Element leftElem = instr.getLeftOperand();
         Element rightElem = instr.getRightOperand();
         boolean bothLiteral = leftElem.isLiteral() && rightElem.isLiteral();
 
         Operation op = instr.getUnaryOperation();
-        this.jasminCode.append("; ").append(op.getOpType()).append("\n");
+        // for DEBUG
+        //this.injectComment(tabs, op.getOpType().toString());
         switch (op.getOpType()) {
             case ADD:
                 if (bothLiteral) {
@@ -439,6 +455,8 @@ public class JasminEmitter {
                 // TODO the other operations
                 break;
         }
+
+        this.contextStack.pop();
     }
 
     private void noperInstructionJasmin(String tabs, SingleOpInstruction instr) {
@@ -446,7 +464,9 @@ public class JasminEmitter {
     }
 
     private void assignInstructionJasmin(String tabs, AssignInstruction instr) {
+        this.contextStack.push(instr);
         this.instructionJasmin(tabs, instr.getRhs());
+        this.contextStack.pop();
 
         Element dest = instr.getDest();
         Descriptor d = this.methodVarTable.get(((Operand) dest).getName());

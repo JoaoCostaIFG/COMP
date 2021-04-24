@@ -173,7 +173,7 @@ public class OllirEmitter {
 
         if (methodRetNode == null) { // no return statement (void method)
             // TODO a serio por favor para
-            this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
+            //this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0), true);
             this.ollirCode.append(tabs).append("\t")

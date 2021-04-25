@@ -13,8 +13,6 @@ public class JasminEmitter {
 
     // TODO arithmetic
 
-    // TODO super
-    // TODO class fields
     // TODO arrays
     // TODO if
     // TODO while
@@ -31,7 +29,7 @@ public class JasminEmitter {
         return this.jasminCode.toString();
     }
 
-    public void injectComment(String tabs, String... comments) {
+    public void comment(String tabs, String... comments) {
         this.jasminCode.append(tabs).append(";");
         for (String c : comments)
             this.jasminCode.append(" ").append(c);
@@ -156,7 +154,7 @@ public class JasminEmitter {
 
     public void instructionJasmin(String tabs, Instruction instr) {
         // for DEBUG
-        //this.injectComment(tabs, instr.getInstType().toString());
+        this.comment(tabs, instr.getInstType().toString());
 
         switch (instr.getInstType()) {
             case ASSIGN:
@@ -215,7 +213,8 @@ public class JasminEmitter {
     }
 
     private String boolLiteralPush(int i) {
-        return this.boolLiteralPush(i == 1);
+        // this negates the given argument
+        return this.boolLiteralPush(i == 0);
     }
 
     private String loadCallArgLiteral(LiteralElement arg) {
@@ -418,7 +417,7 @@ public class JasminEmitter {
 
         Operation op = instr.getUnaryOperation();
         switch (op.getOpType()) {
-            case NOT:
+            case NOTB:
                 if (elem.isLiteral()) {
                     String boolLiteral = this.callArg(elem);
                     this.jasminCode.append(tabs)
@@ -426,6 +425,7 @@ public class JasminEmitter {
                             .append("\n");
                 } else {
                     // TODO
+                    // this.loadCallArg(tabs, elem);
                 }
                 break;
             default:
@@ -443,7 +443,7 @@ public class JasminEmitter {
 
         Operation op = instr.getUnaryOperation();
         // for DEBUG
-        //this.injectComment(tabs, op.getOpType().toString());
+        this.comment(tabs, op.getOpType().toString());
         switch (op.getOpType()) {
             case ADD:
                 if (bothLiteral) {
@@ -496,8 +496,6 @@ public class JasminEmitter {
                     this.loadCallArg(tabs, rightElem);
                     this.jasminCode.append(tabs).append("idiv\n");
                 }
-                break;
-            case NOT:
                 break;
             default:
                 // TODO the other operations

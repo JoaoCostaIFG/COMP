@@ -10,17 +10,22 @@ class C {
 	//    return 2;
 	//}
 
-	public int f1() {
-        int i;
-        inteiro = 2;
-        i = inteiro;
+	// public int f1() {
+    //     int i;
+    //     inteiro = 2;
+    //     i = inteiro;
 
-	    return i + 1;
-	}
+	//     return i + 1;
+	// }
 
     public static void main(String[] args) {
-        C c;
-        c = new C();
-        io.println(c.f1());
+        // C c;
+        // c = new C();
+        // io.println(c.f1());
+
+        boolean b;
+        boolean b2;
+        b2 = false;
+        b = !b2;
     }
 }

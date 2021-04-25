@@ -236,16 +236,23 @@ public class JasminEmitter {
         return argStr;
     }
 
+    private String getLoadInstr(String pre, int vReg) {
+        if (vReg >= 0 && vReg <= 3)
+            return pre + "load_" + vReg;
+        else
+            return pre + "load " + vReg;
+    }
+
     private String loadCallArgOperand(Operand arg) {
         String name = arg.getName();
         String argStr;
         switch (arg.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
-                argStr = "iload_" + this.methodVarTable.get(name).getVirtualReg();
+                argStr = this.getLoadInstr("i", this.methodVarTable.get(name).getVirtualReg());
                 break;
             case OBJECTREF:
-                argStr = "aload_" + this.methodVarTable.get(name).getVirtualReg();
+                argStr = this.getLoadInstr("a", this.methodVarTable.get(name).getVirtualReg());
                 break;
             case THIS:
                 argStr = "aload_0";
@@ -463,6 +470,13 @@ public class JasminEmitter {
         this.loadCallArg(tabs, instr.getSingleOperand());
     }
 
+    private String getStoreInstr(String pre, int vReg) {
+        if (vReg >= 0 && vReg <= 3)
+            return pre + "store_" + vReg;
+        else
+            return pre + "store " + vReg;
+    }
+
     private void assignInstructionJasmin(String tabs, AssignInstruction instr) {
         this.contextStack.push(instr);
         this.instructionJasmin(tabs, instr.getRhs());
@@ -474,13 +488,12 @@ public class JasminEmitter {
             case INT32:
             case BOOLEAN:
                 this.jasminCode.append(tabs)
-                        .append("istore_").append(d.getVirtualReg())
+                        .append(this.getStoreInstr("i", d.getVirtualReg()))
                         .append("\n");
                 break;
-            default:
-                // assume a
+            default: // assume it is a
                 this.jasminCode.append(tabs)
-                        .append("astore_").append(d.getVirtualReg())
+                        .append(this.getStoreInstr("a", d.getVirtualReg()))
                         .append("\n");
                 break;
         }

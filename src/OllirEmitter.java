@@ -116,6 +116,11 @@ public class OllirEmitter {
     public String visit(JmmNode node) {
         this.ollirCode.setLength(0);  // clear length to allow reuse
 
+        // imports
+        for (String i : this.symbolTable.getImports())
+            this.ollirCode.append("import ").append(i).append(";\n");
+        this.ollirCode.append("\n");
+
         String className = this.symbolTable.getClassName();
         this.ollirCode.append(className).append(" {\n");
         // TODO extends
@@ -131,6 +136,7 @@ public class OllirEmitter {
         this.ollirCode.append("\t}\n");
 
         for (String methodName : this.symbolTable.getMethods()) {
+            this.ollirCode.append("\n");
             this.getMethodOllir(methodName);
         }
 
@@ -173,7 +179,7 @@ public class OllirEmitter {
 
         if (methodRetNode == null) { // no return statement (void method)
             // TODO a serio por favor para
-            //this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
+            this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0), true);
             this.ollirCode.append(tabs).append("\t")

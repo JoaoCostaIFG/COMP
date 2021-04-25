@@ -9,19 +9,17 @@ class C {
 	//    return 2;
 	//}
 
-	//public int f1() {
-	//    //this.f2(2);
-	//    return 3;
-	//}
+	public int f1() {
+	    //this.f2(2);
+	    return 3;
+	}
 
     // TODO String array
     public static void main(String[] args) {
         int i;
         C c;
         c = new C();
-        //i = c.f1();
-        i = 3;
-        //c.f1();
+        i = c.f1();
         io.println(i * 1);
 
         //new C(); // TODO

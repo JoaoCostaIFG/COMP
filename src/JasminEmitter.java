@@ -91,6 +91,17 @@ public class JasminEmitter {
         this.jasminCode.append(".class public ").append(this.ollirClass.getClassName()).append("\n");
         this.jasminCode.append(".super java/lang/Object\n");
 
+        // many assumptions are made here (could be a lot more complete)
+        for (Field field : this.ollirClass.getFields()) {
+            this.jasminCode.append("\n")
+                    .append(".field ")
+                    .append(field.getFieldAccessModifier().toString().toLowerCase()).append(" ")
+                    .append(field.getFieldName()).append(" ")
+                    .append(this.elemTypeJasmin(field.getFieldType()));
+        }
+        if (!this.ollirClass.getFields().isEmpty())
+            this.jasminCode.append("\n");
+
         for (Method method : this.ollirClass.getMethods()) {
             this.methodVarTable = OllirAccesser.getVarTable(method);
             this.methodJasmin(method);
@@ -163,8 +174,10 @@ public class JasminEmitter {
                 this.retInstructionJasmin(tabs, (ReturnInstruction) instr);
                 break;
             case PUTFIELD:
+                this.putfieldInstructionJasmin(tabs, (PutFieldInstruction) instr);
                 break;
             case GETFIELD:
+                this.getfieldInstructionJasmin(tabs, (GetFieldInstruction) instr);
                 break;
             case UNARYOPER:
                 this.unOpInstructionJasmin(tabs, (UnaryOpInstruction) instr);
@@ -358,6 +371,34 @@ public class JasminEmitter {
 
         if (invType == CallType.NEW)
             this.jasminCode.append(tabs).append("dup\n");
+    }
+
+    private void putfieldInstructionJasmin(String tabs, PutFieldInstruction instr) {
+        Element firstElem = instr.getFirstOperand();
+        Element secondElem = instr.getSecondOperand();
+        Element thirdElem = instr.getThirdOperand();
+
+        this.loadCallArg(tabs, firstElem);
+        this.loadCallArg(tabs, thirdElem);
+        this.jasminCode.append(tabs)
+                .append("putfield ")
+                .append(this.callArg(firstElem)).append(".")
+                .append(this.callArg(secondElem)).append(" ")
+                .append(this.elemTypeJasmin(secondElem.getType()))
+                .append("\n");
+    }
+
+    private void getfieldInstructionJasmin(String tabs, GetFieldInstruction instr) {
+        Element firstElem = instr.getFirstOperand();
+        Element secondElem = instr.getSecondOperand();
+
+        this.loadCallArg(tabs, firstElem);
+        this.jasminCode.append(tabs)
+                .append("getfield ")
+                .append(this.callArg(firstElem)).append(".")
+                .append(this.callArg(secondElem)).append(" ")
+                .append(this.elemTypeJasmin(secondElem.getType()))
+                .append("\n");
     }
 
     private void retInstructionJasmin(String tabs, ReturnInstruction instr) {

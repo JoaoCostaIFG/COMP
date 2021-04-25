@@ -59,6 +59,8 @@ public class OllirEmitter {
         this.labelCount = 0;
         // reset sanitization fields
         this.sanitizationMap.clear();
+        for (Symbol s : this.symbolTable.getFields())
+            this.sanitizationMap.put(s.getName(), this.getNextAuxVar());
         for (Symbol s : this.parameters)
             this.sanitizationMap.put(s.getName(), this.getNextAuxVar());
     }
@@ -178,7 +180,6 @@ public class OllirEmitter {
             this.getBodyOllir(tabs + "\t", methodBodyNode);
 
         if (methodRetNode == null) { // no return statement (void method)
-            // TODO a serio por favor para
             this.ollirCode.append(tabs).append("\t").append("ret.V;\n");
         } else {
             String retOllir = this.getOpOllir(tabs + "\t", methodRetNode.getChildren().get(0), true);
@@ -447,8 +448,8 @@ public class OllirEmitter {
 
         JmmNode child = node.getChildren().get(0);
         String childOllir = this.getOpOllir(tabs, child, true);
-        //String ret = childOllir + " !" + type + " " + childOllir;
         // TODO not
+        //String ret = childOllir + " !" + type + " " + childOllir;
         String ret = "!" + type + " " + childOllir;
 
         this.contextStack.pop();

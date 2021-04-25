@@ -1,6 +1,7 @@
 import io;
 
 class C {
+    int inteiro;
 
 	//public int f2(int b) {
     //    int a;
@@ -10,18 +11,16 @@ class C {
 	//}
 
 	public int f1() {
-	    //this.f2(2);
-	    return 3;
+        int i;
+        inteiro = 2;
+        i = inteiro;
+
+	    return i + 1;
 	}
 
-    // TODO String array
     public static void main(String[] args) {
-        //int i;
-        //C c;
-        //c = new C();
-        //i = c.f1();
-        io.println(args[0]);
-
-        //new C(); // TODO
+        C c;
+        c = new C();
+        io.println(c.f1());
     }
 }

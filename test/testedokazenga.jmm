@@ -16,11 +16,11 @@ class C {
 
     // TODO String array
     public static void main(String[] args) {
-        int i;
-        C c;
-        c = new C();
-        i = c.f1();
-        io.println(i * 1);
+        //int i;
+        //C c;
+        //c = new C();
+        //i = c.f1();
+        io.println(args[0]);
 
         //new C(); // TODO
     }

@@ -1,7 +1,7 @@
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
-import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
+import pt.up.fe.comp.jmm.ast.PostorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
@@ -13,7 +13,7 @@ import java.util.Set;
 
 import static java.lang.Integer.parseInt;
 
-public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
+public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
     private final MySymbolTable symbolTable;
     private final Method method;
     private final String methodName;
@@ -241,14 +241,6 @@ public class BodyVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
                 return false;
             }
         }
-        // else {
-        // String instName = node.get("name");
-        // if (!this.symbolTable.getClassName().equals(instName)) {
-        //     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, parseInt(node.get("line")),
-        //             "Unknown class to instantiate."));
-        //     return false;
-        // }
-        // }
 
         return true;
     }

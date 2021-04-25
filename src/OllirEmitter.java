@@ -12,6 +12,7 @@ public class OllirEmitter {
     private List<Symbol> localVars, parameters;
     private final Map<String, String> sanitizationMap;
     private final Stack<String> contextStack; // used to infer functions types (that aren't part of our class)
+    // private final Stack<Boolean> notStack; // used to optimize conditions
 
     public OllirEmitter(MySymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -22,6 +23,9 @@ public class OllirEmitter {
         this.parameters = new ArrayList<>();
         this.sanitizationMap = new HashMap<>();
         this.contextStack = new Stack<>();
+        // TODO
+        // this.notStack = new Stack<>();
+        // this.notStack.push(false);
     }
 
     public String getOllirCode() {
@@ -213,7 +217,7 @@ public class OllirEmitter {
 
     public String getCondOllir(String tabs, JmmNode n) {
         String opKind = n.getKind();
-        // TODO not
+        // alternative NOT style
         // boolean isBinOp = (opKind.equals("Binary") && !n.get("op").equals("DOT")) ||
         //         opKind.equals("Unary");
         boolean isBinOp = opKind.equals("Binary") && !n.get("op").equals("DOT");
@@ -257,7 +261,7 @@ public class OllirEmitter {
         this.contextStack.push(".bool");
         String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
         this.contextStack.pop();
-        String[] labels = this.getLabelPair("Body", "Endif");
+        String[] labels = this.getLabelPair("Bodyif", "Endif");
         String bodyLabel = labels[0];
         String endLabel = labels[1];
 
@@ -448,7 +452,7 @@ public class OllirEmitter {
 
         JmmNode child = node.getChildren().get(0);
         String childOllir = this.getOpOllir(tabs, child, true);
-        // TODO not
+        // alternative NOT style
         //String ret = childOllir + " !" + type + " " + childOllir;
         String ret = "!" + type + " " + childOllir;
 

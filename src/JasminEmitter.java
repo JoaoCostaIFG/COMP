@@ -164,9 +164,10 @@ public class JasminEmitter {
                 this.callInstructionJasmin(tabs, (CallInstruction) instr);
                 break;
             case GOTO:
-                // this.gotoInstructionJasmin(tabs, (GotoInstruction) instr.;
+                this.gotoInstructionJasmin(tabs, (GotoInstruction) instr);
                 break;
             case BRANCH:
+                this.branchInstructionJasmin(tabs, (CondBranchInstruction) instr);
                 break;
             case RETURN:
                 this.retInstructionJasmin(tabs, (ReturnInstruction) instr);
@@ -409,6 +410,38 @@ public class JasminEmitter {
         }
 
         this.jasminCode.append("return\n");
+    }
+
+    private void gotoInstructionJasmin(String tabs, GotoInstruction instr) {
+        String label = instr.getLabel();
+
+        this.jasminCode.append(tabs)
+                .append("goto ")
+                .append(label)
+                .append("\n");
+    }
+
+    private void branchInstructionJasmin(String tabs, CondBranchInstruction instr) {
+        Element leftElem = instr.getLeftOperand();
+        Element rightElem = instr.getRightOperand();
+        String label = instr.getLabel();
+
+        Operation op = instr.getCondOperation();
+        switch (op.getOpType()) {
+            case ANDB:
+                // TODO
+                this.loadCallArg(tabs, leftElem);
+                this.jasminCode.append(tabs).append("ifeq ").append(label).append("\n");
+                this.loadCallArg(tabs, rightElem);
+                this.jasminCode.append(tabs).append("ifeq ").append(label).append("\n");
+                break;
+            case LTH:
+                this.loadCallArg(tabs, leftElem);
+                this.loadCallArg(tabs, rightElem);
+                this.jasminCode.append(tabs).append("if_icmplt ").append(label).append("\n");
+            default:
+                break;
+        }
     }
 
     private void unOpInstructionJasmin(String tabs, UnaryOpInstruction instr) {

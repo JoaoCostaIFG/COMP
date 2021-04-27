@@ -3,6 +3,7 @@ import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 public class JasminEmitter {
@@ -14,9 +15,6 @@ public class JasminEmitter {
     private Integer lineNo;
 
     // TODO arrays
-    // TODO if
-    // TODO while
-    // TODO comps
 
     public JasminEmitter(ClassUnit ollirClass) {
         this.ollirClass = ollirClass;
@@ -66,8 +64,15 @@ public class JasminEmitter {
         return this;
     }
 
+    public JasminEmitter addLabel(String label) {
+        this.jasminCode.append(label).append(":\n");
+        ++this.lineNo;
+        return this;
+    }
+
     public JasminEmitter addLabeledCodeLine(String label, String tabs, String... args) {
-        this.jasminCode.append(label).append(":").append(tabs);
+        this.addLabel(label);
+        this.jasminCode.append(tabs);
         for (String a : args)
             this.jasminCode.append(a);
         this.jasminCode.append("\n");
@@ -198,6 +203,14 @@ public class JasminEmitter {
     public void instructionJasmin(String tabs, Instruction instr) {
         // for DEBUG
         this.comment(tabs, instr.getInstType().toString());
+
+        // tag line (if any)
+        for (Map.Entry<String, Instruction> e : this.methodLabels.entrySet()) {
+            if (e.getValue().equals(instr)) {
+                this.addLabel(e.getKey());
+                break;
+            }
+        }
 
         switch (instr.getInstType()) {
             case ASSIGN:
@@ -379,12 +392,14 @@ public class JasminEmitter {
                 ret.append(this.callArg(instr.getFirstArg()));
                 break;
             case NEW:
+                // TODO new array
                 ret.append("new ");
                 ret.append(this.callArg(instr.getFirstArg()));
                 break;
             case arraylength:
+                // TODO array length
                 break;
-            case ldc:
+            default:
                 break;
         }
 
@@ -464,9 +479,9 @@ public class JasminEmitter {
         String label = instr.getLabel();
 
         Operation op = instr.getCondOperation();
+        this.comment(tabs, op.getOpType().toString()); // for DEBUG
         switch (op.getOpType()) {
             case ANDB:
-                // TODO
                 this.loadCallArg(tabs, leftElem);
                 this.addCodeLine(tabs, "ifeq ", label);
                 this.loadCallArg(tabs, rightElem);
@@ -475,7 +490,33 @@ public class JasminEmitter {
             case LTH:
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
+                this.addCodeLine(tabs, "if_icmpge ", label);
+                break;
+            case GTH:
+                this.loadCallArg(tabs, leftElem);
+                this.loadCallArg(tabs, rightElem);
+                this.addCodeLine(tabs, "if_icmple ", label);
+                break;
+            case LTE:
+                this.loadCallArg(tabs, leftElem);
+                this.loadCallArg(tabs, rightElem);
+                this.addCodeLine(tabs, "if_icmpgt ", label);
+                break;
+            case GTE:
+                this.loadCallArg(tabs, leftElem);
+                this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "if_icmplt ", label);
+                break;
+            case EQ:
+                this.loadCallArg(tabs, leftElem);
+                this.loadCallArg(tabs, rightElem);
+                this.addCodeLine(tabs, "if_icmpne ", label);
+                break;
+            case NEQ:
+                this.loadCallArg(tabs, leftElem);
+                this.loadCallArg(tabs, rightElem);
+                this.addCodeLine(tabs, "if_icmpeq ", label);
+                break;
             default:
                 break;
         }
@@ -487,26 +528,23 @@ public class JasminEmitter {
 
         Operation op = instr.getUnaryOperation();
         this.comment(tabs, op.getOpType().toString()); // for DEBUG
-        switch (op.getOpType()) {
-            case NOTB:
-                if (elem.isLiteral()) {
-                    String boolLiteral = this.callArg(elem);
-                    this.addCodeLine(tabs, this.boolLiteralPush(Integer.parseInt(boolLiteral)));
-                } else {
-                    // invert stored boolean value (if 0 => 1, if 1 => 0)
-                    this.loadCallArg(tabs, elem);
-                    // branch labels
-                    int elseLine = this.lineNo + 4;
-                    int endLine = this.lineNo + 5;
-                    this.addCodeLine(tabs, "ifne ", Integer.toString(elseLine))
-                            .addCodeLine(tabs, "iconst_1")
-                            .addCodeLine(tabs, "goto ", Integer.toString(endLine))
-                            .addLabeledCodeLine(Integer.toString(elseLine), tabs, "iconst_0")
-                            .addCode(Integer.toString(endLine), ":");
-                }
-                break;
-            default:
-                break;
+        // the only unary operation we know about is NOTB (!)
+        if (op.getOpType() == OperationType.NOTB) {
+            if (elem.isLiteral()) {
+                String boolLiteral = this.callArg(elem);
+                this.addCodeLine(tabs, this.boolLiteralPush(Integer.parseInt(boolLiteral)));
+            } else {
+                // invert stored boolean value (if 0 => 1, if 1 => 0)
+                this.loadCallArg(tabs, elem);
+                // branch labels
+                int elseLine = this.lineNo + 4;
+                int endLine = this.lineNo + 5;
+                this.addCodeLine(tabs, "ifne ", Integer.toString(elseLine))
+                        .addCodeLine(tabs, "iconst_1")
+                        .addCodeLine(tabs, "goto ", Integer.toString(endLine))
+                        .addLabeledCodeLine(Integer.toString(elseLine), tabs, "iconst_0")
+                        .addLabel(Integer.toString(endLine));
+            }
         }
         this.contextStack.pop();
     }
@@ -533,7 +571,7 @@ public class JasminEmitter {
                 .addCodeLine(tabs, "iconst_1")
                 .addCodeLine(tabs, "goto ", Integer.toString(endLine))
                 .addLabeledCodeLine(Integer.toString(elseLine), tabs, "iconst_0")
-                .addCode(Integer.toString(endLine), ":");
+                .addLabel(Integer.toString(endLine));
     }
 
     private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {

@@ -53,8 +53,9 @@ public class AnalysisStage implements JmmAnalysis {
             Method method = symbolTable.getMethod(methodName);
             BodyVisitor bodyVisitor = new BodyVisitor(symbolTable, method, methodName);
             bodyVisitor.visit(method.getNode(), reports);
-            StaticVisitor staticVisitor = new StaticVisitor(symbolTable);
-            staticVisitor.visit(method.getNode());
+
+            StaticVisitor staticVisitor = new StaticVisitor(symbolTable, method);
+            staticVisitor.visit(method.getNode(), reports);
         }
 
         // System.out.println("Reports: " + reports);

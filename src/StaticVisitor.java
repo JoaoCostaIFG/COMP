@@ -1,4 +1,5 @@
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -10,24 +11,14 @@ import static java.lang.Integer.parseInt;
 
 public class StaticVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
     private final MySymbolTable symbolTable;
-    private boolean isMain;
+    private final Method method;
 
-    public StaticVisitor(MySymbolTable symbolTable) {
+    public StaticVisitor(MySymbolTable symbolTable, Method method) {
         this.symbolTable = symbolTable;
-        this.isMain = false;
+        this.method = method;
 
-        addVisit("MethodDeclaration", this::visitMethodRoot);
         addVisit("Binary", this::visitDot);
-    }
-
-    private Boolean visitMethodRoot(JmmNode jmmNode, List<Report> reports) {
-        System.out.println("Visiting method: " + jmmNode.get("methodName"));
-        for (JmmNode child : jmmNode.getChildren()) {
-            if (child.getKind().equals("MainParameter")) {
-                this.isMain = true;
-            }
-        }
-        return true;
+        addVisit("Literal", this::visitLiteral);
     }
 
     private Boolean visitDot(JmmNode node, List<Report> reports) {
@@ -39,11 +30,39 @@ public class StaticVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         if (childRight.getKind().equals("Len"))
             return true;
 
-        if (this.isMain && childLeft.get("type").equals("this")) {
+        if (this.method.isMain() && childLeft.get("type").equals("this")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                     "The 'this' keyword cannot be referenced from a static context."));
             return false;
+        }
+        return true;
+    }
+
+    private Boolean visitLiteral(JmmNode node, List<Report> reports) {
+        if (!node.get("type").equals("identifier") || !this.method.isMain())
+            return true;
+
+        String literalName = node.get("name");
+        // local vars
+        for (Symbol s : this.method.getLocalVars()) {
+            if (s.getName().equals(literalName))
+                return true;
+        }
+        // method parameters
+        for (Symbol s : this.method.getParameters()) {
+            if (s.getName().equals(literalName))
+                return true;
+        }
+
+        // has to be class field
+        for (Symbol s : this.symbolTable.getFields()) {
+            if (s.getName().equals(literalName)) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                        parseInt(node.get("line")), parseInt(node.get("col")),
+                        "The '" + literalName + "' variable cannot be referenced from a static context (it's a class field)."));
+                return false;
+            }
         }
         return true;
     }

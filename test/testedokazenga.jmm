@@ -25,12 +25,15 @@ class C {
 
         int a;
         int b;
+        boolean bool;
         a = 0;
         b = 10;
+        bool = a < b;
 
-        while (a < b) {
+        while (bool) {
             io.println(a);
             a = a + 1;
+            bool = a < b;
         }
     }
 }

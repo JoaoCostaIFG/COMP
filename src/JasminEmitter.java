@@ -537,13 +537,13 @@ public class JasminEmitter {
                 // invert stored boolean value (if 0 => 1, if 1 => 0)
                 this.loadCallArg(tabs, elem);
                 // branch labels
-                int elseLine = this.lineNo + 4;
-                int endLine = this.lineNo + 5;
-                this.addCodeLine(tabs, "ifne ", Integer.toString(elseLine))
+                String elseLabel = "l" + (this.lineNo + 4);
+                String endLabel = "l" + (this.lineNo + 5);
+                this.addCodeLine(tabs, "ifne ", elseLabel)
                         .addCodeLine(tabs, "iconst_1")
-                        .addCodeLine(tabs, "goto ", Integer.toString(endLine))
-                        .addLabeledCodeLine(Integer.toString(elseLine), tabs, "iconst_0")
-                        .addLabel(Integer.toString(endLine));
+                        .addCodeLine(tabs, "goto ", endLabel)
+                        .addLabeledCodeLine(elseLabel, tabs, "iconst_0")
+                        .addLabel(endLabel);
             }
         }
         this.contextStack.pop();
@@ -565,13 +565,13 @@ public class JasminEmitter {
         this.loadCallArg(tabs, leftElem);
         this.loadCallArg(tabs, rightElem);
         // branch labels
-        int elseLine = this.lineNo + 4;
-        int endLine = this.lineNo + 5;
-        this.addCodeLine(tabs, op, " ", Integer.toString(elseLine))
+        String elseLabel = "l" + (this.lineNo + 4);
+        String endLabel = "l" + (this.lineNo + 5);
+        this.addCodeLine(tabs, op, " ", elseLabel)
                 .addCodeLine(tabs, "iconst_1")
-                .addCodeLine(tabs, "goto ", Integer.toString(endLine))
-                .addLabeledCodeLine(Integer.toString(elseLine), tabs, "iconst_0")
-                .addLabel(Integer.toString(endLine));
+                .addCodeLine(tabs, "goto ", endLabel)
+                .addLabeledCodeLine(elseLabel, tabs, "iconst_0")
+                .addLabel(endLabel);
     }
 
     private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {

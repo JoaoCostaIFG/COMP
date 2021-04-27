@@ -18,7 +18,6 @@ public class JasminEmitter {
 
     // TODO arrays
     // TODO new array
-    // TODO array length
     // TODO stack and locals size
 
     public JasminEmitter(ClassUnit ollirClass) {
@@ -138,7 +137,11 @@ public class JasminEmitter {
     public String parse() {
         this.comment("", "Class accepted by Jasmin2.3")
                 .addCodeLine(".class public ", this.ollirClass.getClassName())
-                .addCodeLine(".super java/lang/Object");
+                .addCode(".super java/lang/");
+        if (this.ollirClass.getSuperClass() != null)
+            this.addCodeLine(this.ollirClass.getSuperClass());
+        else
+            this.addCodeLine("Object");
 
         // many assumptions are made here (could be a lot more complete)
         if (!this.ollirClass.getFields().isEmpty()) {

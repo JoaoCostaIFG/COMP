@@ -52,7 +52,7 @@ public class SemanticTests {
     @Test
     public void KazengaTest() {
         String jmmCode = SpecsIo.read("test/testedokazenga.jmm");
-        badTest(jmmCode, 0);
+        goodTest(jmmCode);
     }
 
     @Test
@@ -102,6 +102,6 @@ public class SemanticTests {
 
     @Test
     public void VarNotInitTest() {
-        badTest(SpecsIo.getResource("fixtures/public/fail/semantic/varNotInit.jmm"), 1);
+        badTest(SpecsIo.read("test/varNotInit.jmm"), 1);
     }
 }

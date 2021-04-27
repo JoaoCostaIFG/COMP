@@ -124,8 +124,10 @@ public class OllirEmitter {
         this.ollirCode.append("\n");
 
         String className = this.symbolTable.getClassName();
-        this.ollirCode.append(className).append(" {\n");
-        // TODO extends
+        this.ollirCode.append(className);
+        if (this.symbolTable.getSuper() != null)
+            this.ollirCode.append(" extends ").append(this.symbolTable.getSuper());
+        this.ollirCode.append(" {\n");
 
         // class fields
         for (Symbol field : this.symbolTable.getFields()) {

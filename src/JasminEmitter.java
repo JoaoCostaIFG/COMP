@@ -378,7 +378,7 @@ public class JasminEmitter {
         StringBuilder ret = new StringBuilder().append(tabs);
 
         CallType invType = OllirUtils.getCallInvocationType(instr);
-        this.comment(tabs, invType.toString()); // fr DEBUG
+        this.comment(tabs, invType.toString()); // for DEBUG
         switch (invType) {
             case invokevirtual:
                 ret.append("invokevirtual ");

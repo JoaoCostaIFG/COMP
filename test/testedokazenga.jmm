@@ -1,30 +1,15 @@
 import io;
 
 class C {
-    int inteiro;
-
-	//public int f2(int b) {
-    //    int a;
-    //    a = 5 - b;
-	//	io.println(a);
-	//    return 2;
-	//}
-
-	// public int f1() {
-    //     int i;
-    //     inteiro = 2;
-    //     i = inteiro;
-
-	//     return i + 1;
-	// }
+    public int f1(int arg) {
+        io.println(arg);
+        return 0;
+    }
 
     public static void main(String[] args) {
-        // C c;
-        // c = new C();
-        // io.println(c.f1());
-
-        int[] arr;
-        arr = new int[0];
-        io.println(arr.length);
+        new C().f1(3);
+        //int[] arr;
+        //arr = new int[0];
+        //io.println(arr.length);
     }
 }

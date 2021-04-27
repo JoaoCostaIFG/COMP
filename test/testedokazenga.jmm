@@ -23,14 +23,22 @@ class C {
         // c = new C();
         // io.println(c.f1());
 
-        int a;
-        int b;
-        a = 1;
-        b = 2;
-        if (a < b) {
-          io.println(3);
-        } else {
-          io.println(4);
-        }
+        boolean bool;
+        boolean bool2;
+        bool2 = false;
+        bool = !bool2;
+
+        //int a;
+        //int b;
+        //a = 1;
+        //b = 2;
+        //if (a < b) {
+        //  io.println(3);
+        //} else {
+        //  io.println(4);
+        //}
+        //while (a < b) {
+        //    io.println(3);
+        //}
     }
 }

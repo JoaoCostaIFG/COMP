@@ -238,7 +238,7 @@ public class OllirEmitter {
         String endLabel = labels[1];
 
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
-        // condition
+        // condition (IMP this if has to be interpreted as an ifFalse)
         this.contextStack.push(".bool");
         String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
         this.contextStack.pop();
@@ -246,8 +246,7 @@ public class OllirEmitter {
                 .append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
         // body
         this.getBodyOllir(tabs + "\t", body);
-        // make it loopar
-        this.ollirCode.append(tabs).append("\t")
+        this.ollirCode.append(tabs).append("\t") // make it loopar
                 .append("goto ").append(loopLabel).append(";\n");
         // end loop
         this.ollirCode.append(tabs).append(endLabel).append(":\n");
@@ -261,19 +260,19 @@ public class OllirEmitter {
         this.contextStack.push(".bool");
         String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
         this.contextStack.pop();
-        String[] labels = this.getLabelPair("Bodyif", "Endif");
-        String bodyLabel = labels[0];
+        String[] labels = this.getLabelPair("Else", "Endif");
+        String elseLabel = labels[0];
         String endLabel = labels[1];
 
-        // if condition
+        // condition (IMP this if has to be interpreted as an ifFalse)
         this.ollirCode.append(tabs).append("if (").append(condOllir.trim())
-                .append(") goto ").append(bodyLabel).append(";\n");
-        // else
-        this.getBodyOllir(tabs + "\t", elseBody);
-        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+                .append(") goto ").append(elseLabel).append(";\n");
         // if body
-        this.ollirCode.append(tabs).append(bodyLabel).append(":\n");
         this.getBodyOllir(tabs + "\t", body);
+        this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
+        // else
+        this.ollirCode.append(tabs).append(elseLabel).append(":\n");
+        this.getBodyOllir(tabs + "\t", elseBody);
         this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
     }
 

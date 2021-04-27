@@ -9,9 +9,9 @@ public class JasminEmitter {
     private final ClassUnit ollirClass;
     private final StringBuilder jasminCode;
     private HashMap<String, Descriptor> methodVarTable;
+    private HashMap<String, Instruction> methodLabels;
     private final Stack<Instruction> contextStack;
-
-    // TODO arithmetic
+    private Integer lineNo;
 
     // TODO arrays
     // TODO if
@@ -22,18 +22,57 @@ public class JasminEmitter {
         this.ollirClass = ollirClass;
         this.jasminCode = new StringBuilder();
         this.methodVarTable = new HashMap<>();
+        this.methodLabels = new HashMap<>();
         this.contextStack = new Stack<>();
+        this.lineNo = 0;
     }
 
     public String getJasminCode() {
         return this.jasminCode.toString();
     }
 
-    public void comment(String tabs, String... comments) {
+    public JasminEmitter addEmptyLine() {
+        this.jasminCode.append("\n");
+        ++this.lineNo;
+        return this;
+    }
+
+    public JasminEmitter addCode(String... args) {
+        for (String a : args)
+            this.jasminCode.append(a);
+        return this;
+    }
+
+    public JasminEmitter addCodeLine(String... args) {
+        for (String a : args)
+            this.jasminCode.append(a);
+        this.jasminCode.append("\n");
+        ++this.lineNo;
+        return this;
+    }
+
+    public JasminEmitter addCodeLine(StringBuilder builder) {
+        this.jasminCode.append(builder).append("\n");
+        ++this.lineNo;
+        return this;
+    }
+
+    public JasminEmitter comment(String tabs, String... comments) {
         this.jasminCode.append(tabs).append(";");
         for (String c : comments)
             this.jasminCode.append(" ").append(c);
         this.jasminCode.append("\n");
+        ++this.lineNo;
+        return this;
+    }
+
+    public JasminEmitter addLabeledCodeLine(String label, String tabs, String... args) {
+        this.jasminCode.append(label).append(":").append(tabs);
+        for (String a : args)
+            this.jasminCode.append(a);
+        this.jasminCode.append("\n");
+        ++this.lineNo;
+        return this;
     }
 
     // TODO complete this
@@ -85,23 +124,24 @@ public class JasminEmitter {
     }
 
     public String parse() {
-        this.jasminCode.append("; Class accepted by Jasmin2.3\n");
-        this.jasminCode.append(".class public ").append(this.ollirClass.getClassName()).append("\n");
-        this.jasminCode.append(".super java/lang/Object\n");
+        this.comment("", "Class accepted by Jasmin2.3")
+                .addCodeLine(".class public ", this.ollirClass.getClassName())
+                .addCodeLine(".super java/lang/Object");
 
         // many assumptions are made here (could be a lot more complete)
-        for (Field field : this.ollirClass.getFields()) {
-            this.jasminCode.append("\n")
-                    .append(".field ")
-                    .append(field.getFieldAccessModifier().toString().toLowerCase()).append(" ")
-                    .append(field.getFieldName()).append(" ")
-                    .append(this.elemTypeJasmin(field.getFieldType()));
+        if (!this.ollirClass.getFields().isEmpty()) {
+            this.addEmptyLine();
+            for (Field field : this.ollirClass.getFields()) {
+                this.addCodeLine(".field ",
+                        field.getFieldAccessModifier().toString().toLowerCase(), " ",
+                        field.getFieldName(), " ",
+                        this.elemTypeJasmin(field.getFieldType()));
+            }
         }
-        if (!this.ollirClass.getFields().isEmpty())
-            this.jasminCode.append("\n");
 
         for (Method method : this.ollirClass.getMethods()) {
             this.methodVarTable = OllirAccesser.getVarTable(method);
+            this.methodLabels = OllirAccesser.getLabels(method);
             this.methodJasmin(method);
         }
 
@@ -109,47 +149,50 @@ public class JasminEmitter {
     }
 
     public void standardInitializerJasmin() {
-        this.jasminCode.append("\n; standard initializer\n")
-                .append(".method public <init>()V\n")
-                .append("\taload_0\n")
-                .append("\tinvokespecial java/lang/Object.<init>()V\n")
-                .append("\treturn\n")
-                .append(".end method\n");
+        String tabs = "\t";
+        this.addEmptyLine()
+                .comment("", "standard initializer")
+                .addCodeLine(".method public <init>()V")
+                .addCodeLine(tabs, "aload_0")
+                .addCodeLine(tabs, "invokespecial java/lang/Object.<init>()V")
+                .addCodeLine(tabs, "return")
+                .addCodeLine(".end method");
     }
 
     public void methodJasmin(Method method) {
         if (method.isConstructMethod()) {
-            // TODO this is a hack
             this.standardInitializerJasmin();
             return;
         }
 
-        this.jasminCode.append("\n.method public ");
-        if (method.isStaticMethod()) this.jasminCode.append("static ");
-        this.jasminCode.append(method.getMethodName());
+        this.addEmptyLine()
+                .addCode(".method public ");
+        if (method.isStaticMethod()) this.addCode("static ");
+        this.addCode(method.getMethodName());
 
         // method signature (args)
-        this.jasminCode.append("(");
+        this.addCode("(");
         for (Element e : method.getParams()) {
-            this.jasminCode.append(this.elemTypeJasmin(e.getType()));
+            this.addCode(this.elemTypeJasmin(e.getType()));
         }
-        this.jasminCode.append(")");
+        this.addCode(")");
 
         Type retType = method.getReturnType();
-        this.jasminCode.append(this.elemTypeJasmin(retType)).append("\n");
+        this.addCodeLine(this.elemTypeJasmin(retType));
 
         String tabs = "\t";
         // TODO
         // stack and locals size
-        this.jasminCode.append(tabs).append(".limit stack 99\n")
-                .append(tabs).append(".limit locals 99\n\n");
+        this.addCodeLine(tabs, ".limit stack 99")
+                .addCodeLine(tabs, ".limit locals 99")
+                .addEmptyLine();
 
         // body
         for (Instruction i : method.getInstructions()) {
             this.instructionJasmin(tabs, i);
         }
 
-        this.jasminCode.append(".end method\n");
+        this.addCodeLine(".end method");
     }
 
     public void instructionJasmin(String tabs, Instruction instr) {
@@ -291,7 +334,7 @@ public class JasminEmitter {
     private void loadCallArg(String tabs, Element arg) {
         String argStr = this.loadCallArg(arg);
         if (argStr != null)
-            this.jasminCode.append(tabs).append(argStr).append("\n");
+            this.addCodeLine(tabs, argStr);
     }
 
     private String callArg(Element e) {
@@ -362,15 +405,16 @@ public class JasminEmitter {
         }
 
         String returnStr = this.elemTypeJasmin(instr.getReturnType());
-        this.jasminCode.append(ret).append(returnStr).append("\n");
+        ret.append(returnStr);
+        this.addCodeLine(ret);
 
         // post processing
         // call pop when the method return value should be ignored (not assign/calc and not void)
         if (this.contextStack.empty() && !returnStr.isEmpty() && !returnStr.equals("V"))
-            this.jasminCode.append(tabs).append("pop\n");
+            this.addCodeLine(tabs, "pop");
 
         if (invType == CallType.NEW)
-            this.jasminCode.append(tabs).append("dup\n");
+            this.addCodeLine(tabs, "dup");
     }
 
     private void putfieldInstructionJasmin(String tabs, PutFieldInstruction instr) {
@@ -380,12 +424,11 @@ public class JasminEmitter {
 
         this.loadCallArg(tabs, firstElem);
         this.loadCallArg(tabs, thirdElem);
-        this.jasminCode.append(tabs)
-                .append("putfield ")
-                .append(this.callArg(firstElem)).append(".")
-                .append(this.callArg(secondElem)).append(" ")
-                .append(this.elemTypeJasmin(secondElem.getType()))
-                .append("\n");
+        this.addCodeLine(tabs,
+                "putfield ",
+                this.callArg(firstElem), ".",
+                this.callArg(secondElem), " ",
+                this.elemTypeJasmin(secondElem.getType()));
     }
 
     private void getfieldInstructionJasmin(String tabs, GetFieldInstruction instr) {
@@ -393,32 +436,26 @@ public class JasminEmitter {
         Element secondElem = instr.getSecondOperand();
 
         this.loadCallArg(tabs, firstElem);
-        this.jasminCode.append(tabs)
-                .append("getfield ")
-                .append(this.callArg(firstElem)).append(".")
-                .append(this.callArg(secondElem)).append(" ")
-                .append(this.elemTypeJasmin(secondElem.getType()))
-                .append("\n");
+        this.addCodeLine(tabs,
+                "getfield ",
+                this.callArg(firstElem), ".",
+                this.callArg(secondElem), " ",
+                this.elemTypeJasmin(secondElem.getType()));
     }
 
     private void retInstructionJasmin(String tabs, ReturnInstruction instr) {
         if (instr.hasReturnValue()) {
             this.loadCallArg(tabs, instr.getOperand());
-            this.jasminCode.append(tabs).append(this.instrPreJasmin(instr.getOperand().getType()));
+            this.addCode(tabs, this.instrPreJasmin(instr.getOperand().getType()));
         } else {
-            this.jasminCode.append(tabs);
+            this.addCode(tabs);
         }
-
-        this.jasminCode.append("return\n");
+        this.addCodeLine("return");
     }
 
     private void gotoInstructionJasmin(String tabs, GotoInstruction instr) {
         String label = instr.getLabel();
-
-        this.jasminCode.append(tabs)
-                .append("goto ")
-                .append(label)
-                .append("\n");
+        this.addCodeLine(tabs, "goto ", label);
     }
 
     private void branchInstructionJasmin(String tabs, CondBranchInstruction instr) {
@@ -431,14 +468,14 @@ public class JasminEmitter {
             case ANDB:
                 // TODO
                 this.loadCallArg(tabs, leftElem);
-                this.jasminCode.append(tabs).append("ifeq ").append(label).append("\n");
+                this.addCodeLine(tabs, "ifeq ", label);
                 this.loadCallArg(tabs, rightElem);
-                this.jasminCode.append(tabs).append("ifeq ").append(label).append("\n");
+                this.addCodeLine(tabs, "ifeq ", label);
                 break;
             case LTH:
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
-                this.jasminCode.append(tabs).append("if_icmplt ").append(label).append("\n");
+                this.addCodeLine(tabs, "if_icmplt ", label);
             default:
                 break;
         }
@@ -449,16 +486,23 @@ public class JasminEmitter {
         Element elem = instr.getRightOperand();
 
         Operation op = instr.getUnaryOperation();
+        this.comment(tabs, op.getOpType().toString()); // for DEBUG
         switch (op.getOpType()) {
             case NOTB:
                 if (elem.isLiteral()) {
                     String boolLiteral = this.callArg(elem);
-                    this.jasminCode.append(tabs)
-                            .append(this.boolLiteralPush(Integer.parseInt(boolLiteral)))
-                            .append("\n");
+                    this.addCodeLine(tabs, this.boolLiteralPush(Integer.parseInt(boolLiteral)));
                 } else {
-                    // TODO
-                    // this.loadCallArg(tabs, elem);
+                    // invert stored boolean value (if 0 => 1, if 1 => 0)
+                    this.loadCallArg(tabs, elem);
+                    // branch labels
+                    int elseLine = this.lineNo + 4;
+                    int endLine = this.lineNo + 5;
+                    this.addCodeLine(tabs, "ifne ", Integer.toString(elseLine))
+                            .addCodeLine(tabs, "iconst_1")
+                            .addCodeLine(tabs, "goto ", Integer.toString(endLine))
+                            .addLabeledCodeLine(Integer.toString(elseLine), tabs, "iconst_0")
+                            .addCode(Integer.toString(endLine), ":");
                 }
                 break;
             default:
@@ -467,71 +511,71 @@ public class JasminEmitter {
         this.contextStack.pop();
     }
 
+    private void intArithmetic(String tabs, Element leftElem, Element rightElem, String op) {
+        if (leftElem.isLiteral() && rightElem.isLiteral()) { // bothLiteral
+            String lhs = this.callArg(leftElem);
+            String rhs = this.callArg(rightElem);
+            this.addCodeLine(tabs, this.intLiteralPush(Integer.parseInt(lhs) + Integer.parseInt(rhs)));
+        } else {
+            this.loadCallArg(tabs, leftElem);
+            this.loadCallArg(tabs, rightElem);
+            this.addCodeLine(tabs, op);
+        }
+    }
+
+    private void booleanArithmetic(String tabs, Element leftElem, Element rightElem, String op) {
+        this.loadCallArg(tabs, leftElem);
+        this.loadCallArg(tabs, rightElem);
+        // branch labels
+        int elseLine = this.lineNo + 4;
+        int endLine = this.lineNo + 5;
+        this.addCodeLine(tabs, op, " ", Integer.toString(elseLine))
+                .addCodeLine(tabs, "iconst_1")
+                .addCodeLine(tabs, "goto ", Integer.toString(endLine))
+                .addLabeledCodeLine(Integer.toString(elseLine), tabs, "iconst_0")
+                .addCode(Integer.toString(endLine), ":");
+    }
+
     private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {
         this.contextStack.push(instr);
 
         Element leftElem = instr.getLeftOperand();
         Element rightElem = instr.getRightOperand();
-        boolean bothLiteral = leftElem.isLiteral() && rightElem.isLiteral();
 
         Operation op = instr.getUnaryOperation();
-        // for DEBUG
-        this.comment(tabs, op.getOpType().toString());
+        this.comment(tabs, op.getOpType().toString()); // for DEBUG
         switch (op.getOpType()) {
             case ADD:
-                if (bothLiteral) {
-                    String lhs = this.callArg(leftElem);
-                    String rhs = this.callArg(rightElem);
-                    this.jasminCode.append(tabs)
-                            .append(this.intLiteralPush(Integer.parseInt(lhs) + Integer.parseInt(rhs)))
-                            .append("\n");
-                } else {
-                    this.loadCallArg(tabs, leftElem);
-                    this.loadCallArg(tabs, rightElem);
-                    this.jasminCode.append(tabs).append("iadd\n");
-                }
+                this.intArithmetic(tabs, leftElem, rightElem, "iadd");
                 break;
             case SUB:
-                if (bothLiteral) {
-                    String lhs = this.callArg(leftElem);
-                    String rhs = this.callArg(rightElem);
-                    this.jasminCode.append(tabs)
-                            .append(this.intLiteralPush(Integer.parseInt(lhs) - Integer.parseInt(rhs)))
-                            .append("\n");
-                } else {
-                    this.loadCallArg(tabs, leftElem);
-                    this.loadCallArg(tabs, rightElem);
-                    this.jasminCode.append(tabs).append("isub\n");
-                }
+                this.intArithmetic(tabs, leftElem, rightElem, "isub");
                 break;
             case MUL:
-                if (bothLiteral) {
-                    String lhs = this.callArg(leftElem);
-                    String rhs = this.callArg(rightElem);
-                    this.jasminCode.append(tabs)
-                            .append(this.intLiteralPush(Integer.parseInt(lhs) * Integer.parseInt(rhs)))
-                            .append("\n");
-                } else {
-                    this.loadCallArg(tabs, leftElem);
-                    this.loadCallArg(tabs, rightElem);
-                    this.jasminCode.append(tabs).append("imul\n");
-                }
+                this.intArithmetic(tabs, leftElem, rightElem, "imul");
                 break;
             case DIV:
-                if (bothLiteral) {
-                    String lhs = this.callArg(leftElem);
-                    String rhs = this.callArg(rightElem);
-                    this.jasminCode.append(tabs)
-                            .append(this.intLiteralPush(Integer.parseInt(lhs) / Integer.parseInt(rhs)))
-                            .append("\n");
-                } else {
-                    this.loadCallArg(tabs, leftElem);
-                    this.loadCallArg(tabs, rightElem);
-                    this.jasminCode.append(tabs).append("idiv\n");
-                }
+                this.intArithmetic(tabs, leftElem, rightElem, "idiv");
+                break;
+            case LTH:
+                this.booleanArithmetic(tabs, leftElem, rightElem, "if_icmpge");
+                break;
+            case GTH:
+                this.booleanArithmetic(tabs, leftElem, rightElem, "if_icmple");
+                break;
+            case EQ:
+                this.booleanArithmetic(tabs, leftElem, rightElem, "if_icmpne");
+                break;
+            case NEQ:
+                this.booleanArithmetic(tabs, leftElem, rightElem, "if_icmpeq");
+                break;
+            case LTE:
+                this.booleanArithmetic(tabs, leftElem, rightElem, "if_icmpgt");
+                break;
+            case GTE:
+                this.booleanArithmetic(tabs, leftElem, rightElem, "if_icmplt");
                 break;
             default:
-                // TODO the other operations
                 break;
         }
 
@@ -559,14 +603,10 @@ public class JasminEmitter {
         switch (dest.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
-                this.jasminCode.append(tabs)
-                        .append(this.getStoreInstr("i", d.getVirtualReg()))
-                        .append("\n");
+                this.addCodeLine(tabs, this.getStoreInstr("i", d.getVirtualReg()));
                 break;
             default: // assume it is a
-                this.jasminCode.append(tabs)
-                        .append(this.getStoreInstr("a", d.getVirtualReg()))
-                        .append("\n");
+                this.addCodeLine(tabs, this.getStoreInstr("a", d.getVirtualReg()));
                 break;
         }
     }

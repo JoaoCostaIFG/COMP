@@ -7,7 +7,8 @@ class C {
     }
 
     public static void main(String[] args) {
-        new C().f1(3);
+        this.f1(3);
+        //io.println(args[0]);
         //int[] arr;
         //arr = new int[0];
         //io.println(arr.length);

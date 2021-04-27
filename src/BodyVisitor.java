@@ -18,7 +18,6 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
     private final Method method;
     private final String methodName;
     private final Set<String> assignedVariables;
-    private boolean isMain = false;
 
     private static final Type everythingType = new Type("", true);
     private static final Symbol everythingSymbol = new Symbol(everythingType, "");
@@ -33,7 +32,6 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
             assignedVariables.add(s.getName());
         }
 
-        addVisit("MethodDeclaration", this::visitMethodRoot);
         addVisit("New", this::visitNew);
         addVisit("Assign", this::visitAssign);
         addVisit("Binary", this::visitBinary);
@@ -41,15 +39,6 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
         addVisit("Literal", this::visitLiteral);
         addVisit("Cond", this::visitCond);
         addVisit("Return", this::visitReturn);
-    }
-
-    private Boolean visitMethodRoot(JmmNode jmmNode, List<Report> reports) {
-        for (JmmNode child : jmmNode.getChildren()) {
-            if (child.getKind().equals("MainParameter")) {
-                this.isMain = true;
-            }
-        }
-        return true;
     }
 
     private boolean validateBooleanOp(JmmNode node, List<Report> reports) {
@@ -137,12 +126,6 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
 
             // is instance of own class
             if (leftType.getName().equals("this") || leftType.getName().equals(this.symbolTable.getClassName())) {
-                if (this.isMain && leftType.getName().equals("this")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
-                            parseInt(childRight.get("line")), parseInt(childRight.get("col")),
-                            "This cannot be referenced from a static context."));
-                    return false;
-                }
                 // check if given method exists in class/super class
                 Type t = getMethodCallType(dotNode, reports);
                 if (t == null && symbolTable.getSuper() == null) {

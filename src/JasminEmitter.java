@@ -407,6 +407,7 @@ public class JasminEmitter {
                     return;
                 } else {
                     ret.append("new ");
+                    ret.append(this.callArg(instr.getFirstArg()));
                 }
                 break;
             case arraylength:

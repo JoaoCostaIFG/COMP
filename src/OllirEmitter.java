@@ -12,7 +12,6 @@ public class OllirEmitter {
     private List<Symbol> localVars, parameters;
     private final Map<String, String> sanitizationMap;
     private final Stack<String> contextStack; // used to infer functions types (that aren't part of our class)
-    // private final Stack<Boolean> notStack; // used to optimize conditions
 
     public OllirEmitter(MySymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -23,9 +22,6 @@ public class OllirEmitter {
         this.parameters = new ArrayList<>();
         this.sanitizationMap = new HashMap<>();
         this.contextStack = new Stack<>();
-        // TODO
-        // this.notStack = new Stack<>();
-        // this.notStack.push(false);
     }
 
     public String getOllirCode() {

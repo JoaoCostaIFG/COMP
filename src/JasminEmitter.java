@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Stack;
 
 public class JasminEmitter {
-    private final boolean debug = false;
+    private final boolean debug = true;
 
     private final ClassUnit ollirClass;
     private final StringBuilder jasminCode;
@@ -17,6 +17,9 @@ public class JasminEmitter {
     private Integer lineNo;
 
     // TODO arrays
+    // TODO new array
+    // TODO array length
+    // TODO stack and locals size
 
     public JasminEmitter(ClassUnit ollirClass) {
         this.ollirClass = ollirClass;
@@ -190,7 +193,6 @@ public class JasminEmitter {
         this.addCodeLine(this.elemTypeJasmin(retType));
 
         String tabs = "\t";
-        // TODO
         // stack and locals size
         this.addCodeLine(tabs, ".limit stack 99")
                 .addCodeLine(tabs, ".limit locals 99")
@@ -323,13 +325,13 @@ public class JasminEmitter {
                 argStr = this.getLoadInstr("i", this.methodVarTable.get(name).getVirtualReg());
                 break;
             case OBJECTREF:
+            case ARRAYREF:
                 argStr = this.getLoadInstr("a", this.methodVarTable.get(name).getVirtualReg());
                 break;
             case THIS:
                 argStr = "aload_0";
                 break;
             case STRING:
-            case ARRAYREF:
             case CLASS:
             default:
                 // pls
@@ -373,6 +375,7 @@ public class JasminEmitter {
         StringBuilder ret = new StringBuilder().append(tabs);
 
         CallType invType = OllirUtils.getCallInvocationType(instr);
+        this.comment(tabs, invType.toString()); // fr DEBUG
         switch (invType) {
             case invokevirtual:
                 ret.append("invokevirtual ");
@@ -394,13 +397,20 @@ public class JasminEmitter {
                 ret.append(this.callArg(instr.getFirstArg()));
                 break;
             case NEW:
-                // TODO new array
-                ret.append("new ");
-                ret.append(this.callArg(instr.getFirstArg()));
+                if (this.callArg(instr.getFirstArg()).equals("array")) {
+                    // arrays are weird.
+                    this.loadCallArg(tabs, instr.getListOfOperands().get(0));
+                    this.addCodeLine(tabs, "newarray int");
+                    return;
+                } else {
+                    ret.append("new ");
+                }
                 break;
             case arraylength:
-                // TODO array length
-                break;
+                // arrays are weird pt.2
+                this.loadCallArg(tabs, instr.getFirstArg());
+                this.addCodeLine(tabs, "arraylength");
+                return;
             default:
                 break;
         }

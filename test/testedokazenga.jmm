@@ -23,14 +23,8 @@ class C {
         // c = new C();
         // io.println(c.f1());
 
-        int a;
-        a = 0;
-        while (a < 10) {
-            a = a + 1;
-        }
-        while (0 < a) {
-            a = a - 1;
-        }
-        io.println(a);
+        int[] arr;
+        arr = new int[0];
+        io.println(arr.length);
     }
 }

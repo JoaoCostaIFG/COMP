@@ -24,16 +24,13 @@ class C {
         // io.println(c.f1());
 
         int a;
-        int b;
-        boolean bool;
         a = 0;
-        b = 10;
-        bool = a < b;
-
-        while (bool) {
-            io.println(a);
+        while (a < 10) {
             a = a + 1;
-            bool = a < b;
         }
+        while (0 < a) {
+            a = a - 1;
+        }
+        io.println(a);
     }
 }

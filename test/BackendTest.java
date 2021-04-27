@@ -37,6 +37,6 @@ public class BackendTest {
         TestUtils.noErrors(result.getReports());
 
         var output = result.run();
-        assertEquals("3", output.trim());
+        assertEquals("0", output.trim());
     }
 }

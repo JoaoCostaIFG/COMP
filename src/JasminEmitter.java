@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Stack;
 
 public class JasminEmitter {
+    private final boolean debug = false;
+
     private final ClassUnit ollirClass;
     private final StringBuilder jasminCode;
     private HashMap<String, Descriptor> methodVarTable;
@@ -56,11 +58,13 @@ public class JasminEmitter {
     }
 
     public JasminEmitter comment(String tabs, String... comments) {
-        this.jasminCode.append(tabs).append(";");
-        for (String c : comments)
-            this.jasminCode.append(" ").append(c);
-        this.jasminCode.append("\n");
-        ++this.lineNo;
+        if (debug) {
+            this.jasminCode.append(tabs).append(";");
+            for (String c : comments)
+                this.jasminCode.append(" ").append(c);
+            this.jasminCode.append("\n");
+            ++this.lineNo;
+        }
         return this;
     }
 
@@ -206,10 +210,8 @@ public class JasminEmitter {
 
         // tag line (if any)
         for (Map.Entry<String, Instruction> e : this.methodLabels.entrySet()) {
-            if (e.getValue().equals(instr)) {
+            if (e.getValue().equals(instr))
                 this.addLabel(e.getKey());
-                break;
-            }
         }
 
         switch (instr.getInstType()) {

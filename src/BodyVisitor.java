@@ -107,7 +107,8 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
         JmmNode childRight = dotNode.getChildren().get(1);
 
         if (childRight.getKind().equals("Len")) {
-            if (!this.nodeIsOfType(childLeft, "int", true, reports)) {
+            Type nodeType = this.getNodeType(childLeft, reports);
+            if (!nodeType.isArray()) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                         parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                         "Length is a property of arrays."));

@@ -391,21 +391,21 @@ public class OllirEmitter {
     }
 
     private String getIndexOllir(String tabs, JmmNode node, boolean isAux) {
-        final String type = ".i32";
-        // final String type = "." + this.getTypeFromOllir(this.getOpOllir(tabs, children.get(0)).trim()).getName();
+        final String indexType = ".i32";
+        final String type = "." + this.getTypeFromOllir(this.getOpOllir(tabs,
+                node.getChildren().get(0)).trim()).getName();
         List<JmmNode> children = node.getChildren();
 
         this.contextStack.push(".array" + type);
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
         this.contextStack.pop();
-        this.contextStack.push(".i32");
+        this.contextStack.push(indexType);
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
         this.contextStack.pop();
 
-        // TODO
         // IMP this is a hack to prevent the use of constants as array indexes. They need to be stored in variables
         if (children.get(1).getKind().equals("Literal") && children.get(1).get("type").equals("int"))
-            childRightOllir = this.injectTempVar(tabs, type, childRightOllir);
+            childRightOllir = this.injectTempVar(tabs, indexType, childRightOllir);
 
         // IMP array access have always to be stored in a temporary variable before usage
         // we are splitting the left child by "." on the left because we don't want the type to show
@@ -581,8 +581,8 @@ public class OllirEmitter {
         String assignee = assigneeName;
 
         // if is array access
-        boolean isArray = leftChild.get("isArrayAccess").equals("yes");
-        if (isArray) {
+        boolean isArrayAccess = leftChild.get("isArrayAccess").equals("yes");
+        if (isArrayAccess) {
             // load array reference is needed
             if (isField) {
                 String content = "getfield(this, " + assignee + type + ")" + type;
@@ -606,7 +606,7 @@ public class OllirEmitter {
         String content = this.getOpOllir(tabs, rightChild, isField).trim();
 
         String ret;
-        if (isField && !isArray) {
+        if (isField && !isArrayAccess) {
             ret = "putfield(this, " + assignee + ", " + content + ").V";
         } else {
             ret = assignee + " :=" + type + " " + content;

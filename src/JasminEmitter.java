@@ -17,7 +17,6 @@ public class JasminEmitter {
     private Integer lineNo;
 
     // TODO arrays
-    // TODO new array
     // TODO stack and locals size
 
     public JasminEmitter(ClassUnit ollirClass) {
@@ -502,6 +501,9 @@ public class JasminEmitter {
                 this.addCodeLine(tabs, "ifeq ", label);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "ifeq ", label);
+                break;
+            case ORB:
+                // TODO
                 break;
             case LTH:
                 this.loadCallArg(tabs, leftElem);

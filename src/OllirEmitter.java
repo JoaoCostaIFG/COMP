@@ -223,6 +223,7 @@ public class OllirEmitter {
         boolean isBinOp = opKind.equals("Binary") && !n.get("op").equals("DOT");
 
         String nodeOllir = this.getOpOllir(tabs, n, !isBinOp).trim();
+        // TODO not binary (old style)?
         if (!isBinOp) {  // conditions have to be operations (binary)
             return nodeOllir + " &&.bool 1.bool";
         }

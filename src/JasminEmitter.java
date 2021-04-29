@@ -278,7 +278,7 @@ public class JasminEmitter {
     }
 
     private String boolLiteralPush(int i) {
-        // this negates the given argument
+        // IMP this negates the given argument
         return this.boolLiteralPush(i == 0);
     }
 

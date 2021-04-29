@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Stack;
 
 public class JasminEmitter {
+    private static final String labelPrefix = "l";
+
     private final boolean debug = true;
 
     private final ClassUnit ollirClass;
@@ -555,8 +557,8 @@ public class JasminEmitter {
                 // invert stored boolean value (if 0 => 1, if 1 => 0)
                 this.loadCallArg(tabs, elem);
                 // branch labels
-                String elseLabel = "l" + (this.lineNo + 4);
-                String endLabel = "l" + (this.lineNo + 5);
+                String elseLabel = JasminEmitter.labelPrefix + (this.lineNo + 4);
+                String endLabel = JasminEmitter.labelPrefix + (this.lineNo + 5);
                 this.addCodeLine(tabs, "ifne ", elseLabel)
                         .addCodeLine(tabs, "iconst_1")
                         .addCodeLine(tabs, "goto ", endLabel)
@@ -583,8 +585,8 @@ public class JasminEmitter {
         this.loadCallArg(tabs, leftElem);
         this.loadCallArg(tabs, rightElem);
         // branch labels
-        String elseLabel = "l" + (this.lineNo + 4);
-        String endLabel = "l" + (this.lineNo + 5);
+        String elseLabel = JasminEmitter.labelPrefix + (this.lineNo + 4);
+        String endLabel = JasminEmitter.labelPrefix + (this.lineNo + 5);
         this.addCodeLine(tabs, op, " ", elseLabel)
                 .addCodeLine(tabs, "iconst_1")
                 .addCodeLine(tabs, "goto ", endLabel)

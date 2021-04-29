@@ -114,6 +114,8 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
                         "Length is a property of arrays."));
                 return false;
             }
+
+            return this.checkNotAStatement(dotNode, reports);
         } else { // func call
             Type leftType = this.getNodeType(childLeft, reports);
             if (leftType == null) { // is something unknown => if is import
@@ -349,7 +351,7 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
         JmmNode childLeft = node.getChildren().get(0),
                 childRight = node.getChildren().get(1);
         if (childRight.getKind().equals("Len")) {
-            // Left child -> int[]
+            // Left child -> int[] / String[]
             // Right child -> Len
             // length can only be called on arrays
             return new Type("int", false);

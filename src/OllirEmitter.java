@@ -5,6 +5,8 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 import java.util.*;
 
 public class OllirEmitter {
+    private static final String regPrefix = "t";
+
     private final MySymbolTable symbolTable;
     private final StringBuilder ollirCode;
     private int labelCount;
@@ -29,7 +31,7 @@ public class OllirEmitter {
     }
 
     private String getNextAuxVar() {
-        return "aux" + (this.auxCount++);
+        return OllirEmitter.regPrefix + (this.auxCount++);
     }
 
     private String sanitizeSymbol(String varName) {

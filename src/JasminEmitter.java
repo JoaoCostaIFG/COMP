@@ -154,8 +154,8 @@ public class JasminEmitter {
         }
 
         for (Method method : this.ollirClass.getMethods()) {
-            this.methodVarTable = OllirAccesser.getVarTable(method);
-            this.methodLabels = OllirAccesser.getLabels(method);
+            this.methodVarTable = method.getVarTable();
+            this.methodLabels = method.getLabels();
             this.methodJasmin(method);
         }
 
@@ -503,7 +503,7 @@ public class JasminEmitter {
                 this.addCodeLine(tabs, "ifeq ", label);
                 break;
             case ORB:
-                // TODO
+                // TODO need extra label if's
                 break;
             case LTH:
                 this.loadCallArg(tabs, leftElem);

@@ -2,7 +2,6 @@ import BoardBase;
 import io;
 
 class C {
-    /*
     int[] a;
 
     public int f() {
@@ -26,14 +25,8 @@ class C {
 
         return 0;
     }
-    */
 
     public static void main(String[] args) {
-        //new C().f();
-        if (true && true && true) {
-            io.println(0);
-        } else {
-            io.println(1);
-        }
+        new C().f();
     }
 }

@@ -652,18 +652,27 @@ public class JasminEmitter {
     }
 
     private void assignInstructionJasmin(String tabs, AssignInstruction instr) {
+        Element dest = instr.getDest();
+        boolean isArrayAssign = dest.getClass().equals(ArrayOperand.class);
+        if (isArrayAssign) {
+            ArrayOperand operand = (ArrayOperand) dest;
+            for (Element indexElem : operand.getIndexOperands()) {
+                // TODO (the array operand could be tested inside)
+                this.loadCallArg(tabs, indexElem);
+            }
+        }
+
         this.contextStack.push(instr);
         this.instructionJasmin(tabs, instr.getRhs());
         this.contextStack.pop();
 
-        Element dest = instr.getDest();
         Descriptor d = this.methodVarTable.get(((Operand) dest).getName());
         switch (dest.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
-                this.addCodeLine(tabs, this.getStoreInstr("i", d.getVirtualReg()));
+                this.addCodeLine(tabs, this.getStoreInstr("i" + (isArrayAssign ? "a" : ""), d.getVirtualReg()));
                 break;
-            default: // assume it is a
+            default: // assume it is 'a'
                 this.addCodeLine(tabs, this.getStoreInstr("a", d.getVirtualReg()));
                 break;
         }

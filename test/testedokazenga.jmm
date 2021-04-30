@@ -9,10 +9,14 @@ class C {
     }
 
     public static void main(String[] args) {
-        boolean b1;
-        boolean b2;
-        b1 = true;
-        b2 = !b1;
+        //boolean b1;
+        //boolean b2;
+        //b1 = true;
+        //b2 = !b1;
+
+        int[] a;
+        a = new int[1];
+        a[0] = 3;
 
         //io.println(args.length);
 

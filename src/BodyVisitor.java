@@ -246,7 +246,7 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
         String varName = varNode.get("name");
         // get var and check that it is declared
         Symbol var = this.getVar(varNode, reports, false);
-        if (var == null) {
+        if (var == null || var == BodyVisitor.everythingSymbol) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                     "Assignment to undeclared variable: " + varName + "."));
@@ -266,6 +266,9 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
         JmmNode contentNode = node.getChildren().get(1);
         Type contentType = this.getNodeType(contentNode, reports);
         if (contentType == null) {
+            //reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+            //        parseInt(varNode.get("line")), parseInt(varNode.get("col")),
+            //        "Variable was not declared: " + varName + "."));
             return false;
         }
 

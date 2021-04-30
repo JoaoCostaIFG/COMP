@@ -592,7 +592,6 @@ public class OllirEmitter {
                 String content = "getfield(this, " + assignee + type + ")" + type;
                 assignee = this.injectTempVar(tabs, type, content).split("\\.")[0];
             }
-
             // remove the array part of the type (.array.i32 -> .i32)
             type = "." + type.split("\\.")[2];
 
@@ -607,7 +606,9 @@ public class OllirEmitter {
         assignee += type;
 
         // content (on fields, it needs to have an aux var)
+        this.contextStack.push(type);
         String content = this.getOpOllir(tabs, rightChild, isField).trim();
+        this.contextStack.pop();
 
         String ret;
         if (isField && !isArrayAccess) {

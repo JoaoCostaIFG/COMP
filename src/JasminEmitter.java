@@ -18,7 +18,6 @@ public class JasminEmitter {
     private final Stack<Instruction> contextStack;
     private Integer lineNo;
 
-    // TODO arrays
     // TODO stack and locals size
 
     public JasminEmitter(ClassUnit ollirClass) {
@@ -170,8 +169,13 @@ public class JasminEmitter {
                 .comment("", "standard initializer")
                 .addCodeLine(".method public <init>()V")
                 .addCodeLine(tabs, "aload_0")
-                .addCodeLine(tabs, "invokespecial java/lang/Object.<init>()V")
-                .addCodeLine(tabs, "return")
+                .addCode(tabs, "invokespecial ");
+        if (this.ollirClass.getSuperClass() == null) // deal with extends
+            this.addCode("java/lang/Object");
+        else
+            this.addCode(this.ollirClass.getSuperClass());
+        this.addCodeLine(".<init>()V");
+        this.addCodeLine(tabs, "return")
                 .addCodeLine(".end method");
     }
 
@@ -612,6 +616,22 @@ public class JasminEmitter {
                 .addLabel(endLabel);
     }
 
+    private void andBooleanArithmetic(String tabs, Element leftElem, Element rightElem) {
+        // branch labels
+        String elseLabel = JasminEmitter.labelPrefix + (this.lineNo + 7);
+        String endLabel = JasminEmitter.labelPrefix + (this.lineNo + 8);
+
+        this.loadCallArg(tabs, leftElem);
+        this.addCodeLine(tabs, "ifeq ", elseLabel);
+        this.loadCallArg(tabs, rightElem);
+        this.addCodeLine(tabs, "ifeq ", elseLabel);
+
+        this.addCodeLine(tabs, "iconst_1")
+                .addCodeLine(tabs, "goto ", endLabel)
+                .addLabeledCodeLine(elseLabel, tabs, "iconst_0")
+                .addLabel(endLabel);
+    }
+
     private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {
         this.contextStack.push(instr);
 
@@ -632,6 +652,9 @@ public class JasminEmitter {
                 break;
             case DIV:
                 this.intArithmetic(tabs, leftElem, rightElem, "idiv");
+                break;
+            case ANDB:
+                this.andBooleanArithmetic(tabs, leftElem, rightElem);
                 break;
             case LTH:
                 this.booleanArithmetic(tabs, leftElem, rightElem, "if_icmpge");

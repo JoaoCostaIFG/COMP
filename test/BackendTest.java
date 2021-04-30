@@ -46,8 +46,8 @@ public class BackendTest {
 
     @Test
     public void testLazysort() {
-        // TODO no class Quicksort found
-        test(SpecsIo.getResource("fixtures/public/Lazysort.jmm"), "a");
+        test(SpecsIo.getResource("fixtures/public/Lazysort.jmm"),
+                "1\n2\n3\n4\n5\n6\n7\n8\n9\n10");
     }
 
     @Test

@@ -4,6 +4,7 @@ import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 
 public class JasminEmitter {
@@ -137,11 +138,8 @@ public class JasminEmitter {
     public String parse() {
         this.comment("", "Class accepted by Jasmin2.3")
                 .addCodeLine(".class public ", this.ollirClass.getClassName())
-                .addCode(".super java/lang/");
-        if (this.ollirClass.getSuperClass() != null)
-            this.addCodeLine(this.ollirClass.getSuperClass());
-        else
-            this.addCodeLine("Object");
+                .addCode(".super ")
+                .addCodeLine(Objects.requireNonNullElse(this.ollirClass.getSuperClass(), "java/lang/Object"));
 
         // many assumptions are made here (could be a lot more complete)
         if (!this.ollirClass.getFields().isEmpty()) {
@@ -169,13 +167,10 @@ public class JasminEmitter {
                 .comment("", "standard initializer")
                 .addCodeLine(".method public <init>()V")
                 .addCodeLine(tabs, "aload_0")
-                .addCode(tabs, "invokespecial ");
-        if (this.ollirClass.getSuperClass() == null) // deal with extends
-            this.addCode("java/lang/Object");
-        else
-            this.addCode(this.ollirClass.getSuperClass());
-        this.addCodeLine(".<init>()V");
-        this.addCodeLine(tabs, "return")
+                .addCode(tabs, "invokespecial ")
+                .addCode(Objects.requireNonNullElse(this.ollirClass.getSuperClass(), "java/lang/Object"))
+                .addCodeLine(".<init>()V")
+                .addCodeLine(tabs, "return")
                 .addCodeLine(".end method");
     }
 

@@ -296,14 +296,13 @@ public class JasminEmitter {
                     argStr = "iconst_0";
                 break;
             case OBJECTREF:
-                Descriptor d = this.methodVarTable.get(literal);
-                argStr = "aload_" + d.getVirtualReg();
+                argStr = this.getLoadInstr("a", this.methodVarTable.get(literal).getVirtualReg());
                 break;
             case STRING:
                 argStr = "ldc " + literal;
                 break;
-            case THIS:
             case ARRAYREF:
+            case THIS:
             case CLASS:
             default:
                 // pls
@@ -326,16 +325,18 @@ public class JasminEmitter {
         switch (arg.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
-                argStr = this.getLoadInstr("i", this.methodVarTable.get(name).getVirtualReg());
+                String pre = "i";
+                if (arg.getClass().equals(ArrayOperand.class)) pre = "a";
+                argStr = this.getLoadInstr(pre, this.methodVarTable.get(name).getVirtualReg());
                 break;
             case OBJECTREF:
             case ARRAYREF:
+            case STRING:
                 argStr = this.getLoadInstr("a", this.methodVarTable.get(name).getVirtualReg());
                 break;
             case THIS:
                 argStr = "aload_0";
                 break;
-            case STRING:
             case CLASS:
             default:
                 // pls
@@ -346,16 +347,33 @@ public class JasminEmitter {
     }
 
     private String loadCallArg(Element arg) {
-        if (arg.isLiteral())
+        if (arg.isLiteral()) {
             return this.loadCallArgLiteral((LiteralElement) arg);
-        else
+        } else {
             return this.loadCallArgOperand((Operand) arg);
+        }
     }
 
     private void loadCallArg(String tabs, Element arg) {
         String argStr = this.loadCallArg(arg);
-        if (argStr != null)
+        if (argStr != null) {
             this.addCodeLine(tabs, argStr);
+
+            if (arg.getClass().equals(ArrayOperand.class)) {
+                for (Element indexElem : ((ArrayOperand) arg).getIndexOperands())
+                    this.loadCallArg(tabs, indexElem);
+
+                switch (arg.getType().getTypeOfElement()) {
+                    case INT32:
+                    case BOOLEAN:
+                        this.addCodeLine(tabs, "iaload");
+                        break;
+                    default:
+                        this.addCodeLine(tabs, "aaload");
+                        break;
+                }
+            }
+        }
     }
 
     private String callArg(Element e) {
@@ -653,27 +671,34 @@ public class JasminEmitter {
 
     private void assignInstructionJasmin(String tabs, AssignInstruction instr) {
         Element dest = instr.getDest();
-        boolean isArrayAssign = dest.getClass().equals(ArrayOperand.class);
-        if (isArrayAssign) {
+        Descriptor d = this.methodVarTable.get(((Operand) dest).getName());
+
+        boolean isArrayAccess = dest.getClass().equals(ArrayOperand.class);
+        if (isArrayAccess) {
+            this.addCodeLine(tabs, this.getLoadInstr("a", d.getVirtualReg()));
+
             ArrayOperand operand = (ArrayOperand) dest;
-            for (Element indexElem : operand.getIndexOperands()) {
-                // TODO (the array operand could be tested inside)
+            for (Element indexElem : operand.getIndexOperands())
                 this.loadCallArg(tabs, indexElem);
-            }
         }
 
         this.contextStack.push(instr);
         this.instructionJasmin(tabs, instr.getRhs());
         this.contextStack.pop();
 
-        Descriptor d = this.methodVarTable.get(((Operand) dest).getName());
         switch (dest.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
-                this.addCodeLine(tabs, this.getStoreInstr("i" + (isArrayAssign ? "a" : ""), d.getVirtualReg()));
+                if (isArrayAccess)
+                    this.addCodeLine(tabs, "iastore");
+                else
+                    this.addCodeLine(tabs, this.getStoreInstr("i", d.getVirtualReg()));
                 break;
             default: // assume it is 'a'
-                this.addCodeLine(tabs, this.getStoreInstr("a", d.getVirtualReg()));
+                if (isArrayAccess)
+                    this.addCodeLine(tabs, "aastore");
+                else
+                    this.addCodeLine(tabs, this.getStoreInstr("a", d.getVirtualReg()));
                 break;
         }
     }

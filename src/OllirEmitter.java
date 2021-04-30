@@ -395,8 +395,9 @@ public class OllirEmitter {
 
     private String getIndexOllir(String tabs, JmmNode node, boolean isAux) {
         final String indexType = ".i32";
-        final String type = "." + this.getTypeFromOllir(this.getOpOllir(tabs,
-                node.getChildren().get(0)).trim()).getName();
+        // TODO I dont't like this
+        String tmpType = this.primitiveType(this.getTypeFromOllir(this.getOpOllir("", node.getChildren().get(0))));
+        final String type = "." + (tmpType == null ? "String" : tmpType);
         List<JmmNode> children = node.getChildren();
 
         this.contextStack.push(".array" + type);

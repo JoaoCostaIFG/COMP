@@ -3,22 +3,17 @@ import io;
 class C {
     //int inteiro;
 
-    public int f1(int arg1, int arg2, int arg3) {
-        io.println(arg1 * arg2 * arg3);
-        return 0;
-    }
+    //public int f1(int arg1, int arg2, int arg3) {
+    //    io.println(arg1 * arg2 * arg3);
+    //    return 0;
+    //}
 
     public static void main(String[] args) {
-        //boolean b1;
-        //boolean b2;
-        //b1 = true;
-        //b2 = !b1;
-
-        int[] a;
-        a = new int[1];
-        a[0] = 3;
-
-        //io.println(args.length);
+        //int[] a;
+        //int i;
+        //a = new int[1];
+        //a[0] = 3;
+        //io.println(a[0]);
 
         //io.println(args[0]);
         //int[] arr;

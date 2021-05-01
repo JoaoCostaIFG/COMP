@@ -16,15 +16,22 @@ import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 
 public class BackendTest {
-    private void test(String code, String expectedResult) {
+    private void test(String code, String expectedResult, List<String> args) {
         var result = TestUtils.backend(code);
         TestUtils.noErrors(result.getReports());
 
-        var output = result.run();
+        var output = result.run(args);
         assertEquals(expectedResult, output.trim());
+    }
+
+    private void test(String code, String expectedResult) {
+        test(code, expectedResult, Collections.emptyList());
     }
 
     @Test
@@ -46,6 +53,7 @@ public class BackendTest {
 
     @Test
     public void testLazysort() {
+        // TODO the beLazy method makes no sense
         test(SpecsIo.getResource("fixtures/public/Lazysort.jmm"),
                 "1\n2\n3\n4\n5\n6\n7\n8\n9\n10");
     }
@@ -58,7 +66,7 @@ public class BackendTest {
 
     @Test
     public void testMonteCarloPi() {
-        // TODO is infinite?
+        // this test expects user input => no output can be expected without mocking user input
         test(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"), "a");
     }
 
@@ -75,7 +83,11 @@ public class BackendTest {
 
     @Test
     public void testTicTacToe() {
-        // TODO TEST THIS WITH INTERACTIVE AND STUFF
+        // String inputStr = "0\n0\n1\n1\n";
+        // InputStream inputSS = new java.io.ByteArrayInputStream(inputStr.getBytes());
+        // System.setIn(inputSS);
+
+        // this test is an interactive game => no output can be expected without mocking user input
         test(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"), "a");
     }
 

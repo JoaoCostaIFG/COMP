@@ -590,7 +590,26 @@ public class JasminEmitter {
         if (leftElem.isLiteral() && rightElem.isLiteral()) { // bothLiteral
             String lhs = this.callArg(leftElem);
             String rhs = this.callArg(rightElem);
-            this.addCodeLine(tabs, this.intLiteralPush(Integer.parseInt(lhs) + Integer.parseInt(rhs)));
+            int il = Integer.parseInt(lhs), ir = Integer.parseInt(rhs);
+            int arg = 0;
+            switch (op) {
+                case "iadd":
+                    arg = il + ir;
+                    break;
+                case "isub":
+                    arg = il - ir;
+                    break;
+                case "imul":
+                    arg = il * ir;
+                    break;
+                case "idiv":
+                    arg = il * ir;
+                    break;
+                default:
+                    // unreachable
+                    return;
+            }
+            this.addCodeLine(tabs, this.intLiteralPush(arg));
         } else {
             this.loadCallArg(tabs, leftElem);
             this.loadCallArg(tabs, rightElem);

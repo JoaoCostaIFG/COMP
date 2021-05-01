@@ -241,7 +241,7 @@ public class OllirEmitter {
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
         // condition (IMP this if has to be interpreted as an ifFalse)
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
         this.contextStack.pop();
         this.ollirCode.append(tabs).append("\t")
                 .append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
@@ -259,7 +259,7 @@ public class OllirEmitter {
         JmmNode elseBody = n.getChildren().get(2);
 
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
         this.contextStack.pop();
         String[] labels = this.getLabelPair("Else", "Endif");
         String elseLabel = labels[0];

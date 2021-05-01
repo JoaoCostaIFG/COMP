@@ -94,6 +94,6 @@ public class BackendTest {
     @Test
     public void testWhileAndIF() {
         test(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"),
-                "0\n0\n10\n10\n10\n10\n10\n10\n10\n10");
+                "10\n10\n10\n10\n10\n10\n10\n10\n10\n10");
     }
 }

@@ -2,10 +2,7 @@ import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Stack;
+import java.util.*;
 
 public class JasminEmitter {
     private static final String labelPrefix = "l";
@@ -13,11 +10,13 @@ public class JasminEmitter {
     private final boolean debug = true;
 
     private final ClassUnit ollirClass;
-    private final StringBuilder jasminCode;
+    private StringBuilder jasminCode;
     private HashMap<String, Descriptor> methodVarTable;
     private HashMap<String, Instruction> methodLabels;
     private final Stack<Instruction> contextStack;
     private Integer lineNo;
+    private int stackSize, stackSizeCnt;
+    private final Set<String> locals;
 
     // TODO stack and locals size
 
@@ -28,25 +27,27 @@ public class JasminEmitter {
         this.methodLabels = new HashMap<>();
         this.contextStack = new Stack<>();
         this.lineNo = 0;
+        this.stackSize = this.stackSizeCnt = 0;
+        this.locals = new HashSet<>();
     }
 
     public String getJasminCode() {
         return this.jasminCode.toString();
     }
 
-    public JasminEmitter addEmptyLine() {
+    private JasminEmitter addEmptyLine() {
         this.jasminCode.append("\n");
         ++this.lineNo;
         return this;
     }
 
-    public JasminEmitter addCode(String... args) {
+    private JasminEmitter addCode(String... args) {
         for (String a : args)
             this.jasminCode.append(a);
         return this;
     }
 
-    public JasminEmitter addCodeLine(String... args) {
+    private JasminEmitter addCodeLine(String... args) {
         for (String a : args)
             this.jasminCode.append(a);
         this.jasminCode.append("\n");
@@ -54,13 +55,13 @@ public class JasminEmitter {
         return this;
     }
 
-    public JasminEmitter addCodeLine(StringBuilder builder) {
+    private JasminEmitter addCodeLine(StringBuilder builder) {
         this.jasminCode.append(builder).append("\n");
         ++this.lineNo;
         return this;
     }
 
-    public JasminEmitter comment(String tabs, String... comments) {
+    private JasminEmitter comment(String tabs, String... comments) {
         if (debug) {
             this.jasminCode.append(tabs).append(";");
             for (String c : comments)
@@ -71,13 +72,13 @@ public class JasminEmitter {
         return this;
     }
 
-    public JasminEmitter addLabel(String label) {
+    private JasminEmitter addLabel(String label) {
         this.jasminCode.append(label).append(":\n");
         ++this.lineNo;
         return this;
     }
 
-    public JasminEmitter addLabeledCodeLine(String label, String tabs, String... args) {
+    private JasminEmitter addLabeledCodeLine(String label, String tabs, String... args) {
         this.addLabel(label);
         this.jasminCode.append(tabs);
         for (String a : args)
@@ -88,7 +89,7 @@ public class JasminEmitter {
     }
 
     // TODO complete this
-    public String elemTypeJasmin(ElementType type) {
+    private String elemTypeJasmin(ElementType type) {
         switch (type) {
             case INT32:
                 return "I";
@@ -103,7 +104,7 @@ public class JasminEmitter {
         }
     }
 
-    public String elemTypeJasmin(Type type) {
+    private String elemTypeJasmin(Type type) {
         switch (type.getTypeOfElement()) {
             case ARRAYREF:
                 ArrayType aType = (ArrayType) type;
@@ -123,7 +124,7 @@ public class JasminEmitter {
         }
     }
 
-    public String instrPreJasmin(Type type) {
+    private String instrPreJasmin(Type type) {
         switch (type.getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
@@ -133,6 +134,12 @@ public class JasminEmitter {
             default: // TODO ?
                 return "a";
         }
+    }
+
+    private StringBuilder setStringBuilder(StringBuilder sb) {
+        StringBuilder prevSB = this.jasminCode;
+        this.jasminCode = sb;
+        return prevSB;
     }
 
     public String parse() {
@@ -161,7 +168,7 @@ public class JasminEmitter {
         return this.getJasminCode();
     }
 
-    public void standardInitializerJasmin() {
+    private void standardInitializerJasmin() {
         String tabs = "\t";
         this.addEmptyLine()
                 .comment("", "standard initializer")
@@ -174,7 +181,20 @@ public class JasminEmitter {
                 .addCodeLine(".end method");
     }
 
-    public void methodJasmin(Method method) {
+    private void updateStackSize(int toConsume) {
+        if (this.stackSizeCnt > this.stackSize)
+            this.stackSize = this.stackSizeCnt;
+        if (toConsume < 0)
+            this.stackSizeCnt = 0;
+        else
+            this.stackSizeCnt -= toConsume;
+    }
+
+    private void updateStackSize() {
+        this.updateStackSize(-1);
+    }
+
+    private void methodJasmin(Method method) {
         if (method.isConstructMethod()) {
             this.standardInitializerJasmin();
             return;
@@ -196,20 +216,34 @@ public class JasminEmitter {
         this.addCodeLine(this.elemTypeJasmin(retType));
 
         String tabs = "\t";
-        // stack and locals size
-        this.addCodeLine(tabs, ".limit stack 150")
-                .addCodeLine(tabs, ".limit locals 150")
-                .addEmptyLine();
-
+        // make the methods write on a temporary buffer so we can set the number of local vars and stack size
+        StringBuilder bodyJasmin = new StringBuilder();
+        StringBuilder classJasmin = this.setStringBuilder(bodyJasmin);
+        // local vars: this + method args + local vars
+        this.locals.clear();
+        if (!method.isStaticMethod()) this.locals.add("this");
+        for (var e : this.methodVarTable.entrySet()) this.locals.add(e.getKey());
+        // track the stack size limit value to set
+        this.stackSize = 0;
         // body
         for (Instruction i : method.getInstructions()) {
+            this.stackSizeCnt = 0;
             this.instructionJasmin(tabs, i);
+            // update max stackSize (if needed)
+            this.updateStackSize();
         }
+        this.setStringBuilder(classJasmin);
 
+        // stack and locals size
+        this.addCodeLine(tabs, ".limit stack ", String.valueOf(this.stackSize))
+                .addCodeLine(tabs, ".limit locals ", String.valueOf(this.locals.size()))
+                .addEmptyLine();
+
+        this.jasminCode.append(bodyJasmin);
         this.addCodeLine(".end method");
     }
 
-    public void instructionJasmin(String tabs, Instruction instr) {
+    private void instructionJasmin(String tabs, Instruction instr) {
         // for DEBUG
         this.comment(tabs, instr.getInstType().toString());
 
@@ -346,15 +380,21 @@ public class JasminEmitter {
     }
 
     private String loadCallArg(Element arg) {
+        String ret;
         if (arg.isLiteral()) {
-            return this.loadCallArgLiteral((LiteralElement) arg);
+            ret = this.loadCallArgLiteral((LiteralElement) arg);
         } else {
-            return this.loadCallArgOperand((Operand) arg);
+            ret = this.loadCallArgOperand((Operand) arg);
         }
+
+        if (ret != null)
+            ++this.stackSizeCnt;
+        return ret;
     }
 
     private void loadCallArg(String tabs, Element arg) {
         String argStr = this.loadCallArg(arg);
+
         if (argStr != null) {
             this.addCodeLine(tabs, argStr);
 
@@ -422,10 +462,13 @@ public class JasminEmitter {
                     // arrays are weird.
                     this.loadCallArg(tabs, instr.getListOfOperands().get(0));
                     this.addCodeLine(tabs, "newarray int");
+                    this.updateStackSize(1);
+                    ++this.stackSizeCnt;
                     return;
                 } else {
                     ret.append("new ");
                     ret.append(this.callArg(instr.getFirstArg()));
+                    ++this.stackSizeCnt;
                 }
                 break;
             case arraylength:
@@ -459,11 +502,15 @@ public class JasminEmitter {
 
         // post processing
         // call pop when the method return value should be ignored (not assign/calc and not void)
-        if (this.contextStack.empty() && !returnStr.isEmpty() && !returnStr.equals("V"))
+        if (this.contextStack.empty() && !returnStr.isEmpty() && !returnStr.equals("V")) {
             this.addCodeLine(tabs, "pop");
+            this.updateStackSize(1);
+        }
 
-        if (invType == CallType.NEW)
+        if (invType == CallType.NEW) {
             this.addCodeLine(tabs, "dup");
+            ++this.stackSizeCnt;
+        }
     }
 
     private void putfieldInstructionJasmin(String tabs, PutFieldInstruction instr) {
@@ -518,8 +565,11 @@ public class JasminEmitter {
             case ANDB:
                 this.loadCallArg(tabs, leftElem);
                 this.addCodeLine(tabs, "ifeq ", label);
+                this.updateStackSize(1);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "ifeq ", label);
+                this.updateStackSize(1);
+                ++this.stackSizeCnt;
                 break;
             case ORB:
                 // TODO need extra label if's
@@ -528,31 +578,43 @@ public class JasminEmitter {
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "if_icmpge ", label);
+                this.updateStackSize(2);
+                ++this.stackSizeCnt;
                 break;
             case GTH:
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "if_icmple ", label);
+                this.updateStackSize(2);
+                ++this.stackSizeCnt;
                 break;
             case LTE:
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "if_icmpgt ", label);
+                this.updateStackSize(2);
+                ++this.stackSizeCnt;
                 break;
             case GTE:
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "if_icmplt ", label);
+                this.updateStackSize(2);
+                ++this.stackSizeCnt;
                 break;
             case EQ:
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "if_icmpne ", label);
+                this.updateStackSize(2);
+                ++this.stackSizeCnt;
                 break;
             case NEQ:
                 this.loadCallArg(tabs, leftElem);
                 this.loadCallArg(tabs, rightElem);
                 this.addCodeLine(tabs, "if_icmpeq ", label);
+                this.updateStackSize(2);
+                ++this.stackSizeCnt;
                 break;
             default:
                 break;
@@ -570,6 +632,7 @@ public class JasminEmitter {
             if (elem.isLiteral()) {
                 String boolLiteral = this.callArg(elem);
                 this.addCodeLine(tabs, this.boolLiteralPush(Integer.parseInt(boolLiteral)));
+                ++this.stackSizeCnt;
             } else {
                 // invert stored boolean value (if 0 => 1, if 1 => 0)
                 this.loadCallArg(tabs, elem);
@@ -581,6 +644,7 @@ public class JasminEmitter {
                         .addCodeLine(tabs, "goto ", endLabel)
                         .addLabeledCodeLine(elseLabel, tabs, "iconst_0")
                         .addLabel(endLabel);
+                ++this.stackSizeCnt;
             }
         }
         this.contextStack.pop();
@@ -610,10 +674,13 @@ public class JasminEmitter {
                     return;
             }
             this.addCodeLine(tabs, this.intLiteralPush(arg));
+            ++this.stackSizeCnt;
         } else {
             this.loadCallArg(tabs, leftElem);
             this.loadCallArg(tabs, rightElem);
             this.addCodeLine(tabs, op);
+            this.updateStackSize(2);
+            ++this.stackSizeCnt;
         }
     }
 
@@ -628,6 +695,9 @@ public class JasminEmitter {
                 .addCodeLine(tabs, "goto ", endLabel)
                 .addLabeledCodeLine(elseLabel, tabs, "iconst_0")
                 .addLabel(endLabel);
+
+        this.updateStackSize(2);
+        ++this.stackSizeCnt;
     }
 
     private void andBooleanArithmetic(String tabs, Element leftElem, Element rightElem) {
@@ -637,13 +707,17 @@ public class JasminEmitter {
 
         this.loadCallArg(tabs, leftElem);
         this.addCodeLine(tabs, "ifeq ", elseLabel);
+        this.updateStackSize(1);
         this.loadCallArg(tabs, rightElem);
         this.addCodeLine(tabs, "ifeq ", elseLabel);
+        this.updateStackSize(1);
 
         this.addCodeLine(tabs, "iconst_1")
                 .addCodeLine(tabs, "goto ", endLabel)
                 .addLabeledCodeLine(elseLabel, tabs, "iconst_0")
                 .addLabel(endLabel);
+
+        ++this.stackSizeCnt;
     }
 
     private void binOpInstructionJasmin(String tabs, BinaryOpInstruction instr) {
@@ -713,9 +787,9 @@ public class JasminEmitter {
         boolean isArrayAccess = dest.getClass().equals(ArrayOperand.class);
         if (isArrayAccess) {
             this.addCodeLine(tabs, this.getLoadInstr("a", d.getVirtualReg()));
+            ++this.stackSizeCnt;
 
-            ArrayOperand operand = (ArrayOperand) dest;
-            for (Element indexElem : operand.getIndexOperands())
+            for (Element indexElem : ((ArrayOperand) dest).getIndexOperands())
                 this.loadCallArg(tabs, indexElem);
         }
 

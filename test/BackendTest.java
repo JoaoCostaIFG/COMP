@@ -16,18 +16,20 @@ import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class BackendTest {
-    private void test(String code, String expectedResult, List<String> args) {
+    private String test(String code, List<String> args) {
         var result = TestUtils.backend(code);
         TestUtils.noErrors(result.getReports());
+        return result.run(args);
+    }
 
-        var output = result.run(args);
-        assertEquals(expectedResult, output.trim());
+    private void test(String code, String expectedResult, List<String> args) {
+        assertEquals(expectedResult, test(code, args));
     }
 
     private void test(String code, String expectedResult) {
@@ -36,31 +38,39 @@ public class BackendTest {
 
     @Test
     public void KazengaTest() {
-        test(SpecsIo.read("test/testedokazenga.jmm"), "6");
+        test(SpecsIo.read("test/testedokazenga.jmm"), "6\n");
     }
 
     @Test
     public void testFindMaximum() {
         test(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"),
-                "Result: 28");
+                "Result: 28\n");
     }
 
     @Test
     public void testHelloWorld() {
         test(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"),
-                "Hello, World!");
+                "Hello, World!\n");
     }
 
     @Test
     public void testLazysort() {
-        // TODO the beLazy method makes no sense
-        test(SpecsIo.getResource("fixtures/public/Lazysort.jmm"),
-                "1\n2\n3\n4\n5\n6\n7\n8\n9\n10");
+        // the beLazy method makes no sense (?)
+        // this code is not a sort and actually just shuffles the array most of the time
+        // so we just test if the output is a list of 10 integers [0, 11].
+        String testResult = test(SpecsIo.getResource("fixtures/public/Lazysort.jmm"),
+                Collections.emptyList());
+        String[] resultSplit = testResult.split("\n");
+        for (String s : resultSplit) {
+            int i = Integer.parseInt(s);
+            if (i < 0 || i > 11)
+                fail("Number " + s + "out of range");
+        }
     }
 
     @Test
     public void testLife() {
-        // TODO invalid local variable number: field method
+        // this game is interactive: enter any non-empty input to step the game
         test(SpecsIo.getResource("fixtures/public/Life.jmm"), "a");
     }
 
@@ -73,12 +83,12 @@ public class BackendTest {
     @Test
     public void testQuickSort() {
         test(SpecsIo.getResource("fixtures/public/QuickSort.jmm"),
-                "1\n2\n3\n4\n5\n6\n7\n8\n9\n10");
+                "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n");
     }
 
     @Test
     public void testSimple() {
-        test(SpecsIo.getResource("fixtures/public/Simple.jmm"), "30");
+        test(SpecsIo.getResource("fixtures/public/Simple.jmm"), "30\n");
     }
 
     @Test
@@ -94,6 +104,6 @@ public class BackendTest {
     @Test
     public void testWhileAndIF() {
         test(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"),
-                "10\n10\n10\n10\n10\n10\n10\n10\n10\n10");
+                "10\n10\n10\n10\n10\n10\n10\n10\n10\n10\n");
     }
 }

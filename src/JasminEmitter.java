@@ -197,8 +197,8 @@ public class JasminEmitter {
 
         String tabs = "\t";
         // stack and locals size
-        this.addCodeLine(tabs, ".limit stack 99")
-                .addCodeLine(tabs, ".limit locals 99")
+        this.addCodeLine(tabs, ".limit stack 150")
+                .addCodeLine(tabs, ".limit locals 150")
                 .addEmptyLine();
 
         // body
@@ -591,7 +591,7 @@ public class JasminEmitter {
             String lhs = this.callArg(leftElem);
             String rhs = this.callArg(rightElem);
             int il = Integer.parseInt(lhs), ir = Integer.parseInt(rhs);
-            int arg = 0;
+            int arg;
             switch (op) {
                 case "iadd":
                     arg = il + ir;
@@ -603,7 +603,7 @@ public class JasminEmitter {
                     arg = il * ir;
                     break;
                 case "idiv":
-                    arg = il * ir;
+                    arg = il / ir;
                     break;
                 default:
                     // unreachable

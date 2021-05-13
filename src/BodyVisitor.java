@@ -305,7 +305,7 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
             s = this.symbolTable.getField(varName);
         else if (checkDeclared) { // only check for declarations of vars in our scope
             if (!this.assignedVariables.contains(varName)) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                reports.add(new Report(ReportType.WARNING, Stage.SEMANTIC,
                         parseInt(varNode.get("line")), parseInt(varNode.get("col")),
                         "Variable used before being assigned a value: " + varName + "."));
             }

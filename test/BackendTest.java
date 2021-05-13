@@ -106,4 +106,19 @@ public class BackendTest {
         test(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"),
                 "10\n10\n10\n10\n10\n10\n10\n10\n10\n10\n");
     }
+
+    @Test
+    public void varNotInitTest() {
+        test(SpecsIo.getResource("varNotInit.jmm"), Collections.emptyList());
+    }
+
+    @Test
+    public void InferenceTest() {
+        test(SpecsIo.getResource("inference.jmm"), Collections.emptyList());
+    }
+
+    @Test
+    public void BinarySearchTest() {
+        test(SpecsIo.getResource("BinarySearch.jmm"), Collections.emptyList());
+    }
 }

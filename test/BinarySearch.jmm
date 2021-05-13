@@ -1,0 +1,70 @@
+import io;
+import MathUtils;
+
+class BinarySearch {
+
+    int[] values;
+
+    public static void main(String[] a) {
+        int[] b;
+        BinarySearch bs;
+
+        b = new int[10];
+        b[0] = 1;
+        b[1] = 3;
+        b[2] = 4;
+        b[3] = 6;
+        b[4] = 7;
+        b[5] = 9;
+        b[6] = 12;
+        b[7] = 13;
+        b[8] = 15;
+        b[9] = 17;
+
+        bs = new BinarySearch();
+        bs.setValues(b);
+
+        //io.println(bs.search(5));
+        io.println(bs.search(9));
+    }
+
+    public int setValues(int[] a) {
+        values = a;
+        return 0;
+    }
+
+    public int search(int value) {
+        int first;
+        int last;
+        int mid;
+        boolean flag;
+        int toReturn;
+
+        flag = false;
+        first = 0;
+        last = values.length - 1;
+        mid = (first + last) / 2;
+
+        while (!(last < first) && !flag) {
+            if (values[mid] < value) {
+                first = mid + 1;
+            } else if (!(value < values[mid])) {
+                flag = true;
+            } else {
+                last = mid - 1;
+            }
+
+            if (!flag) {
+                mid = (first + last) / 2;
+            } else {}
+        }
+
+        if (flag) {
+            toReturn = mid;
+        } else {
+            toReturn = 0-1;
+        }
+
+        return toReturn;
+    }
+}

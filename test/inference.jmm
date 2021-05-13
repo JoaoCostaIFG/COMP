@@ -1,0 +1,12 @@
+import io;
+import MathUtils;
+
+class Inference {
+    public static void main(String[] a) {
+        // int b;
+        // b = MathUtils.random(1, 8);
+        // io.println(b);
+
+        io.println(MathUtils.random(1, 8) + 1);
+    }
+}

@@ -56,7 +56,7 @@ public class AnalysisStage implements JmmAnalysis {
             staticVisitor.visit(method.getNode(), reports);
         }
 
-        // System.out.println("Reports: " + reports);
+        System.out.println("Reports: " + reports);
         return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }

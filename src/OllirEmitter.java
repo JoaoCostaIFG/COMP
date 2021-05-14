@@ -14,8 +14,7 @@ public class OllirEmitter {
     private List<Symbol> localVars, parameters;
     private final Map<String, String> sanitizationMap;
     private final Stack<String> contextStack; // used to infer functions types (that aren't part of our class)
-    private final Map<String, Integer> constantTable; // used for constant propagation
-    private boolean insideLoop; // inhibs constant propagation inside loops
+    private Map<String, Integer> constantTable; // used for constant propagation
 
     public OllirEmitter(MySymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -27,7 +26,6 @@ public class OllirEmitter {
         this.sanitizationMap = new HashMap<>();
         this.contextStack = new Stack<>();
         this.constantTable = new HashMap<>();
-        this.insideLoop = false;
     }
 
     public String getOllirCode() {
@@ -239,13 +237,14 @@ public class OllirEmitter {
                 nodeOllir += " &&.bool 1.bool";
         }
 
-        return nodeOllir;
+        return nodeOllir.trim();
     }
 
     public String getCondOllir(String tabs, JmmNode n) {
         return this.getCondOllir(tabs, n, false);
     }
 
+    /* Old version of the while loop (before DoWhile optimization) */
     /*
     private void getWhileOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
@@ -258,7 +257,7 @@ public class OllirEmitter {
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
         // condition (IMP this if has to be interpreted as an ifFalse)
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0)).trim();
+        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
         this.contextStack.pop();
         this.ollirCode.append(tabs).append("\t")
                 .append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
@@ -281,21 +280,22 @@ public class OllirEmitter {
 
         // initial cond (IMP this if has to be interpreted as an ifFalse)
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0)).trim();
+        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
         this.contextStack.pop();
         this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
 
         // body
+        this.rmAssignedConstants(body);
+
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
-        this.insideLoop = true;
         this.getBodyOllir(tabs + "\t", body);
-        this.insideLoop = false;
         // inner condition (IMP this if has to be interpreted as an ifFalse so we negate it)
         this.contextStack.push(".bool");
-        String innerCondOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0), true).trim();
+        String innerCondOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0), true);
         this.contextStack.pop();
         this.ollirCode.append(tabs).append("\t") // make it loopar
                 .append("if (").append(innerCondOllir).append(") goto ").append(loopLabel).append(";\n");
+
         // end loop
         this.ollirCode.append(tabs).append(endLabel).append(":\n");
     }
@@ -315,13 +315,34 @@ public class OllirEmitter {
         // condition (IMP this if has to be interpreted as an ifFalse)
         this.ollirCode.append(tabs).append("if (").append(condOllir.trim())
                 .append(") goto ").append(elseLabel).append(";\n");
+
+        // backup constant table between body parsings to prevent conflicts
+        var constTableBackup = this.constantTable;
         // if body
+        this.constantTable = new HashMap<>(constTableBackup);  // reset constant table
         this.getBodyOllir(tabs + "\t", body);
         this.ollirCode.append(tabs).append("\tgoto ").append(endLabel).append(";\n");
         // else
+        this.constantTable = new HashMap<>(constTableBackup);  // reset constant table
         this.ollirCode.append(tabs).append(elseLabel).append(":\n");
         this.getBodyOllir(tabs + "\t", elseBody);
         this.ollirCode.append(tabs).append(endLabel).append(":").append("\n");
+
+        this.constantTable = constTableBackup;
+        this.rmAssignedConstants(body, elseBody);
+    }
+
+    private void rmAssignedConstants(JmmNode... nodes) {
+        for (JmmNode n : nodes) {
+            for (JmmNode child : n.getChildren()) {
+                if (child.getKind().equals("Assign")) {
+                    String name = child.getChildren().get(0).get("name");
+                    this.constantTable.remove(name);
+                } else if (child.getNumChildren() > 0) {
+                    this.rmAssignedConstants(child);
+                }
+            }
+        }
     }
 
     private String injectTempVar(String tabs, String type, String content) {
@@ -565,7 +586,7 @@ public class OllirEmitter {
         for (Symbol s : this.localVars) {
             if (s.getName().equals(name)) {
                 // search in constant table (Constant propagation)
-                if (this.constantTable.containsKey(name) && !insideLoop)
+                if (this.constantTable.containsKey(name))
                     return this.constantTable.get(name) + this.getTypeOllir(s.getType());
                 return this.getSymbolOllir(s);
             }

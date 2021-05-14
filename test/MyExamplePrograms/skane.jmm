@@ -20,8 +20,8 @@ class Skane {
 
         skane = new Skane();
         skane.setSnake(snake);
-        skane.setCols(5);
-        skane.setRows(5);
+        skane.setCols(40);
+        skane.setRows(20);
         skane.genNewFood();
 
         while (validInput) {
@@ -33,7 +33,7 @@ class Skane {
         io.println(0-1);
     }
 
-    //Returns false if lost game
+    // Returns false if lost game
     public boolean processInput(int input) {
         int counter;
         int newCell;
@@ -42,20 +42,20 @@ class Skane {
 
         toReturn = true;
 
-        if (this.eq(input, 3)) { //UP(3)
+        if (this.eq(input, 9)) {  // UP(9)
             newCell = snake[0] - cols;
-        } else if (this.eq(input, 1)) { //LEFT(1)
+        } else if (this.eq(input, 7)) {  // LEFT(7)
             newCell = snake[0] - 1;
-        } else if (this.eq(input, 4)) { //RIGHT(4)
+        } else if (this.eq(input, 0)) {  // RIGHT(0)
             newCell = snake[0] + 1;
-        } else if (this.eq(input, 2)) { //DOWN(2)
+        } else if (this.eq(input, 8)) {  // DOWN(8)
             newCell = snake[0] + cols;
         } else {
-            //ERROR
+            // error
             newCell = 0;
         }
 
-        //Out of bounds vertically
+        // Out of bounds vertically
         if(newCell < 0) {
             //Edge case
             if(!this.eq(snake[0], 0)) {
@@ -67,13 +67,13 @@ class Skane {
             } else {}
         } else {}
 
-        //Out of bounds horizontally
-        //Right
+        // Out of bounds horizontally
+        // Right
         if (this.isDivisor(cols, newCell)) {
             if (this.eq(newCell, snake[0] + 1)) {
                 newCell = newCell - cols;
             } else {}
-        //Left
+        // Left
         } else if (this.isDivisor(cols, newCell + 1)) {
             if (this.eq(newCell, snake[0] - 1)) {
                 newCell = newCell + cols;
@@ -84,7 +84,7 @@ class Skane {
             toReturn = false;
         } else {}
 
-        //Food
+        // Food
         if (this.eq(newCell, food)) {
             newSnake = new int[snake.length + 1];
             newSnake[0] = newCell;

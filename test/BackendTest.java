@@ -122,8 +122,14 @@ public class BackendTest {
         test(SpecsIo.getResource("BinarySearch.jmm"), Collections.emptyList());
     }
 
+    //Needs input
     @Test
     public void SkaneTest() {
         test(SpecsIo.getResource("skane.jmm"), Collections.emptyList());
+    }
+
+    @Test
+    public void FibonacciTest() {
+        test(SpecsIo.getResource("fibonacci.jmm"), Collections.emptyList());
     }
 }

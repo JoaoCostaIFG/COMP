@@ -121,4 +121,9 @@ public class BackendTest {
     public void BinarySearchTest() {
         test(SpecsIo.getResource("BinarySearch.jmm"), Collections.emptyList());
     }
+
+    @Test
+    public void SkaneTest() {
+        test(SpecsIo.getResource("skane.jmm"), Collections.emptyList());
+    }
 }

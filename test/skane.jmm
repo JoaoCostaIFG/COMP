@@ -1,0 +1,236 @@
+import io;
+import MathUtils;
+
+class Skane {
+    int rows;
+    int cols;
+    int[] board;
+    int[] snake;
+    int food;
+
+    public static void main(String[] a) {
+        int input;
+        int[] snake;
+        Skane skane;
+        boolean validInput;
+        validInput = true;
+
+        snake = new int[1];
+        snake[0] = 12;
+
+        skane = new Skane();
+        skane.setSnake(snake);
+        skane.setCols(5);
+        skane.setRows(5);
+        skane.genNewFood();
+
+        while (validInput) {
+            skane.printBoard();
+            input = io.read();
+            validInput = skane.processInput(input);
+        }
+
+        io.println(0-1);
+    }
+
+    //Returns false if lost game
+    public boolean processInput(int input) {
+        int counter;
+        int newCell;
+        int[] newSnake;
+        boolean toReturn;
+
+        toReturn = true;
+
+        if (this.eq(input, 3)) { //UP(3)
+            newCell = snake[0] - cols;
+        } else if (this.eq(input, 1)) { //LEFT(1)
+            newCell = snake[0] - 1;
+        } else if (this.eq(input, 4)) { //RIGHT(4)
+            newCell = snake[0] + 1;
+        } else if (this.eq(input, 2)) { //DOWN(2)
+            newCell = snake[0] + cols;
+        } else {
+            //ERROR
+            newCell = 0;
+        }
+
+        //Out of bounds vertically
+        if(newCell < 0) {
+            //Edge case
+            if(!this.eq(snake[0], 0)) {
+                 newCell = rows * cols + newCell;
+            } else {}
+        } else if (this.le((rows * cols), newCell)) {
+            if(!this.eq(snake[0], rows * cols - 1)) {
+                 newCell = newCell - (rows * cols);
+            } else {}
+        } else {}
+
+        //Out of bounds horizontally
+        //Right
+        if (this.isDivisor(cols, newCell)) {
+            if (this.eq(newCell, snake[0] + 1)) {
+                newCell = newCell - cols;
+            } else {}
+        //Left
+        } else if (this.isDivisor(cols, newCell + 1)) {
+            if (this.eq(newCell, snake[0] - 1)) {
+                newCell = newCell + cols;
+            } else {}
+        } else {}
+
+        if (this.isSnake(newCell)) {
+            toReturn = false;
+        } else {}
+
+        //Food
+        if (this.eq(newCell, food)) {
+            newSnake = new int[snake.length + 1];
+            newSnake[0] = newCell;
+            counter = 1;
+            while (counter < newSnake.length) {
+                newSnake[counter] = snake[counter - 1];
+                counter = counter + 1;
+            }
+            this.setSnake(newSnake);
+            this.genNewFood();
+        } else {
+            //Moving body
+            counter = snake.length - 1;
+            while (0 < counter) {
+                snake[counter] = snake[counter - 1];
+                counter = counter - 1;
+            }
+            snake[0] = newCell;
+        }
+
+        return toReturn;
+    }
+
+    public int printBoard() {
+        int counter;
+        int lineAuxCounter;
+        counter = 0;
+        lineAuxCounter = 0;
+
+        while(counter < (rows * cols)) {
+
+            if (this.eq(counter, snake[0])) {
+                io.print(8);
+            } else if (this.isSnake(counter)) {
+                io.print(1);
+            } else if (this.eq(counter, food)) {
+                io.print(2);
+            } else {
+                io.print(0);
+            }
+
+            if (this.eq(lineAuxCounter, cols - 1)) {
+                io.println();
+                lineAuxCounter = 0-1;
+            } else {}
+
+            counter = counter + 1;
+            lineAuxCounter = lineAuxCounter + 1;
+        }
+        return 0;
+    }
+
+    public int printSnake() {
+        int counter;
+        counter = 0;
+        while(counter < snake.length) {
+            io.println(snake[counter]);
+            counter = counter + 1;
+        }
+        return 0;
+    }
+
+    public boolean isSnake(int cell) {
+        boolean flag;
+        int counter;
+
+        counter = 0;
+        flag = false;
+
+        while((counter < snake.length) && !flag) {
+            flag = this.eq(snake[counter], cell);
+            counter = counter + 1;
+        }
+
+        return flag;
+    }
+
+
+    public int setSnake(int[] a) {
+        snake = a;
+        return 0;
+    }
+
+    public int setRows(int a) {
+        rows = a;
+        return 0;
+    }
+
+    public int setCols(int a) {
+        cols = a;
+        return 0;
+    }
+
+    public int genNewFood() {
+        food = MathUtils.random(0, rows * cols - 1);
+        return 0;
+    }
+
+    //m is divisor of n
+    public boolean isDivisor(int m, int n) {
+        int count;
+        boolean toReturn;
+        boolean alreadyBigger;
+
+        count = 0;
+        toReturn = false;
+        alreadyBigger = false;
+
+        while ((count < 200) && !toReturn && !alreadyBigger) {
+            if (this.eq(m * count, n)) {
+                toReturn = true;
+            } else {}
+
+            if (n < m * count) {
+                alreadyBigger = true;
+            } else {}
+
+            count = count + 1;
+        }
+
+        return toReturn;
+    }
+
+
+    public boolean eq(int a, int b) {
+        return (!this.lt(a, b) && !this.lt(b, a));
+    }
+
+    public boolean ne(int a, int b) {
+        return (!this.eq(a, b));
+    }
+
+    public boolean lt(int a, int b) {
+        return (a < b);
+    }
+
+    public boolean le(int a, int b) {
+        return !(!this.lt(a, b) && !this.eq(a, b));
+    }
+
+    public boolean gt(int a, int b) {
+        return (!this.le(a, b));
+    }
+
+    public boolean ge(int a, int b) {
+        return !(!this.gt(a, b) && !this.eq(a, b));
+    }
+
+}

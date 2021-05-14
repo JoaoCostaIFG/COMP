@@ -14,6 +14,8 @@ public class OllirEmitter {
     private List<Symbol> localVars, parameters;
     private final Map<String, String> sanitizationMap;
     private final Stack<String> contextStack; // used to infer functions types (that aren't part of our class)
+    private final Map<String, Integer> constantTable; // used for constant propagation
+    private boolean insideLoop; // inhibs constant propagation inside loops
 
     public OllirEmitter(MySymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -24,6 +26,8 @@ public class OllirEmitter {
         this.parameters = new ArrayList<>();
         this.sanitizationMap = new HashMap<>();
         this.contextStack = new Stack<>();
+        this.constantTable = new HashMap<>();
+        this.insideLoop = false;
     }
 
     public String getOllirCode() {
@@ -65,6 +69,8 @@ public class OllirEmitter {
             this.sanitizationMap.put(s.getName(), this.getNextAuxVar());
         for (Symbol s : this.parameters)
             this.sanitizationMap.put(s.getName(), this.getNextAuxVar());
+        // reset constant table
+        this.constantTable.clear();
     }
 
     private String ollirNameTrim(String typeOllir) {
@@ -209,7 +215,7 @@ public class OllirEmitter {
                     this.getIfOllir(tabs, n);
                     break;
                 case "WhileLoop":
-                    this.getDoWhileOllir(tabs, n);
+                    this.getWhileOllir(tabs, n);
                     break;
             }
         }
@@ -240,6 +246,7 @@ public class OllirEmitter {
         return this.getCondOllir(tabs, n, false);
     }
 
+    /*
     private void getWhileOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
@@ -262,8 +269,9 @@ public class OllirEmitter {
         // end loop
         this.ollirCode.append(tabs).append(endLabel).append(":\n");
     }
+    */
 
-    private void getDoWhileOllir(String tabs, JmmNode n) {
+    private void getWhileOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
 
@@ -279,7 +287,9 @@ public class OllirEmitter {
 
         // body
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
+        this.insideLoop = true;
         this.getBodyOllir(tabs + "\t", body);
+        this.insideLoop = false;
         // inner condition (IMP this if has to be interpreted as an ifFalse so we negate it)
         this.contextStack.push(".bool");
         String innerCondOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0), true).trim();
@@ -321,6 +331,10 @@ public class OllirEmitter {
         return auxVarName;
     }
 
+    private boolean stringIsInt(String str) {
+        return str.split("\\.")[0].matches("-?\\d+");
+    }
+
     private String getIntOpOllir(String tabs, JmmNode node, String op, boolean isAux) {
         final String type = ".i32";
         this.contextStack.push(type);
@@ -328,9 +342,29 @@ public class OllirEmitter {
         List<JmmNode> children = node.getChildren();
         String childLeftOllir = this.getOpOllir(tabs, children.get(0), true);
         String childRightOllir = this.getOpOllir(tabs, children.get(1), true);
-        String ret = childLeftOllir + " " + op + type + " " + childRightOllir;
-
         this.contextStack.pop();
+
+        // both children are constants => Constant Folding
+        if (this.stringIsInt(childLeftOllir) && this.stringIsInt(childRightOllir)) {
+            switch (op) {
+                case "+":
+                    return (Integer.parseInt(childLeftOllir.split("\\.")[0]) +
+                            Integer.parseInt(childRightOllir.split("\\.")[0])) + type;
+                case "-":
+                    return (Integer.parseInt(childLeftOllir.split("\\.")[0]) -
+                            Integer.parseInt(childRightOllir.split("\\.")[0])) + type;
+                case "*":
+                    return (Integer.parseInt(childLeftOllir.split("\\.")[0]) *
+                            Integer.parseInt(childRightOllir.split("\\.")[0])) + type;
+                case "/":
+                    return (Integer.parseInt(childLeftOllir.split("\\.")[0]) /
+                            Integer.parseInt(childRightOllir.split("\\.")[0])) + type;
+                default:
+                    break;
+            }
+        }
+
+        String ret = childLeftOllir + " " + op + type + " " + childRightOllir;
         if (isAux)
             return this.injectTempVar(tabs, type, ret);
         return ret;
@@ -526,9 +560,13 @@ public class OllirEmitter {
 
     private String getIdentifierOllir(String tabs, JmmNode node, boolean isAux) {
         String name = node.get("name");
+
         // local variable
         for (Symbol s : this.localVars) {
             if (s.getName().equals(name)) {
+                // search in constant table (Constant propagation)
+                if (this.constantTable.containsKey(name) && !insideLoop)
+                    return this.constantTable.get(name) + this.getTypeOllir(s.getType());
                 return this.getSymbolOllir(s);
             }
         }
@@ -614,6 +652,9 @@ public class OllirEmitter {
         JmmNode leftChild = node.getChildren().get(0),
                 rightChild = node.getChildren().get(1);
         String assigneeName = leftChild.get("name");
+        // remove from constant table since this is a new assignment
+        this.constantTable.remove(assigneeName);
+
         boolean isField = this.varIsClassField(assigneeName);
         String type = this.getVarType(assigneeName);
 
@@ -645,6 +686,10 @@ public class OllirEmitter {
         // content (on fields, it needs to have an aux var)
         this.contextStack.push(type);
         String content = this.getOpOllir(tabs, rightChild, isField).trim();
+        // Constant Propagation
+        if (this.stringIsInt(content) && !isArrayAccess) {
+            this.constantTable.put(leftChild.get("name"), Integer.valueOf(content.split("\\.")[0]));
+        }
         this.contextStack.pop();
 
         String ret;

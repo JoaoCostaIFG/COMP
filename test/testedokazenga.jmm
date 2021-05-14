@@ -1,36 +1,32 @@
-import BoardBase;
+import MathUtils;
 import io;
 
 class C {
-    //int[] a;
+    int[] a;
 
-    //public int f() {
-    //    //int[] a;
-    //    int tot;
-    //    int i;
+    public int f() {
+        //int[] a;
+        int tot;
+        int i;
 
-    //    a = new int[4];
-    //    i = 0;
-    //    while (i < a.length) {
-    //        a[i] = i;
-    //        i = i + 1;
-    //    }
-    //    tot = 0;
-    //    i = 0;
-    //    while (i < a.length) {
-    //        tot = tot + a[i];
-    //        i = i + 1;
-    //    }
-    //    io.println(tot);
+        a = new int[4];
+        i = 0;
+        while (i < a.length) {
+            a[i] = i;
+            i = i + 1;
+        }
+        tot = 0;
+        i = 0;
+        while (i < a.length) {
+            tot = tot + a[i];
+            i = i + 1;
+        }
+        io.println(tot);
 
-    //    return 0;
-    //}
+        return 0;
+    }
 
     public static void main(String[] args) {
-        //new C().f();
-        int a;
-        int b;
-        a = 1;
-        b = a;
+        new C().f();
     }
 }

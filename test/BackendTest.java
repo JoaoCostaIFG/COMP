@@ -86,7 +86,6 @@ public class BackendTest {
     }
 
     /* INTERACTIVE PROGRAMS (NEED USER INPUT) */
-    /*
     @Test
     public void testLife() {
         // this game is interactive: enter any non-empty input to step the game
@@ -108,7 +107,6 @@ public class BackendTest {
         // this test is an interactive game => no output can be expected without mocking user input
         test(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"), "a");
     }
-    */
 
     /* OUR EXAMPLE PROGRAMS */
     @Test
@@ -123,7 +121,7 @@ public class BackendTest {
 
     @Test
     public void BinarySearchTest() {
-        test(SpecsIo.getResource("MyExamplePrograms/BinarySearch.jmm"), Collections.emptyList());
+        test(SpecsIo.getResource("MyExamplePrograms/BinarySearch.jmm"), "5\n");
     }
 
     @Test

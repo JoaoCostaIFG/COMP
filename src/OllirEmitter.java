@@ -209,25 +209,35 @@ public class OllirEmitter {
                     this.getIfOllir(tabs, n);
                     break;
                 case "WhileLoop":
-                    this.getWhileOllir(tabs, n);
+                    this.getDoWhileOllir(tabs, n);
                     break;
             }
         }
     }
 
-    public String getCondOllir(String tabs, JmmNode n) {
+    public String getCondOllir(String tabs, JmmNode n, boolean isNegated) {
         String opKind = n.getKind();
         // alternative NOT style
         // boolean isBinOp = (opKind.equals("Binary") && !n.get("op").equals("DOT")) ||
         //         opKind.equals("Unary");
         boolean isBinOp = opKind.equals("Binary") && !n.get("op").equals("DOT");
 
-        String nodeOllir = this.getOpOllir(tabs, n, !isBinOp).trim();
-        // TODO not binary (old style)?
-        if (!isBinOp) {  // conditions have to be operations (binary)
-            return nodeOllir + " &&.bool 1.bool";
+        String nodeOllir;
+        if (isNegated) {
+            // in this case, the condition needs to be negated in order to evaluate it as an IfFalse
+            nodeOllir = this.getOpOllir(tabs, n, true);
+            return this.injectTempVar(tabs, ".bool", "!.bool " + nodeOllir) + " &&.bool 1.bool";
+        } else {
+            nodeOllir = this.getOpOllir(tabs, n, !isBinOp);
+            if (!isBinOp)  // conditions have to be operations (binary)
+                nodeOllir += " &&.bool 1.bool";
         }
+
         return nodeOllir;
+    }
+
+    public String getCondOllir(String tabs, JmmNode n) {
+        return this.getCondOllir(tabs, n, false);
     }
 
     private void getWhileOllir(String tabs, JmmNode n) {
@@ -241,7 +251,7 @@ public class OllirEmitter {
         this.ollirCode.append(tabs).append(loopLabel).append(":\n");
         // condition (IMP this if has to be interpreted as an ifFalse)
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0)).trim();
         this.contextStack.pop();
         this.ollirCode.append(tabs).append("\t")
                 .append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
@@ -249,6 +259,33 @@ public class OllirEmitter {
         this.getBodyOllir(tabs + "\t", body);
         this.ollirCode.append(tabs).append("\t") // make it loopar
                 .append("goto ").append(loopLabel).append(";\n");
+        // end loop
+        this.ollirCode.append(tabs).append(endLabel).append(":\n");
+    }
+
+    private void getDoWhileOllir(String tabs, JmmNode n) {
+        JmmNode condNode = n.getChildren().get(0);
+        JmmNode body = n.getChildren().get(1);
+
+        String[] labels = this.getLabelPair("Loop", "EndLoop");
+        String loopLabel = labels[0];
+        String endLabel = labels[1];
+
+        // initial cond (IMP this if has to be interpreted as an ifFalse)
+        this.contextStack.push(".bool");
+        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0)).trim();
+        this.contextStack.pop();
+        this.ollirCode.append(tabs).append("if (").append(condOllir).append(") goto ").append(endLabel).append(";\n");
+
+        // body
+        this.ollirCode.append(tabs).append(loopLabel).append(":\n");
+        this.getBodyOllir(tabs + "\t", body);
+        // inner condition (IMP this if has to be interpreted as an ifFalse so we negate it)
+        this.contextStack.push(".bool");
+        String innerCondOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0), true).trim();
+        this.contextStack.pop();
+        this.ollirCode.append(tabs).append("\t") // make it loopar
+                .append("if (").append(innerCondOllir).append(") goto ").append(loopLabel).append(";\n");
         // end loop
         this.ollirCode.append(tabs).append(endLabel).append(":\n");
     }

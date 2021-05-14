@@ -7,7 +7,7 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,7 +47,8 @@ public class BackendStage implements JasminBackend {
             return new JasminResult(ollirResult, jasminCode, reports);
         } catch (OllirErrorException e) {
             return new JasminResult(ollirClass.getClassName(), null,
-                    Arrays.asList(Report.newError(Stage.GENERATION, -1, -1, "Exception during Jasmin generation", e)));
+                    Collections.singletonList(Report.newError(Stage.GENERATION, -1, -1,
+                            "Exception during Jasmin generation", e)));
         }
     }
 }

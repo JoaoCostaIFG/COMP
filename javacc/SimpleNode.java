@@ -175,6 +175,52 @@ class SimpleNode implements Node, JmmNode {
     public int getId() {
         return id;
     }
+
+    /**
+     * Removes the child at the specified position.
+     *
+     * @param index
+     * @return the node that has been removed
+     */
+    public JmmNode removeChild(int index) {
+        JmmNode ret = null;
+        Node[] copy = new Node[this.children.length - 1];
+        for (int i = 0, j = 0; i < this.children.length; i++) {
+            if (i != index)
+                copy[j++] = this.children[i];
+            else
+                ret = (JmmNode) this.children[i];
+        }
+        this.children = copy;
+        return ret;
+    }
+
+    /**
+     * Removes the given child.
+     *
+     * @param node
+     * @return the node that has been removed, which is the same as the given node
+     */
+    public int removeChild(JmmNode node) {
+        int ret = -1;
+        Node[] copy = new Node[this.children.length - 1];
+        for (int i = 0, j = 0; i < this.children.length; i++) {
+            if ((JmmNode) this.children[i] != node)
+                copy[j++] = this.children[i];
+            else
+                ret = i;
+        }
+        this.children = copy;
+        return ret;
+    }
+
+    /**
+     * Removes this node from the tree.
+     */
+    public void delete() {
+        JmmNode parent = (JmmNode) this.parent;
+        parent.removeChild(this);
+    }
 }
 
 /* JavaCC - OriginalChecksum=d33fdb2b8063d5de3474649324d5d160 (do not edit this line) */

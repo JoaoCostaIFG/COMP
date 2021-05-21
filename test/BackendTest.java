@@ -15,6 +15,7 @@
 import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.specs.util.SpecsIo;
+import pt.up.fe.specs.util.SpecsStrings;
 
 import java.util.*;
 
@@ -29,7 +30,7 @@ public class BackendTest {
     }
 
     private void test(String code, String expectedResult, List<String> args) {
-        assertEquals(expectedResult, test(code, args));
+        assertEquals(SpecsStrings.normalizeFileContents(expectedResult), SpecsStrings.normalizeFileContents(test(code, args)));
     }
 
     private void test(String code, String expectedResult) {

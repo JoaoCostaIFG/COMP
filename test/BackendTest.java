@@ -29,10 +29,17 @@ public class BackendTest {
         return result.run(args);
     }
 
+    private String test(String code, List<String> args, String input) {
+        var result = TestUtils.backend(code);
+        TestUtils.noErrors(result.getReports());
+        return result.run(args, input);
+    }
+
     private void test(String code, String expectedResult, List<String> args) {
         assertEquals(SpecsStrings.normalizeFileContents(expectedResult),
                 SpecsStrings.normalizeFileContents(test(code, args)));
     }
+
 
     private void test(String code, String expectedResult) {
         test(code, expectedResult, Collections.emptyList());
@@ -90,14 +97,15 @@ public class BackendTest {
     /* INTERACTIVE PROGRAMS (NEED USER INPUT) */
     @Test
     public void testLife() {
-        // this game is interactive: enter any non-empty input to step the game
-        test(SpecsIo.getResource("fixtures/public/Life.jmm"), "a");
+        // this game is interactive and has no end: enter any non-empty input to step the game
+        test(SpecsIo.getResource("fixtures/public/Life.jmm"), Collections.emptyList(), "1\n");
     }
 
     @Test
     public void testMonteCarloPi() {
         // this test expects user input => no output can be expected without mocking user input
-        test(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"), "a");
+        test(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"), Collections.emptyList(),
+                "1\n");
     }
 
     @Test
@@ -107,7 +115,8 @@ public class BackendTest {
         // System.setIn(inputSS);
 
         // this test is an interactive game => no output can be expected without mocking user input
-        test(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"), "a");
+        test(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"), Collections.emptyList(),
+                "0\n0\n0\n1\n1\n0\n1\n1\n2\n0\n");
     }
 
     /* OUR EXAMPLE PROGRAMS */
@@ -129,12 +138,14 @@ public class BackendTest {
     @Test
     public void SkaneTest() {
         // this test is an interactive game => no output can be expected without mocking user input
-        test(SpecsIo.getResource("MyExamplePrograms/skane.jmm"), Collections.emptyList());
+        test(SpecsIo.getResource("MyExamplePrograms/skane.jmm"), Collections.emptyList(),
+                "7\n");
     }
 
     @Test
     public void FibonacciTest() {
-        test(SpecsIo.getResource("MyExamplePrograms/fibonacci.jmm"), Collections.emptyList());
+        test(SpecsIo.getResource("MyExamplePrograms/fibonacci.jmm"), Collections.emptyList(),
+                "11\n");
     }
 
     @Test

@@ -1,0 +1,24 @@
+import io;
+
+class ConstantOptimizations {
+    public static void main(String[] args) {
+        int a;
+        int b;
+        int c;
+
+        a = 1 + 2 + 3 * 5 * 6;
+        b = a * 5;
+        if (1 + 2 < 2 + 3) {
+            c = a * b;
+        } else {
+            c = a + b;
+            a = 1;
+        }
+
+        // notice that a is changed inside a branch of the if statement, as such its
+        // constant value can't be propagated
+        c = a - b;
+
+        io.println(c);
+    }
+}

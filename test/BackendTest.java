@@ -30,7 +30,8 @@ public class BackendTest {
     }
 
     private void test(String code, String expectedResult, List<String> args) {
-        assertEquals(SpecsStrings.normalizeFileContents(expectedResult), SpecsStrings.normalizeFileContents(test(code, args)));
+        assertEquals(SpecsStrings.normalizeFileContents(expectedResult),
+                SpecsStrings.normalizeFileContents(test(code, args)));
     }
 
     private void test(String code, String expectedResult) {
@@ -134,5 +135,10 @@ public class BackendTest {
     @Test
     public void FibonacciTest() {
         test(SpecsIo.getResource("MyExamplePrograms/fibonacci.jmm"), Collections.emptyList());
+    }
+
+    @Test
+    public void ConstantsOptimizationTest() {
+        test(SpecsIo.getResource("MyExamplePrograms/ConstantsOptimizations.jmm"), "-372\n");
     }
 }

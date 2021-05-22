@@ -33,38 +33,38 @@ class Lazysort extends Quicksort {
         else {
             lazy = false;
         }
-
+        
         if ( lazy ) {
             lazy = !lazy;
         }
         else {
             lazy = this.quicksort(L, 0, L.length - 1);
         }
-
+        
         return lazy;
     }
-
+    
     public boolean beLazy(int[] L) {
         int _allowedNameL;
-        int $allowedNameI;
+        int _allowedNameI;
 		int rand;
         _allowedNameL = L.length;
+        
+        _allowedNameI = 0;
+        while (_allowedNameI < _allowedNameL/2) {
+            L[_allowedNameI] = MathUtils.random(0, 10);
 
-        $allowedNameI = 0;
-        while ($allowedNameI < _allowedNameL/2) {
-            L[$allowedNameI] = MathUtils.random(0, 10);
-
-            $allowedNameI = $allowedNameI + 1;
+            _allowedNameI = _allowedNameI + 1;
         }
-
-        while ($allowedNameI < _allowedNameL) {
+        
+        while (_allowedNameI < _allowedNameL) {
         	rand = MathUtils.random(0, 10);
-            L[$allowedNameI] = rand + 1;
+            L[_allowedNameI] = rand + 1;
 
-            $allowedNameI = $allowedNameI + 1;
-        }
-
-
+            _allowedNameI = _allowedNameI + 1;
+        }        
+        
+        
         return true;
     }
 }

@@ -6,6 +6,8 @@ import java.util.*;
 
 public class OllirEmitter {
     private static final String regPrefix = "t";
+    // for constant folding and constant propagation
+    private static final boolean doOptimizations = true;
 
     private final MySymbolTable symbolTable;
     private final StringBuilder ollirCode;
@@ -213,7 +215,10 @@ public class OllirEmitter {
                     this.getIfOllir(tabs, n);
                     break;
                 case "WhileLoop":
-                    this.getWhileOllir(tabs, n);
+                    if (doOptimizations)
+                        this.getDoWhileOllir(tabs, n);
+                    else
+                        this.getWhileOllir(tabs, n);
                     break;
             }
         }
@@ -245,7 +250,6 @@ public class OllirEmitter {
     }
 
     /* Old version of the while loop (before DoWhile optimization) */
-    /*
     private void getWhileOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
@@ -268,9 +272,9 @@ public class OllirEmitter {
         // end loop
         this.ollirCode.append(tabs).append(endLabel).append(":\n");
     }
-    */
 
-    private void getWhileOllir(String tabs, JmmNode n) {
+    /* New version of the while loop (after DoWhile optimization) */
+    private void getDoWhileOllir(String tabs, JmmNode n) {
         JmmNode condNode = n.getChildren().get(0);
         JmmNode body = n.getChildren().get(1);
 
@@ -333,6 +337,9 @@ public class OllirEmitter {
     }
 
     private void rmAssignedConstants(JmmNode... nodes) {
+        if (!doOptimizations)
+            return;
+
         for (JmmNode n : nodes) {
             for (JmmNode child : n.getChildren()) {
                 if (child.getKind().equals("Assign")) {
@@ -366,7 +373,7 @@ public class OllirEmitter {
         this.contextStack.pop();
 
         // both children are constants => Constant Folding
-        if (this.stringIsInt(childLeftOllir) && this.stringIsInt(childRightOllir)) {
+        if (doOptimizations && this.stringIsInt(childLeftOllir) && this.stringIsInt(childRightOllir)) {
             switch (op) {
                 case "+":
                     return (Integer.parseInt(childLeftOllir.split("\\.")[0]) +
@@ -586,7 +593,7 @@ public class OllirEmitter {
         for (Symbol s : this.localVars) {
             if (s.getName().equals(name)) {
                 // search in constant table (Constant propagation)
-                if (this.constantTable.containsKey(name))
+                if (doOptimizations && this.constantTable.containsKey(name))
                     return this.constantTable.get(name) + this.getTypeOllir(s.getType());
                 return this.getSymbolOllir(s);
             }
@@ -708,7 +715,7 @@ public class OllirEmitter {
         this.contextStack.push(type);
         String content = this.getOpOllir(tabs, rightChild, isField).trim();
         // Constant Propagation
-        if (this.stringIsInt(content) && !isArrayAccess) {
+        if (doOptimizations && this.stringIsInt(content) && !isArrayAccess) {
             this.constantTable.put(leftChild.get("name"), Integer.valueOf(content.split("\\.")[0]));
         }
         this.contextStack.pop();

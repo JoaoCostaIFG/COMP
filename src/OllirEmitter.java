@@ -310,7 +310,7 @@ public class OllirEmitter {
         JmmNode elseBody = n.getChildren().get(2);
 
         this.contextStack.push(".bool");
-        String condOllir = this.getCondOllir(tabs + "\t", condNode.getChildren().get(0));
+        String condOllir = this.getCondOllir(tabs, condNode.getChildren().get(0));
         this.contextStack.pop();
         String[] labels = this.getLabelPair("Else", "Endif");
         String elseLabel = labels[0];

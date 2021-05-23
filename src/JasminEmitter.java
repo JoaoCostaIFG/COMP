@@ -231,10 +231,14 @@ public class JasminEmitter {
             case GETFIELD:
                 break;
             case UNARYOPER:
+                UnaryOpInstruction unaryOpInstruction = (UnaryOpInstruction) instr;
+                String name = this.getElemName(unaryOpInstruction.getRightOperand());
+                if (name != null)
+                    this.uses.get(targetInstr).add(name);
                 break;
             case BINARYOPER:
                 BinaryOpInstruction binaryOpInstruction = (BinaryOpInstruction) instr;
-                String name = this.getElemName(binaryOpInstruction.getLeftOperand());
+                name = this.getElemName(binaryOpInstruction.getLeftOperand());
                 if (name != null)
                     this.uses.get(targetInstr).add(name);
                 name = this.getElemName(binaryOpInstruction.getRightOperand());
@@ -277,7 +281,7 @@ public class JasminEmitter {
                     this.defs.get(instr).add(name);
             }
         } else {
-            this.fillUsesMap(instr, instr);
+            this.fillUsesMap(instr);
         }
 
         for (Node node : instr.getPred()) {

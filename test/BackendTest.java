@@ -98,7 +98,7 @@ public class BackendTest {
     @Test
     public void testLife() {
         // this game is interactive and has no end: enter any non-empty input to step the game
-        test(SpecsIo.getResource("fixtures/public/Life.jmm"), Collections.emptyList(), "1\n");
+        test(SpecsIo.getResource("fixtures/public/Life.jmm"), Collections.emptyList(), "1\n2\n3\n4\n5\n6\n7\n8\n9\n\n");
     }
 
     @Test

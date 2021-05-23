@@ -1,4 +1,5 @@
 import org.specs.comp.ollir.Method;
+import org.specs.comp.ollir.Node;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
@@ -6,19 +7,17 @@ import java.util.*;
 
 public class JasminEmitter {
     private static final String labelPrefix = "l";
-
-    private final boolean debug = true;
+    private static final boolean debug = true;
 
     private final ClassUnit ollirClass;
     private StringBuilder jasminCode;
-    private HashMap<String, Descriptor> methodVarTable;
-    private HashMap<String, Instruction> methodLabels;
+    private Map<String, Descriptor> methodVarTable;
+    private Map<String, Instruction> methodLabels;
     private final Stack<Instruction> contextStack;
     private Integer lineNo;
     private int stackSize, stackSizeCnt;
     private final Set<String> locals;
-
-    // TODO stack and locals size
+    private final Map<Node, Set<String>> defs, uses;
 
     public JasminEmitter(ClassUnit ollirClass) {
         this.ollirClass = ollirClass;
@@ -29,6 +28,8 @@ public class JasminEmitter {
         this.lineNo = 0;
         this.stackSize = this.stackSizeCnt = 0;
         this.locals = new HashSet<>();
+        this.defs = new HashMap<>();
+        this.uses = new HashMap<>();
     }
 
     public String getJasminCode() {
@@ -88,7 +89,6 @@ public class JasminEmitter {
         return this;
     }
 
-    // TODO complete this
     private String elemTypeJasmin(ElementType type) {
         switch (type) {
             case INT32:
@@ -131,7 +131,7 @@ public class JasminEmitter {
                 return "i";
             case VOID:
                 return "";
-            default: // TODO ?
+            default:
                 return "a";
         }
     }
@@ -194,11 +194,112 @@ public class JasminEmitter {
         this.updateStackSize(-1);
     }
 
+    private String getElemName(Element e) {
+        if (!e.getClass().equals(Operand.class))
+            return null;
+
+        return ((Operand) e).getName();
+    }
+
+    private void fillUsesMap(Instruction targetInstr, Instruction instr) {
+        this.uses.put(targetInstr, new HashSet<>());
+
+        // TODO
+        Element e;
+        switch (instr.getInstType()) {
+            case ASSIGN:
+                AssignInstruction assignInstruction = (AssignInstruction) instr;
+                // dest
+                e = assignInstruction.getDest();
+                if (e.getClass().equals(ArrayOperand.class)) {
+                    ArrayOperand arrayOperand = (ArrayOperand) e;
+                    for (Element indexElem : arrayOperand.getIndexOperands()) {
+                        String name = this.getElemName(indexElem);
+                        if (name != null)
+                            this.uses.get(targetInstr).add(name);
+                    }
+                }
+                break;
+            case CALL:
+                break;
+            case BRANCH:
+                break;
+            case RETURN:
+                break;
+            case PUTFIELD:
+                break;
+            case GETFIELD:
+                break;
+            case UNARYOPER:
+                break;
+            case BINARYOPER:
+                BinaryOpInstruction binaryOpInstruction = (BinaryOpInstruction) instr;
+                String name = this.getElemName(binaryOpInstruction.getLeftOperand());
+                if (name != null)
+                    this.uses.get(targetInstr).add(name);
+                name = this.getElemName(binaryOpInstruction.getRightOperand());
+                if (name != null)
+                    this.uses.get(targetInstr).add(name);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void fillUsesMap(Instruction instr) {
+        this.fillUsesMap(instr, instr);
+    }
+
+    private void fillDefUseMap(Instruction instr) {
+        if (this.defs.containsKey(instr) || this.uses.containsKey(instr))
+            return;
+
+        this.defs.put(instr, new HashSet<>());
+
+        if (instr.getInstType() == InstructionType.ASSIGN) {
+            this.fillUsesMap(instr, ((AssignInstruction) instr).getRhs());
+
+            // TODO array assignment
+            // TODO PUTFIELD
+
+            AssignInstruction assignInstruction = (AssignInstruction) instr;
+            Element dest = assignInstruction.getDest();
+            if (dest.getClass().equals(ArrayOperand.class)) {
+                ArrayOperand arrayOperand = (ArrayOperand) dest;
+                for (Element indexElem : arrayOperand.getIndexOperands()) {
+                    String name = this.getElemName(indexElem);
+                    if (name != null)
+                        this.uses.get(instr).add(name);
+                }
+            } else {
+                String name = this.getElemName(dest);
+                if (name != null)
+                    this.defs.get(instr).add(name);
+            }
+        } else {
+            this.fillUsesMap(instr, instr);
+        }
+
+        for (Node node : instr.getPred()) {
+            if (node.getNodeType() == NodeType.INSTRUCTION)
+                this.fillDefUseMap((Instruction) node);
+        }
+
+        System.out.println(instr.getId() + " Defs: " + this.defs.get(instr) + " Uses: " + this.uses.get(instr));
+    }
+
     private void methodJasmin(Method method) {
         if (method.isConstructMethod()) {
             this.standardInitializerJasmin();
             return;
         }
+
+        List<Instruction> methodInstructions = method.getInstructions();
+
+        // fill the defs table
+        this.defs.clear();
+        this.uses.clear();
+        this.fillDefUseMap(methodInstructions.get(methodInstructions.size() - 1));
 
         this.addEmptyLine()
                 .addCode(".method public ");
@@ -226,7 +327,7 @@ public class JasminEmitter {
         // track the stack size limit value to set
         this.stackSize = 0;
         // body
-        for (Instruction i : method.getInstructions()) {
+        for (Instruction i : methodInstructions) {
             this.stackSizeCnt = 0;
             this.instructionJasmin(tabs, i);
             // update max stackSize (if needed)

@@ -7,7 +7,7 @@ import java.util.*;
 public class OllirEmitter {
     private static final String regPrefix = "t";
     // for constant folding and constant propagation
-    private static final boolean doOptimizations = true;
+    private static final boolean doOptimizations = false;
 
     private final MySymbolTable symbolTable;
     private final StringBuilder ollirCode;
@@ -675,7 +675,6 @@ public class OllirEmitter {
                 this.symbolTable.getFields().stream().anyMatch(v -> v.getName().equals(name));
     }
 
-    // TODO resuse registers, e.g.: map of varName -> register
     private String getAssignOllir(String tabs, JmmNode node) {
         JmmNode leftChild = node.getChildren().get(0),
                 rightChild = node.getChildren().get(1);

@@ -1,7 +1,5 @@
 import org.specs.comp.ollir.Method;
-import org.specs.comp.ollir.Node;
 import org.specs.comp.ollir.*;
-import pt.up.fe.comp.jmm.ollir.OllirUtils;
 
 import java.util.*;
 
@@ -434,7 +432,7 @@ public class JasminEmitter {
     private void callInstructionJasmin(String tabs, CallInstruction instr) {
         StringBuilder ret = new StringBuilder().append(tabs);
 
-        CallType invType = OllirUtils.getCallInvocationType(instr);
+        CallType invType = instr.getInvocationType();
         this.comment(tabs, invType.toString()); // for DEBUG
         switch (invType) {
             case invokevirtual:

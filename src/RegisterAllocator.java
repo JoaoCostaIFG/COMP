@@ -70,6 +70,30 @@ public class RegisterAllocator {
         }
     }
 
+    private void livenessAnalysisForward() {
+        System.out.println("Liveness analysis (forward)");
+
+        while (this.instrChanged()) {
+            for (int i = 0; i < this.instructions.size(); ++i) {
+                RegisterAllocatorIntruction rInstr = this.instructions.get(i);
+
+                // ins
+                Set<String> newIn = new HashSet<>(rInstr.getOut());
+                newIn.removeAll(rInstr.getDef());
+                newIn.addAll(rInstr.getUse());
+                rInstr.setIn(newIn);
+
+                // outs
+                Set<String> newOut = new HashSet<>();
+                for (int j : rInstr.getSuc())
+                    newOut.addAll(this.instructions.get(j - 1).getIn());
+                rInstr.setOut(newOut);
+            }
+
+            System.out.println(this);
+        }
+    }
+
     private boolean instrChanged() {
         for (RegisterAllocatorIntruction ri : this.instructions) {
             if (ri.changed())

@@ -105,7 +105,7 @@ public class BackendTest {
     public void testMonteCarloPi() {
         // this test expects user input => no output can be expected without mocking user input
         test(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"), Collections.emptyList(),
-                "1\n");
+                "100000\n");
     }
 
     @Test

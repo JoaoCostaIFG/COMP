@@ -23,16 +23,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class BackendTest {
-    private String test(String code, List<String> args) {
-        var result = TestUtils.backend(code);
+    private String test(String code, List<String> args, String input) {
+        // IMP the code of TestUtils.backend(String code) was copied here so we can enable optimizations.
+        var ollirResult = TestUtils.optimize(code, true);
+        TestUtils.noErrors(ollirResult.getReports());
+        var result = TestUtils.backend(ollirResult);
+
         TestUtils.noErrors(result.getReports());
-        return result.run(args);
+        if (input == null) return result.run(args);
+        return result.run(args, input);
     }
 
-    private String test(String code, List<String> args, String input) {
-        var result = TestUtils.backend(code);
-        TestUtils.noErrors(result.getReports());
-        return result.run(args, input);
+    private String test(String code, List<String> args) {
+        return test(code, args, null);
     }
 
     private void test(String code, String expectedResult, List<String> args) {
@@ -98,6 +101,7 @@ public class BackendTest {
     @Test
     public void testLife() {
         // this game is interactive and has no end: enter any non-empty input to step the game
+        // this game is infinite so we send it some bad input so it crashes after 9 steps
         test(SpecsIo.getResource("fixtures/public/Life.jmm"), Collections.emptyList(), "1\n2\n3\n4\n5\n6\n7\n8\n9\n\n");
     }
 
@@ -105,7 +109,7 @@ public class BackendTest {
     public void testMonteCarloPi() {
         // this test expects user input => no output can be expected without mocking user input
         test(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"), Collections.emptyList(),
-                "100000\n");
+                "1000000\n");
     }
 
     @Test
@@ -121,35 +125,40 @@ public class BackendTest {
 
     /* OUR EXAMPLE PROGRAMS */
     @Test
-    public void varNotInitTest() {
-        test(SpecsIo.getResource("MyExamplePrograms/varNotInit.jmm"), Collections.emptyList());
-    }
-
-    @Test
-    public void InferenceTest() {
-        test(SpecsIo.getResource("MyExamplePrograms/inference.jmm"), Collections.emptyList());
-    }
-
-    @Test
-    public void BinarySearchTest() {
+    public void binarySearchTest() {
         test(SpecsIo.getResource("MyExamplePrograms/BinarySearch.jmm"), "5\n");
     }
 
     @Test
-    public void SkaneTest() {
-        // this test is an interactive game => no output can be expected without mocking user input
-        test(SpecsIo.getResource("MyExamplePrograms/skane.jmm"), Collections.emptyList(),
-                "7\n");
+    public void constantsOptimizationTest() {
+        test(SpecsIo.getResource("MyExamplePrograms/ConstantsOptimizations.jmm"), "-372\n");
     }
 
     @Test
-    public void FibonacciTest() {
-        test(SpecsIo.getResource("MyExamplePrograms/fibonacci.jmm"), Collections.emptyList(),
+    public void fibonacciTest() {
+        test(SpecsIo.getResource("MyExamplePrograms/Fibonacci.jmm"), Collections.emptyList(),
                 "11\n");
     }
 
     @Test
-    public void ConstantsOptimizationTest() {
-        test(SpecsIo.getResource("MyExamplePrograms/ConstantsOptimizations.jmm"), "-372\n");
+    public void inferenceTest() {
+        test(SpecsIo.getResource("MyExamplePrograms/Inference.jmm"), Collections.emptyList());
+    }
+
+    @Test
+    public void skaneTest() {
+        // this test is an interactive game => no output can be expected without mocking user input
+        test(SpecsIo.getResource("MyExamplePrograms/Skane.jmm"), Collections.emptyList(),
+                "7\n\n");
+    }
+
+    @Test
+    public void staticClassFieldsTest() {
+        test(SpecsIo.getResource("MyExamplePrograms/StaticClassFields.jmm"), Collections.emptyList());
+    }
+
+    @Test
+    public void varNotInitTest() {
+        test(SpecsIo.getResource("MyExamplePrograms/VarNotInit.jmm"), Collections.emptyList());
     }
 }

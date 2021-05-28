@@ -1,0 +1,13 @@
+/* REASON:
+    Variable "i" is part of the class and can't be accessed from a static method.
+*/
+
+class StaticClassFields {
+    int i;
+
+    public static void main(String[] args) {
+        int j;
+        i = 0;
+        j = i;
+    }
+}

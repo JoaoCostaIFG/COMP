@@ -19,6 +19,7 @@ public class StaticVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
 
         addVisit("Binary", this::visitDot);
         addVisit("Literal", this::visitLiteral);
+        addVisit("Var", this::visitAssignment);
     }
 
     private Boolean visitDot(JmmNode node, List<Report> reports) {
@@ -39,31 +40,42 @@ public class StaticVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         return true;
     }
 
-    private Boolean visitLiteral(JmmNode node, List<Report> reports) {
-        if (!node.get("type").equals("identifier") || !this.method.isMain())
-            return true;
-
-        String literalName = node.get("name");
+    private boolean checkByVarName(JmmNode node, String varName, List<Report> reports) {
         // local vars
         for (Symbol s : this.method.getLocalVars()) {
-            if (s.getName().equals(literalName))
+            if (s.getName().equals(varName))
                 return true;
         }
         // method parameters
         for (Symbol s : this.method.getParameters()) {
-            if (s.getName().equals(literalName))
+            if (s.getName().equals(varName))
                 return true;
         }
 
         // has to be class field
         for (Symbol s : this.symbolTable.getFields()) {
-            if (s.getName().equals(literalName)) {
+            if (s.getName().equals(varName)) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                         parseInt(node.get("line")), parseInt(node.get("col")),
-                        "The '" + literalName + "' variable cannot be referenced from a static context (it's a class field)."));
+                        "The '" + varName + "' variable cannot be referenced from a static context (it's a class field)."));
                 return false;
             }
         }
+
         return true;
+    }
+
+    private Boolean visitLiteral(JmmNode node, List<Report> reports) {
+        if (!node.get("type").equals("identifier") || !this.method.isMain())
+            return true;
+
+        return this.checkByVarName(node, node.get("name"), reports);
+    }
+
+    private Boolean visitAssignment(JmmNode node, List<Report> reports) {
+        if (!this.method.isMain())
+            return true;
+
+        return this.checkByVarName(node, node.get("name"), reports);
     }
 }

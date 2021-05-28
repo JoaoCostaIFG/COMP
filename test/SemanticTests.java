@@ -102,6 +102,6 @@ public class SemanticTests {
 
     @Test
     public void VarNotInitTest() {
-        badTest(SpecsIo.read("test/varNotInit.jmm"), 1);
+        badTest(SpecsIo.read("test/VarNotInit.jmm"), 1);
     }
 }

@@ -24,7 +24,7 @@ class C {
             i = i + 1;
         }
 
-        return sum;
+        return sum * 0 + 6;
     }
 
     public static void main(String[] args) {

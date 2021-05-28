@@ -1,3 +1,8 @@
+/* IMPORTANT:
+    Notice that by sanitazing variable names, we can have variables with names
+    like 'array'. See method 'processInput'
+*/
+
 import io;
 import MathUtils;
 
@@ -37,7 +42,7 @@ class Skane {
     public boolean processInput(int input) {
         int counter;
         int newCell;
-        int[] newSnake;
+        int[] array;
         boolean toReturn;
 
         toReturn = true;
@@ -86,14 +91,14 @@ class Skane {
 
         // Food
         if (this.eq(newCell, food)) {
-            newSnake = new int[snake.length + 1];
-            newSnake[0] = newCell;
+            array = new int[snake.length + 1];
+            array[0] = newCell;
             counter = 1;
-            while (counter < newSnake.length) {
-                newSnake[counter] = snake[counter - 1];
+            while (counter < array.length) {
+                array[counter] = snake[counter - 1];
                 counter = counter + 1;
             }
-            this.setSnake(newSnake);
+            this.setSnake(array);
             this.genNewFood();
         } else {
             //Moving body

@@ -1,5 +1,9 @@
+import GraphViewer.Vertex;
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.*;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.*;
 
@@ -8,6 +12,7 @@ public class JasminEmitter {
     private static final boolean debug = true;
 
     private final ClassUnit ollirClass;
+    private final List<Report> reports;
     private StringBuilder jasminCode;
     private Map<String, Descriptor> methodVarTable;
     private Map<String, Instruction> methodLabels;
@@ -16,8 +21,9 @@ public class JasminEmitter {
     private int stackSize, stackSizeCnt;
     private final Set<String> locals;
 
-    public JasminEmitter(ClassUnit ollirClass) {
+    public JasminEmitter(ClassUnit ollirClass, List<Report> reports) {
         this.ollirClass = ollirClass;
+        this.reports = reports;
         this.jasminCode = new StringBuilder();
         this.methodVarTable = new HashMap<>();
         this.methodLabels = new HashMap<>();
@@ -195,10 +201,6 @@ public class JasminEmitter {
             return;
         }
 
-        RegisterAllocator registerAllocator = new RegisterAllocator(method);
-        registerAllocator.allocate(10);
-        System.out.println(registerAllocator.getGraph());
-
         this.addEmptyLine()
                 .addCode(".method public ");
         if (method.isStaticMethod()) this.addCode("static ");
@@ -218,10 +220,35 @@ public class JasminEmitter {
         // make the methods write on a temporary buffer so we can set the number of local vars and stack size
         StringBuilder bodyJasmin = new StringBuilder();
         StringBuilder classJasmin = this.setStringBuilder(bodyJasmin);
+
         // local vars: this + method args + local vars
+        int maxRegisters = 0;
         this.locals.clear();
         if (!method.isStaticMethod()) this.locals.add("this");
-        for (var e : this.methodVarTable.entrySet()) this.locals.add(e.getKey());
+        for (var e : this.methodVarTable.entrySet()) {
+            this.locals.add(e.getKey());
+        }
+
+        int regsUsed = 0;
+        if (maxRegisters > 0) {
+            RegisterAllocator registerAllocator = new RegisterAllocator(method);
+            regsUsed = registerAllocator.allocate(maxRegisters);
+            System.out.println(regsUsed);
+            if (regsUsed < 0) {
+                this.reports.add(new Report(ReportType.ERROR, Stage.GENERATION, -1,
+                        "It's not possible to limit the method " + method.getMethodName()
+                                + " to " + maxRegisters + " register(s)."));
+                return;
+            }
+            System.out.println(registerAllocator.getGraph());
+
+            for (RegisterAllocatorIntruction v : registerAllocator.getInstructions()) {
+                for (String varName : v.getDef()) {
+                    this.locals.remove(varName);
+                }
+            }
+        }
+
         // track the stack size limit value to set
         this.stackSize = 0;
         // body
@@ -235,7 +262,7 @@ public class JasminEmitter {
 
         // stack and locals size
         this.addCodeLine(tabs, ".limit stack ", String.valueOf(this.stackSize))
-                .addCodeLine(tabs, ".limit locals ", String.valueOf(this.locals.size()))
+                .addCodeLine(tabs, ".limit locals ", String.valueOf(this.locals.size() + regsUsed))
                 .addEmptyLine();
 
         this.jasminCode.append(bodyJasmin);

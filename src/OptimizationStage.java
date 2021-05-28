@@ -22,17 +22,22 @@ import java.util.List;
 
 public class OptimizationStage implements JmmOptimization {
     @Override
-    public OllirResult toOllir(JmmSemanticsResult semanticsResult) {
+    public OllirResult toOllir(JmmSemanticsResult semanticsResult, boolean optimize) {
         JmmNode node = semanticsResult.getRootNode();
 
         // Convert the AST to a String containing the equivalent OLLIR code
-        OllirEmitter emitter = new OllirEmitter((MySymbolTable) semanticsResult.getSymbolTable());
+        OllirEmitter emitter = new OllirEmitter((MySymbolTable) semanticsResult.getSymbolTable(), optimize);
         String ollirCode = emitter.visit(node);
         System.err.println(ollirCode);
 
         // More reports from this stage
         List<Report> reports = new ArrayList<>();
         return new OllirResult(semanticsResult, ollirCode, reports);
+    }
+
+    @Override
+    public OllirResult toOllir(JmmSemanticsResult semanticsResult) {
+        return this.toOllir(semanticsResult, false);
     }
 
     @Override

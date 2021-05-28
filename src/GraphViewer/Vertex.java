@@ -33,7 +33,12 @@ public class Vertex {
     }
 
     public int getDegree() {
-        return this.adj.size();
+        int ret = 0;
+        for (Edge e : this.adj) {
+            if (e.dest.isEnabled)
+                ++ret;
+        }
+        return ret;
     }
 
     public void addEdge(Vertex v) {
@@ -57,6 +62,6 @@ public class Vertex {
 
     @Override
     public String toString() {
-        return this.info + "[" + this.color + "]";
+        return (isEnabled ? "" : "x") + this.info + "[" + this.color + "]";
     }
 }

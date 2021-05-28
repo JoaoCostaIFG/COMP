@@ -7,7 +7,7 @@ import java.util.*;
 public class OllirEmitter {
     private static final String regPrefix = "t";
     // for constant folding and constant propagation
-    private static final boolean doOptimizations = false;
+    private final boolean doOptimizations;
 
     private final MySymbolTable symbolTable;
     private final StringBuilder ollirCode;
@@ -18,7 +18,8 @@ public class OllirEmitter {
     private final Stack<String> contextStack; // used to infer functions types (that aren't part of our class)
     private Map<String, Integer> constantTable; // used for constant propagation
 
-    public OllirEmitter(MySymbolTable symbolTable) {
+    public OllirEmitter(MySymbolTable symbolTable, boolean doOptimizations) {
+        this.doOptimizations = doOptimizations;
         this.symbolTable = symbolTable;
         this.ollirCode = new StringBuilder();
         this.auxCount = 0;

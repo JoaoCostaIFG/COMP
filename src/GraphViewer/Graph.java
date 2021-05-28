@@ -1,16 +1,20 @@
 package GraphViewer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 public class Graph {
     private List<Vertex> vertexSet;
     private Stack<Vertex> vertexStack;
+    private int colorsUsed;
 
     public Graph() {
         this.vertexSet = new ArrayList<>();
         this.vertexStack = new Stack<>();
+        this.colorsUsed = 0;
+    }
+
+    public int getColorsUsed() {
+        return colorsUsed;
     }
 
     public List<Vertex> getVertexSet() {
@@ -66,6 +70,9 @@ public class Graph {
                 }
             }
         } while (foundOne);
+        // Step 1 check: all nodes need to be on the stack
+        if (this.vertexStack.size() != this.vertexSet.size())
+            return false;
 
         // Step 2: repeatedly color
         boolean[] colors = new boolean[k];
@@ -92,21 +99,29 @@ public class Graph {
                 return false;
         }
 
+        // Step 3: save colors used
+        Set<Integer> colorsUsedSet = new HashSet<>();
+        for (Vertex v : this.vertexSet)
+            colorsUsedSet.add(v.color);
+        this.colorsUsed = colorsUsedSet.size();
+
         return true;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
+        Set<Vertex> alreadyDrawn = new HashSet<>();
         for (Vertex v : this.vertexSet) {
             if (v.getAdj().size() == 0) {
                 builder.append(v).append("\n");
             } else {
                 for (Edge e : v.getAdj()) {
-                    if (v.isEnabled && e.dest.isEnabled)
+                    if (v.isEnabled && e.dest.isEnabled && !alreadyDrawn.contains(e.dest))
                         builder.append(v).append(" --- ").append(e.dest).append("\n");
                 }
             }
+            alreadyDrawn.add(v);
         }
 
         return builder.toString();

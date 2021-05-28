@@ -23,7 +23,7 @@ public class OptimizeTest {
      *  helper
      */
     private void optimizeTest(String jmmCode) {
-        var result = TestUtils.optimize(jmmCode);
+        var result = TestUtils.optimize(jmmCode, true);
         //TestUtils.noErrors(result.getReports());
     }
 

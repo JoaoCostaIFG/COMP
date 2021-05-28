@@ -8,7 +8,7 @@ import java.util.*;
 
 public class RegisterAllocator {
     private final Method method;
-    private List<RegisterAllocatorIntruction> instructions;
+    private final List<RegisterAllocatorIntruction> instructions;
     private Graph g;
 
     public RegisterAllocator(Method method) {
@@ -26,19 +26,16 @@ public class RegisterAllocator {
         this.createGraph();
     }
 
+    public List<RegisterAllocatorIntruction> getInstructions() {
+        return instructions;
+    }
+
     private void fillDefUseMap(Instruction instr) {
         if (this.instructions.get(instr.getId() - 1) != null)
             return;
 
-        RegisterAllocatorIntruction rInstr = new RegisterAllocatorIntruction(instr);
+        RegisterAllocatorIntruction rInstr = new RegisterAllocatorIntruction(this.method, instr);
         this.instructions.set(instr.getId() - 1, rInstr);
-
-        /*
-        for (Node node : instr.getPred()) {
-            if (node.getNodeType() == NodeType.INSTRUCTION)
-                this.fillDefUseMap((Instruction) node);
-        }
-        */
     }
 
     private void fillDefUseMap() {
@@ -66,9 +63,9 @@ public class RegisterAllocator {
                 newIn.addAll(rInstr.getUse());
                 rInstr.setIn(newIn);
             }
-
-            System.out.println(this);
         }
+
+        System.out.println(this);
     }
 
     private void livenessAnalysisForward() {
@@ -90,9 +87,9 @@ public class RegisterAllocator {
                     newOut.addAll(this.instructions.get(j - 1).getIn());
                 rInstr.setOut(newOut);
             }
-
-            System.out.println(this);
         }
+
+        System.out.println(this);
     }
 
     private boolean instrChanged() {
@@ -117,12 +114,18 @@ public class RegisterAllocator {
                     this.g.addEdge(origInfo, destInfo);
                 }
             }
+
+            for (String origInfo : ri.getOut()) {
+                for (String destInfo : ri.getOut()) {
+                    this.g.addEdge(origInfo, destInfo);
+                }
+            }
         }
     }
 
-    public boolean allocate(int maxRegNo) {
+    public int allocate(int maxRegNo) {
         if (!this.g.graphColoring(maxRegNo))
-            return false;
+            return -1;
 
         // get regs available for local vars
         List<Integer> regsAvailable = new ArrayList<>();
@@ -140,7 +143,7 @@ public class RegisterAllocator {
             entry.getValue().setVirtualReg(regsAvailable.get(v.getColor()));
         }
 
-        return true;
+        return this.g.getColorsUsed();
     }
 
     public Graph getGraph() {

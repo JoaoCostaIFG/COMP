@@ -26,23 +26,19 @@ import java.util.List;
 public class BackendStage implements JasminBackend {
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
+        // More reports from this stage
+        List<Report> reports = new ArrayList<>();
         ClassUnit ollirClass = ollirResult.getOllirClass();
 
         try {
-            // Example of what you can do with the OLLIR class
             ollirClass.checkMethodLabels(); // check the use of labels in the OLLIR loaded
             ollirClass.buildCFGs(); // build the CFG of each method
-            // ollirClass.outputCFGs(); // output to .dot files the CFGs, one per method
             ollirClass.buildVarTables(); // build the table of variables for each method
-            // ollirClass.show(); // print to console main information about the input OLLIR
 
             // Convert the OLLIR to a String containing the equivalent Jasmin code
-            JasminEmitter jasminEmitter = new JasminEmitter(ollirClass);
+            JasminEmitter jasminEmitter = new JasminEmitter(ollirClass, reports);
             String jasminCode = jasminEmitter.parse();
             System.err.println(jasminCode);
-
-            // More reports from this stage
-            List<Report> reports = new ArrayList<>();
 
             return new JasminResult(ollirResult, jasminCode, reports);
         } catch (OllirErrorException e) {

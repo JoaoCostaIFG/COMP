@@ -1,3 +1,4 @@
+import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.Node;
 import org.specs.comp.ollir.*;
 
@@ -7,13 +8,15 @@ import java.util.List;
 import java.util.Set;
 
 public class RegisterAllocatorIntruction {
+    private final Method method;
     private final Instruction instr;
     private final Set<String> def;
     private final Set<String> use;
     private Set<String> oldIn, in;
     private Set<String> oldOut, out;
 
-    public RegisterAllocatorIntruction(Instruction instr) {
+    public RegisterAllocatorIntruction(Method method, Instruction instr) {
+        this.method = method;
         this.instr = instr;
         this.def = new HashSet<>();
         this.use = new HashSet<>();
@@ -35,9 +38,8 @@ public class RegisterAllocatorIntruction {
             Element dest = assignInstruction.getDest();
             if (dest.getClass().equals(ArrayOperand.class)) {
                 ArrayOperand arrayOperand = (ArrayOperand) dest;
-                for (Element indexElem : arrayOperand.getIndexOperands()) {
+                for (Element indexElem : arrayOperand.getIndexOperands())
                     this.addOperandToUse(indexElem);
-                }
             } else {
                 String destName = this.getElemName(dest);
                 if (destName != null) this.def.add(destName);
@@ -63,11 +65,6 @@ public class RegisterAllocatorIntruction {
                     }
                 }
                 break;
-            case BRANCH:
-                CondBranchInstruction condBranchInstruction = (CondBranchInstruction) instr;
-                this.addOperandToUse(condBranchInstruction.getLeftOperand());
-                this.addOperandToUse(condBranchInstruction.getRightOperand());
-                break;
             case CALL:
                 CallInstruction callInstruction = (CallInstruction) instr;
                 if (callInstruction.getInvocationType() != CallType.NEW) {
@@ -81,14 +78,19 @@ public class RegisterAllocatorIntruction {
                     this.addOperandToUse(callInstruction.getListOfOperands().get(0));
                 }
                 break;
+            case BRANCH:
+                CondBranchInstruction condBranchInstruction = (CondBranchInstruction) instr;
+                this.addOperandToUse(condBranchInstruction.getLeftOperand());
+                this.addOperandToUse(condBranchInstruction.getRightOperand());
+                break;
             case RETURN:
                 ReturnInstruction returnInstruction = (ReturnInstruction) instr;
                 if (returnInstruction.hasReturnValue())
                     this.addOperandToUse(returnInstruction.getOperand());
                 break;
             case PUTFIELD:
-                break;
-            case GETFIELD:
+                PutFieldInstruction putFieldInstruction = (PutFieldInstruction) instr;
+                this.addOperandToUse(putFieldInstruction.getThirdOperand());
                 break;
             case UNARYOPER:
                 UnaryOpInstruction unaryOpInstruction = (UnaryOpInstruction) instr;
@@ -99,6 +101,18 @@ public class RegisterAllocatorIntruction {
                 this.addOperandToUse(binaryOpInstruction.getLeftOperand());
                 this.addOperandToUse(binaryOpInstruction.getRightOperand());
                 break;
+            case NOPER:
+                SingleOpInstruction singleOpInstruction = (SingleOpInstruction) instr;
+                e = singleOpInstruction.getSingleOperand();
+                if (e.getClass().equals(ArrayOperand.class)) {
+                    ArrayOperand arrayOperand = (ArrayOperand) e;
+                    for (Element indexElem : arrayOperand.getIndexOperands())
+                        this.addOperandToUse(indexElem);
+                } else {
+                    this.addOperandToUse(e);
+                }
+                break;
+            case GETFIELD:
             default:
                 break;
         }
@@ -107,8 +121,13 @@ public class RegisterAllocatorIntruction {
     private String getElemName(Element e) {
         if (!e.getClass().equals(Operand.class)) return null;
         Operand o = (Operand) e;
-        if (o.getType().getTypeOfElement() == ElementType.CLASS) return null;
-        return o.getName();
+        ElementType elementType = o.getType().getTypeOfElement();
+        if (elementType == ElementType.BOOLEAN || elementType == ElementType.INT32) {
+            String name = o.getName();
+            if (this.method.getVarTable().get(name).getScope() == VarScope.LOCAL)
+                return name;
+        }
+        return null;
     }
 
     private void addOperandToUse(Element e) {

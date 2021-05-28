@@ -1,3 +1,6 @@
+import GraphViewer.Graph;
+import GraphViewer.Vertex;
+import GraphViewer.VertexInterface;
 import org.specs.comp.ollir.Instruction;
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.NodeType;
@@ -10,6 +13,7 @@ import java.util.Set;
 public class RegisterAllocator {
     private final Method method;
     private List<RegisterAllocatorIntruction> instructions;
+    private Graph g;
 
     public RegisterAllocator(Method method) {
         this.method = method;
@@ -23,6 +27,7 @@ public class RegisterAllocator {
 
         this.fillDefUseMap();
         this.livenessAnalysis();
+        this.createGraph();
     }
 
     private void fillDefUseMap(Instruction instr) {
@@ -100,6 +105,23 @@ public class RegisterAllocator {
                 return true;
         }
         return false;
+    }
+
+    private void createGraph() {
+        this.g = new Graph();
+        for (RegisterAllocatorIntruction ri : this.instructions) {
+            for (String info : ri.getDef()) {
+                this.g.addVertex(info);
+            }
+        }
+
+        for (RegisterAllocatorIntruction ri : this.instructions) {
+            for (String origInfo : ri.getIn()) {
+                for (String destInfo : ri.getIn()) {
+                    this.g.addEdge(origInfo, destInfo);
+                }
+            }
+        }
     }
 
     @Override

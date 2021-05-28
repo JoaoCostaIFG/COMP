@@ -1,5 +1,3 @@
-import GraphViewer.Edge;
-import GraphViewer.Vertex;
 import org.specs.comp.ollir.Node;
 import org.specs.comp.ollir.*;
 
@@ -8,37 +6,32 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RegisterAllocatorIntruction implements Vertex {
-    private final List<Edge> adj;
+public class RegisterAllocatorIntruction {
     private final Instruction instr;
     private final Set<String> def;
     private final Set<String> use;
     private Set<String> oldIn, in;
     private Set<String> oldOut, out;
-    private int color;
 
     public RegisterAllocatorIntruction(Instruction instr) {
         this.instr = instr;
-        this.adj = new ArrayList<>();
         this.def = new HashSet<>();
         this.use = new HashSet<>();
         this.oldIn = null;
         this.in = new HashSet<>();
         this.oldOut = null;
         this.out = new HashSet<>();
-        this.color = 0;
 
         this.fillDef();
     }
 
     private void fillDef() {
         if (this.instr.getInstType() == InstructionType.ASSIGN) {
-            this.fillUsesMap(((AssignInstruction) instr).getRhs());
+            AssignInstruction assignInstruction = (AssignInstruction) instr;
+            this.fillUsesMap(assignInstruction.getRhs());
 
             // TODO array assignment
             // TODO PUTFIELD
-
-            AssignInstruction assignInstruction = (AssignInstruction) instr;
             Element dest = assignInstruction.getDest();
             if (dest.getClass().equals(ArrayOperand.class)) {
                 ArrayOperand arrayOperand = (ArrayOperand) dest;
@@ -46,11 +39,13 @@ public class RegisterAllocatorIntruction implements Vertex {
                     this.addOperandToUse(indexElem);
                 }
             } else {
-                this.addOperandToUse(dest);
+                String destName = this.getElemName(dest);
+                if (destName != null) this.def.add(destName);
             }
         } else {
             this.fillUsesMap(instr);
         }
+
     }
 
     private void fillUsesMap(Instruction instr) {
@@ -159,38 +154,6 @@ public class RegisterAllocatorIntruction implements Vertex {
 
     public boolean changed() {
         return !eqSet(this.oldIn, this.in) || !eqSet(this.oldOut, this.out);
-    }
-
-    @Override
-    public int getId() {
-        return this.instr.getId();
-    }
-
-    @Override
-    public void setColor(int newColor) {
-        this.color = newColor;
-    }
-
-    @Override
-    public int getColor() {
-        return this.color;
-    }
-
-    @Override
-    public List<Edge> getAdj() {
-        return this.adj;
-    }
-
-    @Override
-    public void addEdge(Vertex v) {
-        for (Edge edge : this.adj) {
-            if (edge.getDest().getId() == v.getId())
-                return;
-        }
-
-        Edge e = new Edge(this, v);
-        this.adj.add(e);
-        v.addEdge(this);
     }
 
     private static boolean eqSet(Set<?> a, Set<?> b) {

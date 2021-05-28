@@ -1,19 +1,19 @@
 package GraphViewer;
 
 public class Edge {
-    protected final Vertex orig;
-    protected final Vertex dest;
+    protected final VertexInterface orig;
+    protected final VertexInterface dest;
 
-    public Edge(Vertex orig, Vertex dest) {
+    public Edge(VertexInterface orig, VertexInterface dest) {
         this.orig = orig;
         this.dest = dest;
     }
 
-    public Vertex getOrig() {
+    public VertexInterface getOrig() {
         return orig;
     }
 
-    public Vertex getDest() {
+    public VertexInterface getDest() {
         return dest;
     }
 }

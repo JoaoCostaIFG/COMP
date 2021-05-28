@@ -77,6 +77,8 @@ public class RegisterAllocatorIntruction {
                         for (Element arg : callInstruction.getListOfOperands())
                             this.addOperandToUse(arg);
                     }
+                } else if (callInstruction.getListOfOperands().size() > 0) {
+                    this.addOperandToUse(callInstruction.getListOfOperands().get(0));
                 }
                 break;
             case RETURN:

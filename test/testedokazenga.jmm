@@ -4,13 +4,16 @@ class C {
     public static void main(String[] args) {
         int sum;
         int i;
-        int[] A;
+        int j;
+        //int[] A;
 
-        A = new int[10];
-        sum = 0;
         i = 0;
+        sum = 0;
+        j = i * sum;
+        //A = new int[i];
         while (i < 10) {
-            sum = sum + A[i];
+            //sum = sum + A[i];
+            sum = sum + i * j;
             i = i + 1;
         }
         io.println(sum);

@@ -4,10 +4,7 @@ import org.specs.comp.ollir.Instruction;
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.NodeType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class RegisterAllocator {
     private final Method method;
@@ -134,6 +131,7 @@ public class RegisterAllocator {
             if (v == null) continue;
             regsAvailable.add(entry.getValue().getVirtualReg());
         }
+        Collections.sort(regsAvailable);
 
         // set regs for the local vars we found
         for (var entry : this.method.getVarTable().entrySet()) {

@@ -196,7 +196,7 @@ public class JasminEmitter {
         }
 
         RegisterAllocator registerAllocator = new RegisterAllocator(method);
-        registerAllocator.allocate(3);
+        registerAllocator.allocate(10);
         System.out.println(registerAllocator.getGraph());
 
         this.addEmptyLine()

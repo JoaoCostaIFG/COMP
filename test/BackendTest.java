@@ -50,7 +50,7 @@ public class BackendTest {
 
     @Test
     public void KazengaTest() {
-        test(SpecsIo.read("test/testedokazenga.jmm"), "6\n");
+        test(SpecsIo.read("test/testedokazenga.jmm"), "45\n");
     }
 
     @Test
@@ -114,10 +114,6 @@ public class BackendTest {
 
     @Test
     public void testTicTacToe() {
-        // String inputStr = "0\n0\n1\n1\n";
-        // InputStream inputSS = new java.io.ByteArrayInputStream(inputStr.getBytes());
-        // System.setIn(inputSS);
-
         // this test is an interactive game => no output can be expected without mocking user input
         test(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"), Collections.emptyList(),
                 "0\n0\n0\n1\n1\n0\n1\n1\n2\n0\n");

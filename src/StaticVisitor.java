@@ -32,7 +32,7 @@ public class StaticVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
             return true;
 
         if (this.method.isMain() && childLeft.get("type").equals("this")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+            reports.add(new Report(ReportType.WARNING, Stage.SEMANTIC,
                     parseInt(childRight.get("line")), parseInt(childRight.get("col")),
                     "The 'this' keyword cannot be referenced from a static context."));
             return false;
@@ -55,7 +55,7 @@ public class StaticVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         // has to be class field
         for (Symbol s : this.symbolTable.getFields()) {
             if (s.getName().equals(varName)) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
+                reports.add(new Report(ReportType.WARNING, Stage.SEMANTIC,
                         parseInt(node.get("line")), parseInt(node.get("col")),
                         "The '" + varName + "' variable cannot be referenced from a static context (it's a class field)."));
                 return false;

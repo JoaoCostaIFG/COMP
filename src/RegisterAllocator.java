@@ -1,6 +1,5 @@
 import GraphViewer.Graph;
 import GraphViewer.Vertex;
-import GraphViewer.VertexInterface;
 import org.specs.comp.ollir.Instruction;
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.NodeType;
@@ -122,6 +121,32 @@ public class RegisterAllocator {
                 }
             }
         }
+    }
+
+    public boolean allocate(int maxRegNo) {
+        if (!this.g.graphColoring(maxRegNo))
+            return false;
+
+        // get regs available for local vars
+        List<Integer> regsAvailable = new ArrayList<>();
+        for (var entry : this.method.getVarTable().entrySet()) {
+            Vertex v = this.g.getVertexByInfo(entry.getKey());
+            if (v == null) continue;
+            regsAvailable.add(entry.getValue().getVirtualReg());
+        }
+
+        // set regs for the local vars we found
+        for (var entry : this.method.getVarTable().entrySet()) {
+            Vertex v = this.g.getVertexByInfo(entry.getKey());
+            if (v == null) continue;
+            entry.getValue().setVirtualReg(regsAvailable.get(v.getColor()));
+        }
+
+        return true;
+    }
+
+    public Graph getGraph() {
+        return g;
     }
 
     @Override

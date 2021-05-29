@@ -31,7 +31,7 @@ compileJjtree {
 compileJavacc {
     inputDirectory = file('generated/')
     outputDirectory = file('generated/')
-	arguments = [grammar_encoding: 'UTF-8', static: 'false']	
+	arguments = [grammar_encoding: 'UTF-8', static: 'false']
 }
 
 
@@ -44,25 +44,29 @@ sourceSets {
          srcDir 'generated'
       }
    }
-	
+
    test {
       java {
          srcDir 'test'
       }
-	  
+
 	  resources {
 		srcDir 'test'
 	  }
    }
-    
+
 }
 
 
 // Create JAR with main class
 jar {
    manifest {
-      attributes 'Main-Class': 'Main'
+       attributes 'Main-Class': 'Main'
    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 
@@ -74,7 +78,7 @@ task copyJar() {
 			println 'Copying JAR file to ./'
 			from jar
 			into "./"
-		}	
+		}
     }
 }
 build.dependsOn copyJar

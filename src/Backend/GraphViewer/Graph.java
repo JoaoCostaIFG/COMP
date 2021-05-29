@@ -1,4 +1,4 @@
-package Jasmin.GraphViewer;
+package Backend.GraphViewer;
 
 import java.util.*;
 

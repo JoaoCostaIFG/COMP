@@ -1,7 +1,7 @@
-package Jasmin;
+package Backend;
 
-import Jasmin.GraphViewer.Graph;
-import Jasmin.GraphViewer.Vertex;
+import Backend.GraphViewer.Graph;
+import Backend.GraphViewer.Vertex;
 import org.specs.comp.ollir.Instruction;
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.NodeType;

@@ -1,4 +1,4 @@
-package Jasmin;
+package Backend;
 
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.Node;

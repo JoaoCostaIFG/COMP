@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class AnalysisStage implements JmmAnalysis {
-
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult parserResult) {
         // abort analysis and throw a report in case the syntatic analysis has any errors
@@ -61,7 +60,6 @@ public class AnalysisStage implements JmmAnalysis {
             staticVisitor.visit(method.getNode(), reports);
         }
 
-        System.out.println("Reports: " + reports);
         return new JmmSemanticsResult(parserResult, symbolTable, reports);
     }
 }

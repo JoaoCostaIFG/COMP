@@ -1,12 +1,18 @@
+import Analysis.AnalysisStage;
+import Backend.BackendStage;
+import LLIR.OptimizationStage;
 import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.jasmin.JasminResult;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.specs.util.SpecsIo;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.StringReader;
 import java.util.List;
-import java.util.Scanner;
 
 public class Main implements JmmParser {
     public JmmParserResult parse(String jmmCode) {
@@ -19,10 +25,21 @@ public class Main implements JmmParser {
         } catch (ParseException e) {
             List<Report> reports = jmm.getReports();
             e.setErrMsg("Failed to parse the given file");
-            System.err.println(e.getErrMsg());
             reports.add(e.getReport());
             return new JmmParserResult(null, jmm.getReports());
         }
+    }
+
+    public JmmSemanticsResult semanticAnalysis(JmmParserResult parserResult) {
+        return new AnalysisStage().semanticAnalysis(parserResult);
+    }
+
+    public OllirResult llirStage(JmmSemanticsResult semanticsResult, boolean optimize) {
+        return new OptimizationStage().toOllir(semanticsResult, optimize);
+    }
+
+    public JasminResult backendStage(OllirResult ollirResult, int regLimit) {
+        return new BackendStage(regLimit).toJasmin(ollirResult);
     }
 
     public static void err(String errStr) {
@@ -73,19 +90,50 @@ public class Main implements JmmParser {
                     break;
             }
         }
+        // we need to have a file
+        if (filename == null)
+            usage();
+        String jmmCode = SpecsIo.read(filename);
 
-        File f = new File(filename);
-        Scanner fReader = null;
-        try {
-            fReader = new Scanner(f);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            System.exit(1);
+        Main main = new Main();
+        // Syntatic analysis stage
+        System.out.println("Syntatic analysis stage...");
+        JmmParserResult parserResult = main.parse(jmmCode);
+        for (Report report : parserResult.getReports()) {
+            if (report.getType() == ReportType.ERROR)
+                err("Found errors: " + parserResult.getReports());
         }
-        StringBuilder stringBuilder = new StringBuilder();
-        while (fReader.hasNextLine())
-            stringBuilder.append(fReader.nextLine());
-        String jmmCode = stringBuilder.toString();
-        new Main().parse(jmmCode);
+        // Semantic analysis stage
+        System.out.println("Semantic analysis stage...");
+        JmmSemanticsResult semanticsResult = main.semanticAnalysis(parserResult);
+        for (Report report : semanticsResult.getReports()) {
+            if (report.getType() == ReportType.ERROR)
+                err("Found errors: " + semanticsResult.getReports());
+        }
+        // LLIR stage
+        System.out.println("LLIR stage...");
+        OllirResult ollirResult = main.llirStage(semanticsResult, doOptimizations);
+        for (Report report : ollirResult.getReports()) {
+            if (report.getType() == ReportType.ERROR)
+                err("Found errors: " + ollirResult.getReports());
+        }
+        // Backend stage
+        System.out.println("Backend stage...");
+        JasminResult jasminResult = main.backendStage(ollirResult, regLimit);
+        for (Report report : jasminResult.getReports()) {
+            if (report.getType() == ReportType.ERROR)
+                err("Found errors: " + jasminResult.getReports());
+        }
+
+        // write Jasmin file
+        String outFile = SpecsIo.getResourceName(filename) + ".j";
+        SpecsIo.write(new File(outFile), jasminResult.getJasminCode());
+
+        // show reports (if any)
+        List<Report> reports = jasminResult.getReports();
+        if (reports.size() == 0)
+            System.out.println("No reports.");
+        else
+            System.out.println("Reports: " + reports);
     }
 }

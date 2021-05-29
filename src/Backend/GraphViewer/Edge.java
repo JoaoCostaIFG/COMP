@@ -1,4 +1,4 @@
-package Jasmin.GraphViewer;
+package Backend.GraphViewer;
 
 public class Edge {
     protected final Vertex orig;

@@ -1,4 +1,4 @@
-package Jasmin.GraphViewer;
+package Backend.GraphViewer;
 
 import java.util.ArrayList;
 import java.util.List;

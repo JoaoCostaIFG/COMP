@@ -1,4 +1,4 @@
-package Jasmin;
+package Backend;
 
 import org.specs.comp.ollir.ClassUnit;
 import org.specs.comp.ollir.OllirErrorException;

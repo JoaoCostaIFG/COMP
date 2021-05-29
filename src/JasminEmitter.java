@@ -1,4 +1,3 @@
-import GraphViewer.Vertex;
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;
@@ -11,8 +10,10 @@ public class JasminEmitter {
     private static final String labelPrefix = "l";
     private static final boolean debug = true;
 
+
     private final ClassUnit ollirClass;
     private final List<Report> reports;
+    private final int maxRegisters;
     private StringBuilder jasminCode;
     private Map<String, Descriptor> methodVarTable;
     private Map<String, Instruction> methodLabels;
@@ -21,9 +22,10 @@ public class JasminEmitter {
     private int stackSize, stackSizeCnt;
     private final Set<String> locals;
 
-    public JasminEmitter(ClassUnit ollirClass, List<Report> reports) {
+    public JasminEmitter(ClassUnit ollirClass, List<Report> reports, int maxRegisters) {
         this.ollirClass = ollirClass;
         this.reports = reports;
+        this.maxRegisters = maxRegisters;
         this.jasminCode = new StringBuilder();
         this.methodVarTable = new HashMap<>();
         this.methodLabels = new HashMap<>();
@@ -31,6 +33,10 @@ public class JasminEmitter {
         this.lineNo = 0;
         this.stackSize = this.stackSizeCnt = 0;
         this.locals = new HashSet<>();
+    }
+
+    public JasminEmitter(ClassUnit ollirClass, List<Report> reports) {
+        this(ollirClass, reports, 0);
     }
 
     public String getJasminCode() {
@@ -222,7 +228,6 @@ public class JasminEmitter {
         StringBuilder classJasmin = this.setStringBuilder(bodyJasmin);
 
         // local vars: this + method args + local vars
-        int maxRegisters = 0;
         this.locals.clear();
         if (!method.isStaticMethod()) this.locals.add("this");
         for (var e : this.methodVarTable.entrySet()) {
@@ -230,17 +235,17 @@ public class JasminEmitter {
         }
 
         int regsUsed = 0;
-        if (maxRegisters > 0) {
+        if (this.maxRegisters > 0) {
             RegisterAllocator registerAllocator = new RegisterAllocator(method);
-            regsUsed = registerAllocator.allocate(maxRegisters);
+            regsUsed = registerAllocator.allocate(this.maxRegisters);
             System.out.println(regsUsed);
             if (regsUsed < 0) {
                 this.reports.add(new Report(ReportType.ERROR, Stage.GENERATION, -1,
                         "It's not possible to limit the method " + method.getMethodName()
-                                + " to " + maxRegisters + " register(s)."));
+                                + " to " + this.maxRegisters + " register(s)."));
                 return;
             }
-            System.out.println(registerAllocator.getGraph());
+            //System.out.println(registerAllocator.getGraph());
 
             for (RegisterAllocatorIntruction v : registerAllocator.getInstructions()) {
                 for (String varName : v.getDef()) {

@@ -1,3 +1,5 @@
+package Jasmin;
+
 import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;

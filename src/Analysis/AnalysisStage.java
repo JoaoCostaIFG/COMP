@@ -1,3 +1,8 @@
+package Analysis;
+
+import Analysis.SymbolTable.Method;
+import Analysis.SymbolTable.MySymbolTable;
+import Analysis.Visitors.*;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;

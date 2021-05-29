@@ -1,3 +1,7 @@
+package Analysis.Visitors;
+
+import Analysis.SymbolTable.Method;
+import Analysis.SymbolTable.MySymbolTable;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -45,7 +49,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         if (!bodyNode.getKind().equals("MethodBody")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(bodyNode.get("line")), parseInt(bodyNode.get("col")),
-                    "Method " + methodName + " doesn't have a properly formatted body."));
+                    "Analysis.SymbolTable.Method " + methodName + " doesn't have a properly formatted body."));
             return null;
         }
 
@@ -89,7 +93,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         if (children.size() != 4) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(node.get("line")), parseInt(node.get("col")),
-                    "Method " + methodName + " isn't properly defined."));
+                    "Analysis.SymbolTable.Method " + methodName + " isn't properly defined."));
             return false;
         }
 
@@ -98,7 +102,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         if (!methodTypeNode.getKind().equals("Type")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(methodTypeNode.get("line")), parseInt(methodTypeNode.get("col")),
-                    "Method " + methodName + " doesn't have a properly formatted return type."));
+                    "Analysis.SymbolTable.Method " + methodName + " doesn't have a properly formatted return type."));
             return false;
         }
         Type returnType = new Type(methodTypeNode.get("dataType"), methodTypeNode.get("isArray").equals("yes"));
@@ -108,7 +112,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         if (!parametersNode.getKind().equals("MethodParameters")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(parametersNode.get("line")), parseInt(parametersNode.get("col")),
-                    "Method " + methodName + " doesn't have a properly formatted parameters."));
+                    "Analysis.SymbolTable.Method " + methodName + " doesn't have a properly formatted parameters."));
             return false;
         }
         List<Symbol> methodParameters = new ArrayList<>();
@@ -143,7 +147,7 @@ public class MethodVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
         if (conflicts) {  // in case it conflicts with something
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(node.get("line")), parseInt(node.get("col")),
-                    "Method " + methodName + " is already defined."));
+                    "Analysis.SymbolTable.Method " + methodName + " is already defined."));
             return false;
         }
 

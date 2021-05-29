@@ -1,3 +1,6 @@
+package Analysis.Visitors;
+
+import Analysis.SymbolTable.MySymbolTable;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -12,7 +15,7 @@ import java.util.List;
 import static java.lang.Integer.parseInt;
 
 public class ClassFieldVisitor extends PreorderJmmVisitor<List<Report>, Boolean> {
-    private static int nodesFoundNo = 0;
+    private int nodesFoundNo = 0;
     private final MySymbolTable symbolTable;
 
     public ClassFieldVisitor(MySymbolTable symbolTable) {
@@ -22,7 +25,7 @@ public class ClassFieldVisitor extends PreorderJmmVisitor<List<Report>, Boolean>
     }
 
     private Boolean parseClassFields(JmmNode node, List<Report> reports) {
-        if (ClassFieldVisitor.nodesFoundNo >= 1) {
+        if (this.nodesFoundNo >= 1) {
             reports.add(new Report(ReportType.WARNING, Stage.SEMANTIC,
                     parseInt(node.get("line")), parseInt(node.get("col")),
                     "Found more than one class field code section. This shouldn't happen."));
@@ -43,7 +46,7 @@ public class ClassFieldVisitor extends PreorderJmmVisitor<List<Report>, Boolean>
         }
 
         this.symbolTable.setFields(classFields);
-        ++ClassFieldVisitor.nodesFoundNo;
+        ++this.nodesFoundNo;
         return true;
     }
 

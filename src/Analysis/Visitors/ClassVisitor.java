@@ -1,3 +1,6 @@
+package Analysis.Visitors;
+
+import Analysis.SymbolTable.MySymbolTable;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;

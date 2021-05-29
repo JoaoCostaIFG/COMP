@@ -1,3 +1,6 @@
+package LLIR;
+
+import Analysis.SymbolTable.MySymbolTable;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;

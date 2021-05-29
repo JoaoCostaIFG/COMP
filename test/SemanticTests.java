@@ -1,3 +1,4 @@
+import Analysis.AnalysisStage;
 import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmParserResult;
@@ -50,12 +51,6 @@ public class SemanticTests {
      *  bad
      */
     @Test
-    public void KazengaTest() {
-        String jmmCode = SpecsIo.read("test/testedokazenga.jmm");
-        goodTest(jmmCode);
-    }
-
-    @Test
     public void ArrIndexNotIntTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/arr_index_not_int.jmm"), 1);
     }
@@ -98,10 +93,5 @@ public class SemanticTests {
     @Test
     public void VarUndefTest() {
         badTest(SpecsIo.getResource("fixtures/public/fail/semantic/var_undef.jmm"), 1);
-    }
-
-    @Test
-    public void VarNotInitTest() {
-        badTest(SpecsIo.read("test/VarNotInit.jmm"), 1);
     }
 }

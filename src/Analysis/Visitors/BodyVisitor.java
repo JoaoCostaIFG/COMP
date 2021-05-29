@@ -1,3 +1,7 @@
+package Analysis.Visitors;
+
+import Analysis.SymbolTable.Method;
+import Analysis.SymbolTable.MySymbolTable;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -249,7 +253,7 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
         if (var == null || var == BodyVisitor.everythingSymbol) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC,
                     parseInt(varNode.get("line")), parseInt(varNode.get("col")),
-                    "Assignment to undeclared variable: " + varName + "."));
+                    "Assignment to undeclared variable: " + varName + "." + var));
             return false;
         }
         Type varType = var.getType();
@@ -300,7 +304,7 @@ public class BodyVisitor extends PostorderJmmVisitor<List<Report>, Boolean> {
         String varName = varNode.get("name");
 
         // check for method
-        Symbol s = method.getVar(varName);
+        Symbol s = this.method.getVar(varName);
         if (s == null)  // check class scope
             s = this.symbolTable.getField(varName);
         else if (checkDeclared) { // only check for declarations of vars in our scope

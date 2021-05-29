@@ -72,7 +72,8 @@ allocating registers, our tool does not perform spilling.
 O IRAO FEZ TUDO mas ele diz q é benevolente
 
 ** PROS:
-    - Many extra semantic verifications;
+    - Many extra semantic verifications (described above in the extras section
+      of the SEMANTIC ANALYSIS chapter);
     - Register allocation (-r);
     - Improved while template (-o);
     - Constant propagation optimization (-o);

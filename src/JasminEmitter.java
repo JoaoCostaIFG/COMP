@@ -585,6 +585,26 @@ public class JasminEmitter {
         this.addCodeLine(tabs, "goto ", label);
     }
 
+    private void intCmpBranchInstructionJasmin(String tabs, String op, String zeroOp, String label,
+                                               Element leftElem, Element rightElem) {
+        boolean zeroAtTheRight = rightElem.isLiteral() && this.callArg(rightElem).equals("0");
+
+        if (zeroAtTheRight) {
+            this.loadCallArg(tabs, leftElem);
+            this.addCodeLine(tabs, zeroOp, " ", label);
+
+            this.updateStackSize(1);
+            ++this.stackSizeCnt;
+        } else {
+            this.loadCallArg(tabs, leftElem);
+            this.loadCallArg(tabs, rightElem);
+            this.addCodeLine(tabs, op, " ", label);
+
+            this.updateStackSize(2);
+            ++this.stackSizeCnt;
+        }
+    }
+
     private void branchInstructionJasmin(String tabs, CondBranchInstruction instr) {
         Element leftElem = instr.getLeftOperand();
         Element rightElem = instr.getRightOperand();
@@ -606,46 +626,22 @@ public class JasminEmitter {
                 // TODO need extra label if's
                 break;
             case LTH:
-                this.loadCallArg(tabs, leftElem);
-                this.loadCallArg(tabs, rightElem);
-                this.addCodeLine(tabs, "if_icmpge ", label);
-                this.updateStackSize(2);
-                ++this.stackSizeCnt;
+                this.intCmpBranchInstructionJasmin(tabs, "if_icmpge", "ifge", label, leftElem, rightElem);
                 break;
             case GTH:
-                this.loadCallArg(tabs, leftElem);
-                this.loadCallArg(tabs, rightElem);
-                this.addCodeLine(tabs, "if_icmple ", label);
-                this.updateStackSize(2);
-                ++this.stackSizeCnt;
+                this.intCmpBranchInstructionJasmin(tabs, "if_icmple", "ifle", label, leftElem, rightElem);
                 break;
             case LTE:
-                this.loadCallArg(tabs, leftElem);
-                this.loadCallArg(tabs, rightElem);
-                this.addCodeLine(tabs, "if_icmpgt ", label);
-                this.updateStackSize(2);
-                ++this.stackSizeCnt;
+                this.intCmpBranchInstructionJasmin(tabs, "if_icmpgt", "ifgt", label, leftElem, rightElem);
                 break;
             case GTE:
-                this.loadCallArg(tabs, leftElem);
-                this.loadCallArg(tabs, rightElem);
-                this.addCodeLine(tabs, "if_icmplt ", label);
-                this.updateStackSize(2);
-                ++this.stackSizeCnt;
+                this.intCmpBranchInstructionJasmin(tabs, "if_icmplt", "iflt", label, leftElem, rightElem);
                 break;
             case EQ:
-                this.loadCallArg(tabs, leftElem);
-                this.loadCallArg(tabs, rightElem);
-                this.addCodeLine(tabs, "if_icmpne ", label);
-                this.updateStackSize(2);
-                ++this.stackSizeCnt;
+                this.intCmpBranchInstructionJasmin(tabs, "if_icmpne", "ifne", label, leftElem, rightElem);
                 break;
             case NEQ:
-                this.loadCallArg(tabs, leftElem);
-                this.loadCallArg(tabs, rightElem);
-                this.addCodeLine(tabs, "if_icmpeq ", label);
-                this.updateStackSize(2);
-                ++this.stackSizeCnt;
+                this.intCmpBranchInstructionJasmin(tabs, "if_icmpeq", "ifeq", label, leftElem, rightElem);
                 break;
             default:
                 break;
@@ -811,9 +807,74 @@ public class JasminEmitter {
             return pre + "store " + vReg;
     }
 
+    private String iinc(int reg, int i) {
+        if (i >= -128 && i <= 127) {
+            return "iinc " + reg + " " + i;
+        } else if (i >= -32768 && i <= 32767) {
+            return "iinc_w " + reg + " " + i;
+        } else {
+            return null;
+        }
+    }
+
+    private boolean assigniincJasmin(String tabs, String destName, int reg, Instruction instr) {
+        // only works for ADD or SUB
+        if (instr.getInstType() != InstructionType.BINARYOPER)
+            return false;
+
+        BinaryOpInstruction binaryOpInstruction = (BinaryOpInstruction) instr;
+        Operation op = binaryOpInstruction.getUnaryOperation();
+        if (op.getOpType() != OperationType.ADD && op.getOpType() != OperationType.SUB)
+            return false;
+
+        Element leftElem = binaryOpInstruction.getLeftOperand();
+        Element rightElem = binaryOpInstruction.getRightOperand();
+
+        // one of the operands needs to be a variable and the other a number
+        if (leftElem.isLiteral() && rightElem.isLiteral())
+            return false;
+        if (!leftElem.isLiteral() && !rightElem.isLiteral())
+            return false;
+
+        // check which is the var and which is the int
+        String usedName;
+        int val;
+        if (leftElem.isLiteral()) {
+            // subtracting the variable is not an inc
+            if (op.getOpType() == OperationType.SUB)
+                return false;
+
+            val = Integer.parseInt(this.callArg(leftElem));
+            usedName = this.callArg(rightElem);
+        } else {
+            val = Integer.parseInt(this.callArg(rightElem));
+            usedName = this.callArg(leftElem);
+        }
+
+        // only applicable when the dest var is the same as the used variable
+        if (!usedName.equals(destName))
+            return false;
+
+        // on subs we invert the const
+        if (op.getOpType() == OperationType.SUB)
+            val *= -1;
+
+        // skip increments by 0/-0
+        if (val == 0)
+            return true;
+
+        String res = this.iinc(reg, val);
+        if (res == null)
+            return false;
+
+        this.addCodeLine(tabs, res);
+        return true;
+    }
+
     private void assignInstructionJasmin(String tabs, AssignInstruction instr) {
         Element dest = instr.getDest();
-        Descriptor d = this.methodVarTable.get(((Operand) dest).getName());
+        String destName = ((Operand) dest).getName();
+        Descriptor d = this.methodVarTable.get(destName);
 
         boolean isArrayAccess = dest.getClass().equals(ArrayOperand.class);
         if (isArrayAccess) {
@@ -822,6 +883,10 @@ public class JasminEmitter {
 
             for (Element indexElem : ((ArrayOperand) dest).getIndexOperands())
                 this.loadCallArg(tabs, indexElem);
+        } else {
+            // iinc optimization (if possible)
+            if (assigniincJasmin(tabs, destName, d.getVirtualReg(), instr.getRhs()))
+                return;
         }
 
         this.contextStack.push(instr);

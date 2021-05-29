@@ -126,7 +126,8 @@ public class Main implements JmmParser {
         }
 
         // write Jasmin file
-        String outFile = SpecsIo.getResourceName(filename) + ".j";
+        String outFile = SpecsIo.getResourceName(filename);
+        outFile = outFile.substring(0, outFile.length() - 3) + "j";
         SpecsIo.write(new File(outFile), jasminResult.getJasminCode());
 
         // show reports (if any)

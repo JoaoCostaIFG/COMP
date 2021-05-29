@@ -50,7 +50,6 @@ public class BackendStage implements JasminBackend {
             // Convert the OLLIR to a String containing the equivalent Jasmin code
             JasminEmitter jasminEmitter = new JasminEmitter(ollirClass, reports, this.registersLimit);
             String jasminCode = jasminEmitter.parse();
-            System.err.println(jasminCode);
 
             return new JasminResult(ollirResult, jasminCode, reports);
         } catch (OllirErrorException e) {

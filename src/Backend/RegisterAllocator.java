@@ -109,12 +109,14 @@ public class RegisterAllocator {
 
     private void createGraph() {
         this.g = new Graph();
+        // get variables that are locally defined (no arguments)
         for (RegisterAllocatorIntruction ri : this.instructions) {
             for (String info : ri.getDef()) {
                 this.g.addVertex(info);
             }
         }
 
+        // register conflicts
         for (RegisterAllocatorIntruction ri : this.instructions) {
             for (String origInfo : ri.getIn()) {
                 for (String destInfo : ri.getIn()) {
@@ -177,49 +179,32 @@ public class RegisterAllocator {
         if (!this.g.graphColoring(maxRegNo))
             return -1;
 
-        /*
-        // get regs available for local vars
-        List<Integer> regsAvailable = new ArrayList<>();
-        for (var entry : this.method.getVarTable().entrySet()) {
-            Vertex v = this.g.getVertexByInfo(entry.getKey());
-            if (v == null) continue;
-            regsAvailable.add(entry.getValue().getVirtualReg());
-        }
-        Collections.sort(regsAvailable);
+        int startInd = 0;
+        if (!this.method.isStaticMethod()) ++startInd;
+        startInd += this.method.getParams().size();
 
-        // set regs for the local vars we found
-        for (var entry : this.method.getVarTable().entrySet()) {
-            Vertex v = this.g.getVertexByInfo(entry.getKey());
-            if (v == null) continue;
-            entry.getValue().setVirtualReg(regsAvailable.get(v.getColor()));
-        }
-        */
-
-        boolean hasThis = false;
+        int colorsUsed = this.g.getColorsUsed();
+        int currInd = startInd + colorsUsed;
         for (var e : this.method.getVarTable().entrySet()) {
-            if (e.getKey().equals("this")) {
-                hasThis = true;
-                break;
-            }
-        }
-
-        int startInd = hasThis ? 1 : 0;
-        int maxColor = this.g.getColorsUsed();
-        int currInd = maxColor;
-        for (var e : this.method.getVarTable().entrySet()) {
-            if (e.getKey().equals("this"))
+            Descriptor d = e.getValue();
+            // skip this, method params, and class fields
+            if (d.getVirtualReg() == -1 || d.getVirtualReg() < startInd)
                 continue;
 
-            Descriptor d = e.getValue();
             Vertex v = this.g.getVertexByInfo(e.getKey());
-            if (v == null) {
+            if (v == null)
                 d.setVirtualReg(currInd++);
-            } else {
-                d.setVirtualReg(v.getColor() + startInd);
-            }
+            else
+                d.setVirtualReg(startInd + v.getColor());
         }
 
-        return maxColor;
+        System.out.println(method.getMethodName());
+        System.out.print("\t");
+        for (var e : method.getVarTable().entrySet())
+            System.out.print(e.getKey() + ":" + e.getValue().getVirtualReg() + " ");
+        System.out.println("");
+
+        return currInd;
     }
 
     public Graph getGraph() {

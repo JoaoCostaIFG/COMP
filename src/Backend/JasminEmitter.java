@@ -21,7 +21,6 @@ public class JasminEmitter {
     private final Stack<Instruction> contextStack;
     private Integer lineNo;
     private int stackSize, stackSizeCnt;
-    private final Set<String> locals;
     private List<Integer> deadAssignments;
 
     public JasminEmitter(ClassUnit ollirClass, List<Report> reports, int maxRegisters, boolean debug) {
@@ -36,7 +35,6 @@ public class JasminEmitter {
         this.contextStack = new Stack<>();
         this.lineNo = 0;
         this.stackSize = this.stackSizeCnt = 0;
-        this.locals = new HashSet<>();
         this.deadAssignments = new ArrayList<>();
     }
 
@@ -235,19 +233,12 @@ public class JasminEmitter {
         StringBuilder bodyJasmin = new StringBuilder();
         StringBuilder classJasmin = this.setStringBuilder(bodyJasmin);
 
-        // local vars: this + method args + local vars
-        this.locals.clear();
-        if (!method.isStaticMethod()) this.locals.add("this");
-        for (var e : this.methodVarTable.entrySet()) {
-            this.locals.add(e.getKey());
-        }
-
         RegisterAllocator registerAllocator = new RegisterAllocator(method, debug);
         // calculate assignments that aren't used. This will be dropped from the final code
         //this.deadAssignments = registerAllocator.deadAssignments();
 
         // register allocation
-        int regsUsed = 0;
+        int regsUsed;
         if (this.maxRegisters > 0) {
             regsUsed = registerAllocator.allocate(this.maxRegisters);
             //System.out.println("Regs used: " + regsUsed);
@@ -258,11 +249,8 @@ public class JasminEmitter {
                 return;
             }
             //System.out.println(registerAllocator.getGraph());
-
-            for (RegisterAllocatorIntruction v : registerAllocator.getInstructions()) {
-                for (String varName : v.getDef())
-                    this.locals.remove(varName);
-            }
+        } else {
+            regsUsed = method.getVarTable().size();
         }
 
         // track the stack size limit value to set
@@ -278,17 +266,8 @@ public class JasminEmitter {
 
         // stack and locals size
         this.addCodeLine(tabs, ".limit stack ", String.valueOf(this.stackSize))
-                .addCodeLine(tabs, ".limit locals ",
-                        String.valueOf(this.maxRegisters > 0 ? this.maxRegisters : this.locals.size()))
+                .addCodeLine(tabs, ".limit locals ", String.valueOf(regsUsed))
                 .addEmptyLine();
-
-
-        System.out.println(method.getMethodName() + " " + this.locals + " " + regsUsed);
-        for (var e : method.getVarTable().entrySet()) {
-            System.out.print(e.getKey() + ":" + e.getValue().getVirtualReg() + " ");
-            e.getValue().setVarType(e.getValue().getVarType());
-        }
-        System.out.println("");
 
         this.jasminCode.append(bodyJasmin);
         this.addCodeLine(".end method");

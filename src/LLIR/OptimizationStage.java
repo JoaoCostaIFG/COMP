@@ -46,7 +46,6 @@ public class OptimizationStage implements JmmOptimization {
         List<Report> reports = new ArrayList<>();
 
         if (this.debug) System.err.println(ollirCode);
-        System.err.println(ollirCode);
 
         return new OllirResult(semanticsResult, ollirCode, reports);
     }

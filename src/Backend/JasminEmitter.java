@@ -14,7 +14,7 @@ public class JasminEmitter {
 
     private final ClassUnit ollirClass;
     private final List<Report> reports;
-    private final int maxRegisters;
+    private int maxRegisters;
     private StringBuilder jasminCode;
     private Map<String, Descriptor> methodVarTable;
     private Map<String, Instruction> methodLabels;
@@ -235,22 +235,34 @@ public class JasminEmitter {
 
         RegisterAllocator registerAllocator = new RegisterAllocator(method, debug);
         // calculate assignments that aren't used. This will be dropped from the final code
-        //this.deadAssignments = registerAllocator.deadAssignments();
+        this.deadAssignments = registerAllocator.deadAssignments();
 
         // register allocation
+        Set<String> locals = new HashSet<>();
+        if (!method.isStaticMethod()) locals.add("this");
+        for (var e : this.methodVarTable.entrySet())
+            locals.add(e.getKey());
+        int maxRegsNeeded = locals.size();
+
         int regsUsed;
         if (this.maxRegisters > 0) {
-            regsUsed = registerAllocator.allocate(this.maxRegisters);
-            //System.out.println("Regs used: " + regsUsed);
+            regsUsed = registerAllocator.allocate(maxRegsNeeded);
             if (regsUsed < 0) {
                 this.reports.add(new Report(ReportType.ERROR, Stage.GENERATION, -1,
                         "It's not possible to limit the method '" + method.getMethodName()
-                                + "' to " + this.maxRegisters + " register(s)."));
+                                + "' to " + maxRegsNeeded + " register(s)."));
                 return;
             }
-            //System.out.println(registerAllocator.getGraph());
+
+            if (regsUsed > this.maxRegisters) {
+                this.reports.add(new Report(ReportType.ERROR, Stage.GENERATION, -1,
+                        "It's not possible to limit the method '" + method.getMethodName()
+                                + "' to " + this.maxRegisters + " register(s). You would need at least "
+                                + regsUsed + " registers"));
+                return;
+            }
         } else {
-            regsUsed = method.getVarTable().size();
+            regsUsed = maxRegsNeeded;
         }
 
         // track the stack size limit value to set

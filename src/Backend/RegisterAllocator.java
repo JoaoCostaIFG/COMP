@@ -202,7 +202,7 @@ public class RegisterAllocator {
         System.out.print("\t");
         for (var e : method.getVarTable().entrySet())
             System.out.print(e.getKey() + ":" + e.getValue().getVirtualReg() + " ");
-        System.out.println("");
+        System.out.println("\n");
 
         return currInd;
     }

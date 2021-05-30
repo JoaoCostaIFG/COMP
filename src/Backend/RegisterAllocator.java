@@ -4,7 +4,10 @@ import Backend.GraphViewer.Graph;
 import Backend.GraphViewer.Vertex;
 import org.specs.comp.ollir.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class RegisterAllocator {
     private final boolean debug;
@@ -174,6 +177,7 @@ public class RegisterAllocator {
         if (!this.g.graphColoring(maxRegNo))
             return -1;
 
+        /*
         // get regs available for local vars
         List<Integer> regsAvailable = new ArrayList<>();
         for (var entry : this.method.getVarTable().entrySet()) {
@@ -189,8 +193,33 @@ public class RegisterAllocator {
             if (v == null) continue;
             entry.getValue().setVirtualReg(regsAvailable.get(v.getColor()));
         }
+        */
 
-        return this.g.getColorsUsed();
+        boolean hasThis = false;
+        for (var e : this.method.getVarTable().entrySet()) {
+            if (e.getKey().equals("this")) {
+                hasThis = true;
+                break;
+            }
+        }
+
+        int startInd = hasThis ? 1 : 0;
+        int maxColor = this.g.getColorsUsed();
+        int currInd = maxColor;
+        for (var e : this.method.getVarTable().entrySet()) {
+            if (e.getKey().equals("this"))
+                continue;
+
+            Descriptor d = e.getValue();
+            Vertex v = this.g.getVertexByInfo(e.getKey());
+            if (v == null) {
+                d.setVirtualReg(currInd++);
+            } else {
+                d.setVirtualReg(v.getColor() + startInd);
+            }
+        }
+
+        return maxColor;
     }
 
     public Graph getGraph() {

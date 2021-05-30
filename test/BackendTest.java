@@ -145,7 +145,7 @@ public class BackendTest {
     @Test
     public void skaneTest() {
         // this test is an interactive game => no output can be expected without mocking user input
-        test(SpecsIo.getResource("MyExamplePrograms/Skane.jmm"), Collections.emptyList(), "7\n\n");
+        test(SpecsIo.getResource("MyExamplePrograms/Skane.jmm"), Collections.emptyList(), "7\n7\n8\n\n");
     }
 
     @Test

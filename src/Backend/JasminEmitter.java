@@ -278,9 +278,17 @@ public class JasminEmitter {
 
         // stack and locals size
         this.addCodeLine(tabs, ".limit stack ", String.valueOf(this.stackSize))
-                .addCodeLine(tabs, ".limit locals ", String.valueOf(this.locals.size() + regsUsed))
+                .addCodeLine(tabs, ".limit locals ",
+                        String.valueOf(this.maxRegisters > 0 ? this.maxRegisters : this.locals.size()))
                 .addEmptyLine();
 
+
+        System.out.println(method.getMethodName() + " " + this.locals + " " + regsUsed);
+        for (var e : method.getVarTable().entrySet()) {
+            System.out.print(e.getKey() + ":" + e.getValue().getVirtualReg() + " ");
+            e.getValue().setVarType(e.getValue().getVarType());
+        }
+        System.out.println("");
 
         this.jasminCode.append(bodyJasmin);
         this.addCodeLine(".end method");

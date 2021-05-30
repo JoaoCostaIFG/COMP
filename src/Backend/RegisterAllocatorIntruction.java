@@ -137,6 +137,13 @@ public class RegisterAllocatorIntruction {
         if (name != null) this.use.add(name);
     }
 
+    public Instruction getInstr() {
+        return instr;
+    }
+
+    public int getId() {
+        return this.instr.getId();
+    }
 
     public Set<String> getDef() {
         return def;

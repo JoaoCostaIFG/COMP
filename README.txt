@@ -75,7 +75,7 @@ O IRAO FEZ TUDO mas ele diz q é benevolente
     - Many extra semantic verifications (described above in the extras section
       of the SEMANTIC ANALYSIS chapter);
     - Register allocation (-r);
-    - Improved while template (-o);
+    - Loop inversion (improved while loop) (-o);
     - Constant propagation optimization (-o);
     - Constant folding optimization (extra);
     - When using constant propagation and constant folding, we apply the

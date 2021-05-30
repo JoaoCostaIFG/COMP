@@ -72,6 +72,7 @@ public class BackendTest {
         // so we just test if the output is a list of 10 integers [0, 11].
         String testResult = test(SpecsIo.getResource("fixtures/public/Lazysort.jmm"),
                 Collections.emptyList());
+        System.out.println(testResult);
         String[] resultSplit = testResult.split("\n");
         for (String s : resultSplit) {
             int i = Integer.parseInt(s);
@@ -144,8 +145,7 @@ public class BackendTest {
     @Test
     public void skaneTest() {
         // this test is an interactive game => no output can be expected without mocking user input
-        test(SpecsIo.getResource("MyExamplePrograms/Skane.jmm"), Collections.emptyList(),
-                "7\n\n");
+        test(SpecsIo.getResource("MyExamplePrograms/Skane.jmm"), Collections.emptyList(), "7\n\n");
     }
 
     @Test

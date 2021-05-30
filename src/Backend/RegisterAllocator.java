@@ -2,18 +2,18 @@ package Backend;
 
 import Backend.GraphViewer.Graph;
 import Backend.GraphViewer.Vertex;
-import org.specs.comp.ollir.Instruction;
-import org.specs.comp.ollir.Method;
-import org.specs.comp.ollir.NodeType;
+import org.specs.comp.ollir.*;
 
 import java.util.*;
 
 public class RegisterAllocator {
+    private final boolean debug;
     private final Method method;
     private final List<RegisterAllocatorIntruction> instructions;
     private Graph g;
 
-    public RegisterAllocator(Method method) {
+    public RegisterAllocator(Method method, boolean debug) {
+        this.debug = debug;
         this.method = method;
         this.instructions = new ArrayList<>();
 
@@ -25,7 +25,10 @@ public class RegisterAllocator {
 
         this.fillDefUseMap();
         this.livenessAnalysis();
-        this.createGraph();
+    }
+
+    public RegisterAllocator(Method method) {
+        this(method, false);
     }
 
     public List<RegisterAllocatorIntruction> getInstructions() {
@@ -41,13 +44,12 @@ public class RegisterAllocator {
     }
 
     private void fillDefUseMap() {
-        for (Instruction i : this.method.getInstructions()) {
+        for (Instruction i : this.method.getInstructions())
             this.fillDefUseMap(i);
-        }
     }
 
     private void livenessAnalysis() {
-        System.out.println("Liveness analysis");
+        if (this.debug) System.out.println("Liveness analysis");
 
         while (this.instrChanged()) {
             for (int i = this.instructions.size() - 1; i >= 0; --i) {
@@ -67,11 +69,11 @@ public class RegisterAllocator {
             }
         }
 
-        System.out.println(this);
+        if (this.debug) System.out.println(this);
     }
 
     private void livenessAnalysisForward() {
-        System.out.println("Liveness analysis (forward)");
+        if (this.debug) System.out.println("Liveness analysis (forward)");
 
         while (this.instrChanged()) {
             for (int i = 0; i < this.instructions.size(); ++i) {
@@ -91,7 +93,7 @@ public class RegisterAllocator {
             }
         }
 
-        System.out.println(this);
+        if (this.debug) System.out.println(this);
     }
 
     private boolean instrChanged() {
@@ -125,7 +127,50 @@ public class RegisterAllocator {
         }
     }
 
+    public List<Integer> deadAssignments() {
+        // This is mainly used for meaningless assignments caused by the combination of the constant optimization and
+        // constant propagation optimizations combination. Assignments like a = 1; that aren't used anywhere in the code
+        // are removed.
+
+        List<Integer> ret = new ArrayList<>();
+        for (RegisterAllocatorIntruction i : this.instructions) {
+            if (i.getDef().size() == 0)
+                continue;
+
+            Instruction instruction = i.getInstr();
+            if (instruction.getInstType() != InstructionType.ASSIGN)
+                continue;
+            AssignInstruction assignInstruction = (AssignInstruction) instruction;
+            if (assignInstruction.getRhs().getInstType() != InstructionType.NOPER)
+                continue;
+
+            boolean contains = false;
+            for (String def : i.getDef()) {
+                if (i.getOut().contains(def)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) ret.add(i.getId());
+        }
+
+        // remove dead instructions from allocation
+        // IMP: this is not useful, because these kind of instruction will be by themselves in a graph. As such
+        // these can't conflict with any other variables.
+        // Note2: this is actually bad, because this wouldn't be removed fro mthe register count
+        /*
+        for (Integer i : ret) {
+            this.instructions.removeIf((
+                    RegisterAllocatorIntruction instr) -> instr.getId() == i);
+        }
+        */
+
+        return ret;
+    }
+
     public int allocate(int maxRegNo) {
+        this.createGraph();
+
         if (!this.g.graphColoring(maxRegNo))
             return -1;
 

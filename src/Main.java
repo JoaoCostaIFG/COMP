@@ -34,12 +34,12 @@ public class Main implements JmmParser {
         return new AnalysisStage().semanticAnalysis(parserResult);
     }
 
-    public OllirResult llirStage(JmmSemanticsResult semanticsResult, boolean optimize) {
-        return new OptimizationStage().toOllir(semanticsResult, optimize);
+    public OllirResult llirStage(JmmSemanticsResult semanticsResult, boolean optimize, boolean debug) {
+        return new OptimizationStage(debug).toOllir(semanticsResult, optimize);
     }
 
-    public JasminResult backendStage(OllirResult ollirResult, int regLimit) {
-        return new BackendStage(regLimit).toJasmin(ollirResult);
+    public JasminResult backendStage(OllirResult ollirResult, int regLimit, boolean debug) {
+        return new BackendStage(debug, regLimit).toJasmin(ollirResult);
     }
 
     public static void err(String errStr) {
@@ -52,6 +52,7 @@ public class Main implements JmmParser {
     }
 
     public static void main(String[] args) {
+        boolean verbose = false;
         boolean doOptimizations = false;
         int regLimit = 0;
         String filename = null;
@@ -62,38 +63,37 @@ public class Main implements JmmParser {
         boolean noMoreArgs = false;
         for (int i = 0; i < args.length; ++i) {
             String arg = args[i];
-            switch (arg) {
-                case "-o":
-                    if (!noMoreArgs)
-                        err("Unknown file " + arg + ".");
-                    doOptimizations = true;
-                    break;
-                case "-r":
-                    if (!noMoreArgs)
-                        err("Unknown file " + arg + ".");
-                    if (i == args.length - 1)
-                        err("-r needs an argument, <num>.");
-                    regLimit = Integer.parseInt(args[++i]);
-                    break;
-                case "--":
-                    noMoreArgs = true;
-                    break;
-                default:
-                    if (!noMoreArgs && arg.charAt(0) == '-')
-                        err("Unknown option " + arg + ".");
-                    if (filename != null)
-                        err("You can only compile a single file at a time.");
+            if (arg.equals("-o") && !noMoreArgs) {
+                doOptimizations = true;
+            } else if (arg.equals("-v") && !noMoreArgs) {
+                verbose = true;
+            } else if (arg.equals("-r") && !noMoreArgs) {
+                if (i == args.length - 1)
+                    err("-r needs an argument, <num>.");
+                regLimit = Integer.parseInt(args[++i]);
+                if (regLimit < 0)
+                    err("Registers can't be limited to a negative value.");
+            } else if (arg.equals("--")) {
+                noMoreArgs = true;
+            } else {
+                if (!noMoreArgs && arg.charAt(0) == '-')
+                    err("Unknown option " + arg + ".");
+                if (filename != null)
+                    err("You can only compile a single file at a time.");
 
-                    filename = arg;
-                    if (!filename.matches(".*\\.jmm$"))
-                        err("Can only compile '.jmm' files.");
-                    break;
+                filename = arg;
+                if (!filename.matches(".*\\.jmm$"))
+                    err("Can only compile '.jmm' files.");
             }
         }
         // we need to have a file
         if (filename == null)
             usage();
         String jmmCode = SpecsIo.read(filename);
+
+        System.out.println("Optimizations are " + (doOptimizations ? "on" : "off"));
+        if (regLimit == 0) System.out.println("Registers are not limited (register allocation)");
+        else System.out.println("Registers are limited to: " + regLimit);
 
         Main main = new Main();
         // Syntatic analysis stage
@@ -112,14 +112,14 @@ public class Main implements JmmParser {
         }
         // LLIR stage
         System.out.println("LLIR stage...");
-        OllirResult ollirResult = main.llirStage(semanticsResult, doOptimizations);
+        OllirResult ollirResult = main.llirStage(semanticsResult, doOptimizations, verbose);
         for (Report report : ollirResult.getReports()) {
             if (report.getType() == ReportType.ERROR)
                 err("Found errors: " + ollirResult.getReports());
         }
         // Backend stage
         System.out.println("Backend stage...");
-        JasminResult jasminResult = main.backendStage(ollirResult, regLimit);
+        JasminResult jasminResult = main.backendStage(ollirResult, regLimit, verbose);
         for (Report report : jasminResult.getReports()) {
             if (report.getType() == ReportType.ERROR)
                 err("Found errors: " + jasminResult.getReports());
@@ -132,9 +132,7 @@ public class Main implements JmmParser {
 
         // show reports (if any)
         List<Report> reports = jasminResult.getReports();
-        if (reports.size() == 0)
-            System.out.println("No reports.");
-        else
-            System.out.println("Reports: " + reports);
+        if (reports.size() == 0) System.out.println("No reports.");
+        else System.out.println("Reports: " + reports);
     }
 }

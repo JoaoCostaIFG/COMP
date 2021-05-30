@@ -1,6 +1,5 @@
 package Backend;
 
-import org.specs.comp.ollir.Method;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -10,8 +9,8 @@ import java.util.*;
 
 public class JasminEmitter {
     private static final String labelPrefix = "l";
-    private static final boolean debug = true;
 
+    private final boolean debug;
 
     private final ClassUnit ollirClass;
     private final List<Report> reports;
@@ -23,8 +22,11 @@ public class JasminEmitter {
     private Integer lineNo;
     private int stackSize, stackSizeCnt;
     private final Set<String> locals;
+    private List<Integer> deadAssignments;
 
-    public JasminEmitter(ClassUnit ollirClass, List<Report> reports, int maxRegisters) {
+    public JasminEmitter(ClassUnit ollirClass, List<Report> reports, int maxRegisters, boolean debug) {
+        this.debug = debug;
+
         this.ollirClass = ollirClass;
         this.reports = reports;
         this.maxRegisters = maxRegisters;
@@ -35,10 +37,15 @@ public class JasminEmitter {
         this.lineNo = 0;
         this.stackSize = this.stackSizeCnt = 0;
         this.locals = new HashSet<>();
+        this.deadAssignments = new ArrayList<>();
+    }
+
+    public JasminEmitter(ClassUnit ollirClass, List<Report> reports, boolean debug) {
+        this(ollirClass, reports, 0, debug);
     }
 
     public JasminEmitter(ClassUnit ollirClass, List<Report> reports) {
-        this(ollirClass, reports, 0);
+        this(ollirClass, reports, false);
     }
 
     public String getJasminCode() {
@@ -216,9 +223,8 @@ public class JasminEmitter {
 
         // method signature (args)
         this.addCode("(");
-        for (Element e : method.getParams()) {
+        for (Element e : method.getParams())
             this.addCode(this.elemTypeJasmin(e.getType()));
-        }
         this.addCode(")");
 
         Type retType = method.getReturnType();
@@ -236,23 +242,26 @@ public class JasminEmitter {
             this.locals.add(e.getKey());
         }
 
+        RegisterAllocator registerAllocator = new RegisterAllocator(method, debug);
+        // calculate assignments that aren't used. This will be dropped from the final code
+        //this.deadAssignments = registerAllocator.deadAssignments();
+
+        // register allocation
         int regsUsed = 0;
         if (this.maxRegisters > 0) {
-            RegisterAllocator registerAllocator = new RegisterAllocator(method);
             regsUsed = registerAllocator.allocate(this.maxRegisters);
-            System.out.println(regsUsed);
+            //System.out.println("Regs used: " + regsUsed);
             if (regsUsed < 0) {
                 this.reports.add(new Report(ReportType.ERROR, Stage.GENERATION, -1,
-                        "It's not possible to limit the method " + method.getMethodName()
-                                + " to " + this.maxRegisters + " register(s)."));
+                        "It's not possible to limit the method '" + method.getMethodName()
+                                + "' to " + this.maxRegisters + " register(s)."));
                 return;
             }
             //System.out.println(registerAllocator.getGraph());
 
             for (RegisterAllocatorIntruction v : registerAllocator.getInstructions()) {
-                for (String varName : v.getDef()) {
+                for (String varName : v.getDef())
                     this.locals.remove(varName);
-                }
             }
         }
 
@@ -272,6 +281,7 @@ public class JasminEmitter {
                 .addCodeLine(tabs, ".limit locals ", String.valueOf(this.locals.size() + regsUsed))
                 .addEmptyLine();
 
+
         this.jasminCode.append(bodyJasmin);
         this.addCodeLine(".end method");
     }
@@ -288,6 +298,10 @@ public class JasminEmitter {
 
         switch (instr.getInstType()) {
             case ASSIGN:
+                if (this.deadAssignments.contains(instr.getId())) {
+                    if (debug) System.out.println("Dropping: " + instr.getId());
+                    return;
+                }
                 this.assignInstructionJasmin(tabs, (AssignInstruction) instr);
                 break;
             case CALL:

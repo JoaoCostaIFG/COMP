@@ -26,14 +26,16 @@ import java.util.List;
  */
 
 public class BackendStage implements JasminBackend {
+    private final boolean debug;
     private final int registersLimit;
 
-    public BackendStage(int registersLimit) {
+    public BackendStage(boolean debug, int registersLimit) {
+        this.debug = debug;
         this.registersLimit = registersLimit;
     }
 
     public BackendStage() {
-        this(0);
+        this(false, 0);
     }
 
     @Override
@@ -48,7 +50,7 @@ public class BackendStage implements JasminBackend {
             ollirClass.buildVarTables(); // build the table of variables for each method
 
             // Convert the OLLIR to a String containing the equivalent Jasmin code
-            JasminEmitter jasminEmitter = new JasminEmitter(ollirClass, reports, this.registersLimit);
+            JasminEmitter jasminEmitter = new JasminEmitter(ollirClass, reports, this.registersLimit, this.debug);
             String jasminCode = jasminEmitter.parse();
 
             return new JasminResult(ollirResult, jasminCode, reports);

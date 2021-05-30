@@ -24,6 +24,16 @@ import java.util.List;
  */
 
 public class OptimizationStage implements JmmOptimization {
+    private final boolean debug;
+
+    public OptimizationStage(boolean debug) {
+        this.debug = debug;
+    }
+
+    public OptimizationStage() {
+        this.debug = false;
+    }
+
     @Override
     public OllirResult toOllir(JmmSemanticsResult semanticsResult, boolean optimize) {
         JmmNode node = semanticsResult.getRootNode();
@@ -34,6 +44,10 @@ public class OptimizationStage implements JmmOptimization {
 
         // More reports from this stage
         List<Report> reports = new ArrayList<>();
+
+        if (this.debug) System.err.println(ollirCode);
+        System.err.println(ollirCode);
+
         return new OllirResult(semanticsResult, ollirCode, reports);
     }
 

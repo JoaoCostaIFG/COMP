@@ -5,6 +5,7 @@ import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
+import pt.up.fe.comp.jmm.jasmin.JasminUtils;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -91,11 +92,16 @@ public class Main implements JmmParser {
             usage();
         String jmmCode = SpecsIo.read(filename);
 
+        String targetDir = "out";
+        String outName = SpecsIo.getResourceName(filename);
+        outName = targetDir + File.separator + outName.substring(0, outName.length() - 4);
+
         System.out.println("Optimizations are " + (doOptimizations ? "on" : "off"));
         if (regLimit == 0) System.out.println("Registers are not limited (register allocation)");
         else System.out.println("Registers are limited to: " + regLimit);
 
         Main main = new Main();
+
         // Syntatic analysis stage
         System.out.println("Syntatic analysis stage...");
         JmmParserResult parserResult = main.parse(jmmCode);
@@ -103,6 +109,10 @@ public class Main implements JmmParser {
             if (report.getType() == ReportType.ERROR)
                 err("Found errors: " + parserResult.getReports());
         }
+        // write AST json file
+        SpecsIo.mkdir(new File(targetDir)); // create output dir
+        SpecsIo.write(new File(outName + ".json"), parserResult.getRootNode().toJson());
+
         // Semantic analysis stage
         System.out.println("Semantic analysis stage...");
         JmmSemanticsResult semanticsResult = main.semanticAnalysis(parserResult);
@@ -110,6 +120,9 @@ public class Main implements JmmParser {
             if (report.getType() == ReportType.ERROR)
                 err("Found errors: " + semanticsResult.getReports());
         }
+        // write symbol table file
+        SpecsIo.write(new File(outName + ".symbols.txt"), semanticsResult.getSymbolTable().print());
+
         // LLIR stage
         System.out.println("LLIR stage...");
         OllirResult ollirResult = main.llirStage(semanticsResult, doOptimizations, verbose);
@@ -117,6 +130,9 @@ public class Main implements JmmParser {
             if (report.getType() == ReportType.ERROR)
                 err("Found errors: " + ollirResult.getReports());
         }
+        // write OLLIR file
+        SpecsIo.write(new File(outName + ".ollir"), ollirResult.getOllirCode());
+
         // Backend stage
         System.out.println("Backend stage...");
         JasminResult jasminResult = main.backendStage(ollirResult, regLimit, verbose);
@@ -124,11 +140,10 @@ public class Main implements JmmParser {
             if (report.getType() == ReportType.ERROR)
                 err("Found errors: " + jasminResult.getReports());
         }
-
         // write Jasmin file
-        String outFile = SpecsIo.getResourceName(filename);
-        outFile = outFile.substring(0, outFile.length() - 3) + "j";
-        SpecsIo.write(new File(outFile), jasminResult.getJasminCode());
+        SpecsIo.write(new File(outName + ".j"), jasminResult.getJasminCode());
+
+        JasminUtils.assemble(new File(outName + ".j"), new File(targetDir));
 
         // show reports (if any)
         List<Report> reports = jasminResult.getReports();

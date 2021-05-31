@@ -15,7 +15,7 @@ import jasmin.ClassFile;
  * @author Tiago Carvalho
  *
  */
-class JasminUtils {
+public class JasminUtils {
     /**
      * Extracted from Jasmin code
      */

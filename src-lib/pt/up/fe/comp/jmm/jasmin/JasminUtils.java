@@ -75,7 +75,7 @@ public class JasminUtils {
         } catch (jasError e) {
             throw new RuntimeException("JAS Error: " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new RuntimeException("eXception: " + e.getMessage(), e);
+            throw new RuntimeException("Exception while assembling Jasmin file", e);
         }
 
     }

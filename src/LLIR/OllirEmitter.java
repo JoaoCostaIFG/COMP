@@ -146,6 +146,7 @@ public class OllirEmitter {
         for (Symbol field : this.symbolTable.getFields()) {
             this.ollirCode.append("\t.field private ").append(this.getSymbolOllir(field)).append(";\n");
         }
+        if (this.symbolTable.getFields().size() > 0) this.ollirCode.append("\n");
 
         // constructor
         this.ollirCode.append("\t.construct ").append(className).append("().V {\n");

@@ -27,14 +27,14 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         // abort if there is no root node
-        if (parserResult.getRootNode() == null) {
+        JmmNode rootNode = parserResult.getRootNode();
+        if (rootNode == null) {
             var errorReport = new Report(ReportType.ERROR, Stage.SEMANTIC, -1,
                     "Started semantic analysis but AST root node is null");
             return new JmmSemanticsResult(parserResult, null, Collections.singletonList(errorReport));
         }
 
         MySymbolTable symbolTable = new MySymbolTable();
-        JmmNode rootNode = parserResult.getRootNode();
         List<Report> reports = new ArrayList<>();
 
         // FILL SYMBOL TABLE

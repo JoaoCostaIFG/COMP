@@ -35,8 +35,6 @@ public class RegisterAllocatorIntruction {
             AssignInstruction assignInstruction = (AssignInstruction) instr;
             this.fillUsesMap(assignInstruction.getRhs());
 
-            // TODO array assignment
-            // TODO PUTFIELD
             Element dest = assignInstruction.getDest();
             if (dest.getClass().equals(ArrayOperand.class)) {
                 ArrayOperand arrayOperand = (ArrayOperand) dest;
@@ -53,7 +51,6 @@ public class RegisterAllocatorIntruction {
     }
 
     private void fillUsesMap(Instruction instr) {
-        // TODO
         Element e;
         switch (instr.getInstType()) {
             case ASSIGN:

@@ -83,7 +83,7 @@ public class MySymbolTable implements SymbolTable {
     public String addMethod(String methodName, Type returnType, List<Symbol> parameters, List<Symbol> localVars, JmmNode node) {
         // 2 methods can have the same => append UUID to method name
         // ":" can't be part of a method's name
-        String methodUUID = methodName + ":" + UUID.randomUUID().toString();
+        String methodUUID = methodName + ":" + UUID.randomUUID();
         this.methods.put(methodUUID, new Method(methodUUID, returnType, parameters, localVars, node));
         return methodUUID;
     }

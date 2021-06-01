@@ -14,7 +14,7 @@ public class JasminEmitter {
 
     private final ClassUnit ollirClass;
     private final List<Report> reports;
-    private int maxRegisters;
+    private final int maxRegisters;
     private StringBuilder jasminCode;
     private Map<String, Descriptor> methodVarTable;
     private Map<String, Instruction> methodLabels;
@@ -204,7 +204,7 @@ public class JasminEmitter {
             this.stackSizeCnt -= toConsume;
     }
 
-    private void updateStackSize() {
+    private void resetStackSize() {
         this.updateStackSize(-1);
     }
 
@@ -250,7 +250,8 @@ public class JasminEmitter {
             if (regsUsed < 0) {
                 this.reports.add(new Report(ReportType.ERROR, Stage.GENERATION, -1,
                         "It's not possible to limit the method '" + method.getMethodName()
-                                + "' to " + maxRegsNeeded + " register(s)."));
+                                + "' to " + maxRegsNeeded + " register(s). You would need at least "
+                                + maxRegsNeeded + " registers."));
                 return;
             }
 
@@ -258,7 +259,7 @@ public class JasminEmitter {
                 this.reports.add(new Report(ReportType.ERROR, Stage.GENERATION, -1,
                         "It's not possible to limit the method '" + method.getMethodName()
                                 + "' to " + this.maxRegisters + " register(s). You would need at least "
-                                + regsUsed + " registers"));
+                                + regsUsed + " registers."));
                 return;
             }
         } else {
@@ -272,7 +273,7 @@ public class JasminEmitter {
             this.stackSizeCnt = 0;
             this.instructionJasmin(tabs, i);
             // update max stackSize (if needed)
-            this.updateStackSize();
+            this.resetStackSize();
         }
         this.setStringBuilder(classJasmin);
 

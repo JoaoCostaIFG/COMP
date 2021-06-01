@@ -179,6 +179,7 @@ public class RegisterAllocator {
         if (!this.g.graphColoring(maxRegNo))
             return -1;
 
+        // rebuild var table
         int startInd = 0;
         if (!this.method.isStaticMethod()) ++startInd;
         startInd += this.method.getParams().size();

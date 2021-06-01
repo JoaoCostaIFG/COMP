@@ -20,11 +20,12 @@ code generation.
 
 ### DEALING WITH SYNTACTIC ERRORS
 
-We store the line and column of every node using a hook. We do this so we can
+We store the line and column of every node using a hook. We do this, so we can
 show the line and column corresponding to the errors that are reported. When
-encountering an error outside a while loop, the error is reported and the
-analysis stops. Errors inside while loops are accumulated, because the analysis
-doesn't stop, and reported at the end of the parsing.
+encountering an error outside a while loop, the error is reported, and the
+analysis stops. Errors inside while loop conditions are accumulated, because
+the analysis doesn't stop (error recovery), and reported at the end of the
+parsing.
 
 ### SEMANTIC ANALYSIS
 

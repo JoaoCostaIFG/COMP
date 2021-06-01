@@ -206,7 +206,7 @@ public class ParseException extends Exception {
     }
 
     public Report getReport() {
-        return new Report(ReportType.ERROR, Stage.SYNTATIC, currentToken.beginLine, errMsg);
+        return new Report(ReportType.ERROR, Stage.SYNTATIC, currentToken.beginLine, currentToken.beginColumn, errMsg);
     }
 }
 /* JavaCC - OriginalChecksum=48d898a94cd0ac284bcb606323ed1990 (do not edit this line) */

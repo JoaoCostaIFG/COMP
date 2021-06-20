@@ -1,0 +1,17 @@
+| node | use     | def  | succ  | in1              | out1             | in2                 | out2                | in3 | out3           |
+|======+=========+======+=======+==================+==================+=====================+=====================+=====+================|
+| 12   | m       |      |       | m                |                  | m                   |                     | m   |                |
+| 11   | i, N    |      | 5, 12 | i, N, m          | m                | A, i, N, m          | A, i, N, m          |     | i, A, Mem, m, N |
+| 10   | i       | i    | 11    | i, N, m          | i, N, m          | i, A, N, m          | A, i, N, m          |
+| 9    | t3      | m    | 10    | t3, i, N         | i, N, m          | t3, i, A, N         | i, A, N, m          |
+| 8    | m, t3   |      | 9, 10 | m, t3, i, N      | t3, i, N, m      | m, t3, A, i, N      | t3, A, i, N, m      |
+| 7    | Mem, t2 | t3   | 8     | Mem, t2, i, N, m | m, t3, i, N      | Mem, t2, m, A, i, N | m, t3, A, i, N      |
+| 6    | A, t1   | t2   | 7     | A, t1, i, N, m   | Mem, t2, i, N, m | A, t1, Mem, m, i, N | Mem, t2, m, A, i, N |
+| 5    | i       | t1   | 6     | A, i, N, m       | A, t1, i, N, m   | i, A, Mem, m, N     | A, t1, Mem, m, i, N |
+| 4    | N       |      | 5, 12 | A, i, N, m       | A, i, N, m       | A, t1, Mem, m, i, N | A, t1, Mem, m, i, N |
+| 3    |         | i    | 4     | A, N, m          | A, i, N, m       | A, t1, Mem, m, N    | A, t1, Mem, m, i, N |
+| 2    |         | m    | 3     | A, N             | A, N, m          | A, t1, Mem, N       | A, t1, Mem, m, N    |
+| 1    |         | A, N | 2     |                  | A, N             | t1, Mem             | A, t1, Mem, N       |
+
+in[n] <- use[n] U (out[n] - def[n])
+out[n] <- UwU in[s]

@@ -1,0 +1,66 @@
+Start
+  |
+   -- Decl
+  |     |
+  |      -- INT -- int
+  |     |
+  |      -- IDENT -- a
+  |     |
+  |      -- VIRG -- ,
+  |     |
+  |      -- IDENT -- b
+  |     |
+  |      -- VIRG -- ,
+  |     |
+  |      -- IDENT -- c
+  |     |
+  |      -- PVIRG -- ;
+   -- AttribConst
+  |     |
+  |      -- IDENT -- b
+  |     |
+  |      -- IGUAL -- =
+  |     |
+  |      -- CONST -- 3
+  |     |
+  |      -- PVIRG -- ;
+   -- AttribExpr
+        |
+         -- IDENT -- a
+        |
+         -- IGUAL -- =
+        |
+         -- Expr
+        |     |
+        |      -- IDENT -- b
+        |     |
+        |      -- MULT -- *
+        |     |
+        |      -- IDENT -- c
+        |
+         -- PVIRG -- ;
+
+AST:
+Start
+  |
+   -- int
+  |     |
+  |      -- a
+  |     |
+  |      -- b
+  |     |
+  |      -- c
+   -- =
+  |     |
+  |      -- b
+  |     |
+  |      -- 3
+   -- =
+        |
+         -- a
+        |
+         -- *
+             |
+              -- b
+             |
+              -- c

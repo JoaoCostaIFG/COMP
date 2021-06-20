@@ -1,0 +1,5 @@
+**/.idea
+**/*.java
+**/*.class
+**/.ccls-cache
+*.pdf

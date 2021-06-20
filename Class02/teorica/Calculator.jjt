@@ -1,0 +1,76 @@
+options
+{
+ NODE_DEFAULT_VOID = true; // don't generate nodes by default
+ LOOKAHEAD = 1;
+}
+
+PARSER_BEGIN(Calculator)
+public class Calculator
+{
+    public static void main(String[] args) throws ParseException {
+        System.out.println("Write the expression: ");
+        Calculator myCalc = new Calculator(System.in);
+        SimpleNode root = myCalc.Start(); // returns reference to root node
+        root.dump(""); // prints the tree on the screen
+    }
+}
+PARSER_END(Calculator)
+
+SKIP :
+{
+" " | "\r" | "\t"
+}
+
+TOKEN:
+{
+    < INT: "int" >
+    | < IDENT: ["a"-"z"](["0"-"9", "a"-"z"])* >
+    | < VIRG: "," >
+    | < PVIRG: ";" >
+    | < CONST: (["0"-"9"])+ >
+    | < IGUAL: "=" >
+    | < MULT: "*" >
+    | < LF: "\n" >
+}
+
+// Start -> {Decl} AttribS
+SimpleNode Start() #Expression : {}
+{
+    (Decl())* (AttribS())? <LF> {return jjtThis;} // Java code inside brackets
+}
+
+// Decl -> INT IDENT {VIRG IDENT} PVIRG
+void Decl() #Decl : {}
+{
+    <INT> <IDENT> (<VIRG> <IDENT>)* <PVIRG>
+}
+
+// AttribS -> IDENT IGUAL Split
+void AttribS() #AttribS : {}
+{
+    <IDENT> <IGUAL> Split()
+}
+
+// Split -> (CONST AttribConstLoop) | (Expr AttribExprLoop)
+void Split() #Split : {}
+{
+    (<CONST> #Const AttribConstLoop()) | (Expr() AttribExprLoop())
+}
+
+// AttribConstLoop -> PVIRG (AttribS | epsilon)
+void AttribConstLoop() : {}
+{
+    <PVIRG> (AttribS())?
+}
+
+// AttribExprLoop -> PVIRG {IDENT IGUAL Expr PVIRG}
+void AttribExprLoop() : {}
+{
+    <PVIRG> (<IDENT> <IGUAL> Expr() <PVIRG>)*
+}
+
+// Expr -> IDENT MULT IDENT
+void Expr() #Expr : {Token t;}
+{
+    <IDENT> <MULT> #Mult <IDENT>
+}

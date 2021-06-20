@@ -1,0 +1,68 @@
+options
+{
+ NODE_DEFAULT_VOID = true; // don't generate nodes by default
+ LOOKAHEAD = 2;
+}
+PARSER_BEGIN(Calculator)
+public class Calculator
+{
+    public static void main(String[] args) throws ParseException {
+        System.out.println("Parser for a calculator that accepts expressions with integers, +,-,*,/,(,and ).");
+        System.out.println("Write an arithmetic expression:");
+        Calculator myCalc = new Calculator(System.in);
+        SimpleNode root = myCalc.Expression(); // returns reference to root node
+        root.dump(""); // prints the tree on the screen
+        System.out.println("Expression value: " + root.eval());
+    }
+}
+PARSER_END(Calculator)
+
+SKIP :
+{
+" " | "\r" | "\t"
+}
+
+TOKEN:
+{
+    < SYMBOL: ["A"-"Z", "a"-"z"](["0"-"9", "A"-"Z", "a"-"z"])*>
+    | < INTEGER: (["0"-"9"])+ >
+    | < LF: "\n" >
+    | <ENDEXPR: ";">
+}
+
+SimpleNode Expression() #Expression : {}
+{
+    Expr0() (<ENDEXPR> Expr0())* <LF> {return jjtThis;} // Java code inside brackets
+}
+
+void Expr0() : {Token t; SimpleNode n;}
+{
+    // is assignment?
+    (t=<SYMBOL> {n = jjtThis; n.value = t.image;} #Symb
+    "="
+    Expr1(1) {n.val = jjtThis.eval();} #Eq(2))
+    | Expr1(1) // normal expr
+}
+
+void Expr1(int sign) : {}  // 1: positive; -1: negative
+{
+    Expr2(sign)
+    ("+" Expr2(sign) #Add(2)
+    | "-" Expr2(sign) #Sub(2))*
+}
+
+void Expr2(int sign) : {}
+{
+    // the Expr3 after *|/ don't take the sign because -1 * 1 = -1 and -1 * -1 = 1
+    Expr3(sign)
+    ("*" Expr3(1) #Mul(2)
+    | "/" Expr3(1) #Div(2))*
+}
+
+void Expr3(int sign) : {Token t;}
+{
+    t=<INTEGER> {jjtThis.val = sign * Integer.parseInt(t.image);} #Term
+    | t=<SYMBOL> {jjtThis.value = t.image;} #Symb
+    | "-" Expr3(-1)
+    | "(" Expr1(sign) ")"
+}

@@ -1,7 +1,7 @@
 # FEUP COMP 2021
 
 This repository includes the project my group made, some practical classes'
-exercises, the theoretical classes' slides, and some of the precious years'
+exercises, the theoretical classes' slides, and some of the previous years'
 exams.
 
 ## Project
